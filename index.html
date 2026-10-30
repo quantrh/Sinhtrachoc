@@ -45,7 +45,7 @@ textarea.typing-box.alert,textarea.typing-box.alert:focus{background:#ffe9ed;bor
 <button class="active" data-tab="enroll">1. Tạo mẫu gõ</button>
 <button class="alt" data-tab="monitor">2. Kiểm tra người gõ</button>
 <button class="alt" data-tab="guide">3. Hướng dẫn</button>
-<button class="alt" data-tab="academy">4. Giáo trình</button>
+<button class="alt" data-tab="academy">4. Giáo trình</button><button class="alt" data-tab="insights">5. Phân tích đặc trưng</button>
 </div>
 <div class="grid">
 <div>
@@ -87,6 +87,19 @@ textarea.typing-box.alert,textarea.typing-box.alert:focus{background:#ffe9ed;bor
 <p class="muted"><b>FAR</b> = số lượt người khác được chấp nhận / tổng lượt thử người khác. <b>FRR</b> = số lượt chính chủ bị từ chối / tổng lượt thử chính chủ. Chưa có lượt thử tương ứng thì hiển thị “—”, không phải 0%. Số liệu chỉ gồm lượt kiểm thử do tài khoản trình duyệt hiện tại ghi nhận với mẫu đang chọn; chưa phải đánh giá toàn cộng đồng.</p>
 </section>
 <h3>Nhật ký quyết định</h3><div class="log" id="log"><div>Chưa có dữ liệu phiên.</div></div>
+</section>
+<section class="card page" data-page="insights" hidden>
+<h2>Phân tích đặc trưng hành vi gõ phím</h2>
+<p>So sánh <b>cửa sổ 30 phím gần nhất</b> trong phiên kiểm tra với mẫu hành vi tham chiếu đã chọn. Màn hình cập nhật khi phát sinh cửa sổ mới hoặc bấm Làm mới.</p>
+<div class="row"><button id="refreshInsights" class="alt">Làm mới phân tích</button><button id="downloadFeatures" class="alt">Xuất số liệu JSON</button></div>
+<p id="insightsNote" class="info">Chọn mẫu hành vi và gõ đủ 30 phím trong phần Kiểm tra người gõ.</p>
+<div class="stats"><div class="stat"><small>Điểm tương đồng tương đối</small><strong id="insSimilarity">—</strong></div><div class="stat"><small>Mức không tương đồng tương đối</small><strong id="insDifference">—</strong></div><div class="stat"><small>Đặc trưng đang dùng để quyết định</small><strong>12 / 42</strong></div></div>
+<h3>Những yếu tố đóng góp vào độ lệch</h3>
+<p class="muted">Tỷ trọng dưới đây phản ánh <b>phần đóng góp của từng đặc trưng vào khoảng cách robust</b>, không phải nguyên nhân thực tế được chứng minh hay xác suất danh tính. Hai độ lệch lớn nhất được loại khỏi công thức quyết định để giảm tác động của giá trị ngoại lệ.</p>
+<div id="featureReasons" class="info">Chưa có dữ liệu.</div>
+<h3>42 đặc trưng đã thu thập</h3>
+<p class="muted">Các đặc trưng mang nhãn “Tham khảo” (digraph/trigraph) vẫn được thu thập cho mục đích nghiên cứu nhưng <b>không tham gia quyết định hiện tại</b>.</p>
+<div style="overflow-x:auto"><table><thead><tr><th>Đặc trưng</th><th>Mẫu gốc</th><th>Lần gõ</th><th>Chênh lệch</th><th>Vai trò</th></tr></thead><tbody id="featureTable"></tbody></table></div>
 </section>
 <section class="card page" data-page="guide" hidden>
 <h2>Hướng dẫn sử dụng KeyDNA Continuous</h2>
@@ -381,7 +394,7 @@ function updateMonitor(){
  $("liveState").className="pill "+(r.flag?"risk-"+Math.min(4,badStreak):"good");
  const line=document.createElement("div");
  line.textContent="Window "+count+" | IF "+r.iso.toFixed(3)+" | Mah "+r.mah.toFixed(3)+" | similarity "+Math.round(r.confidence*100)+"% / min "+tuning.threshold+"% | "+(locked?"ALERT":r.flag?"SUSPECT":"OK");
- $("log").prepend(line);
+ $("log").prepend(line);if(document.querySelector('[data-page="insights"]')?.hidden===false)refreshInsights();
 }
 keyCollector($("enrollText"),enroll,updateEnroll);
 keyCollector($("monitorText"),monitor,updateMonitor);
@@ -471,7 +484,7 @@ $("removeProfile").onclick=async()=>{
  if(error)return alert("Xóa thất bại: "+error.message);
  selectedProfileId=null;profile=null;await loadProfiles();setInfo("Đã xóa mẫu hành vi.");
 };
-document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{const tab=b.dataset.tab;document.querySelectorAll("[data-tab]").forEach(x=>{x.className=x===b?"active":"alt"});document.querySelectorAll("[data-page]").forEach(x=>x.hidden=x.dataset.page!==tab)});
+document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{const tab=b.dataset.tab;document.querySelectorAll("[data-tab]").forEach(x=>{x.className=x===b?"active":"alt"});document.querySelectorAll("[data-page]").forEach(x=>x.hidden=x.dataset.page!==tab);if(tab==="insights")refreshInsights()});
 $("exportProfile").onclick=()=>{if(!profile){alert("Chưa có mẫu hành vi");return}const blob=new Blob([JSON.stringify(profile)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="keydna-continuous-profile.json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
 
 
@@ -534,6 +547,58 @@ $("demoFlow").onclick=()=>{
  "→ 3 cửa sổ nghi vấn liên tiếp: mức cảnh báo tăng",
  "Các điểm IF/Mahalanobis trong ví dụ chỉ minh họa, không phải chạy mô hình thật."
  ].join("\n");
+};
+
+
+const featureNames=["Dwell trung bình","Biến thiên Dwell","Press-to-Press trung bình","Biến thiên Press-to-Press","Release-to-Press trung bình","Biến thiên Release-to-Press","Tốc độ (WPM)",
+ ...Array.from({length:20},(_,i)=>"Digraph bucket "+(i+1)),
+ ...Array.from({length:10},(_,i)=>"Trigraph bucket "+(i+1)),
+ "Latency P10","Latency P50","Latency P90","Tỷ lệ quãng nghỉ dài","Hệ số biến thiên latency"];
+const featureUnits=i=>i===6?" WPM":i===40||i===41?"":" ms";
+const activeDimensions=[0,1,2,3,4,5,6,37,38,39,40,41];
+let latestInsights=null;
+function buildFeatureInsights(){
+ if(!profile){return null}
+ const data=windows(monitor),f=data.at(-1);
+ if(!f)return null;
+ const adjusted=adjustedFeatures(f),evaluated=evaluate(f),part=activeDimensions.map(i=>({
+  i,name:featureNames[i],original:f[i],adjusted:adjusted[i],baseline:profile.m[i],
+  deviation:Math.min(5,Math.abs(adjusted[i]-profile.m[i])/Math.max(profile.s[i]||1,Math.abs(profile.m[i])*.15,8))
+ }));
+ const ranking=[...part].sort((a,b)=>a.deviation-b.deviation),excluded=new Set(ranking.slice(-2).map(x=>x.i));
+ const included=part.filter(x=>!excluded.has(x.i)),sum=included.reduce((a,x)=>a+x.deviation,0);
+ const reasons=part.map(x=>({...x,excluded:excluded.has(x.i),share:excluded.has(x.i)?0:sum>0?100*x.deviation/sum:0})).sort((a,b)=>b.share-a.share);
+ return {profile:profile.name,windows:data.length,features:f,adjusted,reasons,score:evaluated};
+}
+function featureValue(i,x){return Number.isFinite(x)?x.toFixed(i===40||i===41?3:1)+featureUnits(i):"—"}
+function refreshInsights(){
+ const data=buildFeatureInsights();latestInsights=data;
+ $("featureTable").replaceChildren();$("featureReasons").replaceChildren();
+ if(!data){$("insSimilarity").textContent="—";$("insDifference").textContent="—";$("insightsNote").textContent="Hãy chọn mẫu tham chiếu và gõ đủ 30 phím trong Kiểm tra người gõ.";return}
+ $("insSimilarity").textContent=Math.round(data.score.confidence*100)+"%";
+ $("insDifference").textContent=Math.round(data.score.anomaly*100)+"%";
+ $("insightsNote").textContent="Mẫu: "+data.profile+" · Cửa sổ số "+data.windows+" · Ngưỡng tương đồng tối thiểu "+tuning.threshold+"%. Các điểm số là thang đo heuristic, chưa hiệu chuẩn bằng FAR/FRR.";
+ for(const x of data.reasons.filter(x=>!x.excluded).slice(0,6)){
+  const el=document.createElement("div");el.style.marginBottom="12px";
+  const title=document.createElement("div");
+  title.textContent=x.name+" · đóng góp "+x.share.toFixed(1)+"% vào khoảng cách";
+  const track=document.createElement("div");track.style.cssText="height:9px;background:#dfebea;border-radius:8px;overflow:hidden;margin:6px 0";
+  const bar=document.createElement("div");bar.style.cssText="height:100%;background:#bd7351;width:"+x.share+"%";
+  const note=document.createElement("small");note.textContent="Tham chiếu "+featureValue(x.i,x.baseline)+" → hiện tại "+featureValue(x.i,x.original)+(Math.abs(x.original-x.adjusted)>1e-6?" (sau dung sai "+featureValue(x.i,x.adjusted)+")":"");
+  el.append(title,track,note);track.append(bar);$("featureReasons").append(el);
+ }
+ for(let i=0;i<42;i++){
+  const tr=document.createElement("tr");const values=[featureNames[i],featureValue(i,profile.m[i]),featureValue(i,data.features[i]),featureValue(i,data.features[i]-profile.m[i]),activeDimensions.includes(i)?"Đang dùng":"Tham khảo"];
+  for(const v of values){const td=document.createElement("td");td.textContent=v;tr.append(td)}
+  $("featureTable").append(tr);
+ }
+}
+$("refreshInsights").onclick=refreshInsights;
+$("downloadFeatures").onclick=()=>{
+ if(!latestInsights)refreshInsights();
+ if(!latestInsights)return alert("Chưa có dữ liệu phân tích");
+ const blob=new Blob([JSON.stringify(latestInsights,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");
+ a.href=url;a.download="keydna-feature-analysis.json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 };
 
 showProfile();updateEnroll();connect();
