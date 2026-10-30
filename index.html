@@ -31,6 +31,13 @@ textarea.typing-box.suspect,textarea.typing-box.suspect:focus{background:#fff6f7
 textarea.typing-box.alert,textarea.typing-box.alert:focus{background:#ffe9ed;border-color:#b91434;box-shadow:0 0 0 5px #b9143424;outline:none}
 .pill.suspect{background:#fff0d6;color:#8c5300}.pill.alert{background:#ffdce2;color:#a11433}
 @media(max-width:750px){textarea.typing-box{min-height:150px}.danger-inline b{font-size:16px}}
+ 
+/* Four-level consecutive-window risk scale: yellow, orange, pink, deep red */
+.danger-inline.risk-1,textarea.typing-box.risk-1,textarea.typing-box.risk-1:focus{background:#fff8cf;border-color:#d8ad1d;color:#785400;box-shadow:0 0 0 3px #d8ad1d22}
+.danger-inline.risk-2,textarea.typing-box.risk-2,textarea.typing-box.risk-2:focus{background:#ffe8ce;border-color:#ee8a19;color:#8e4300;box-shadow:0 0 0 3px #ee8a1927}
+.danger-inline.risk-3,textarea.typing-box.risk-3,textarea.typing-box.risk-3:focus{background:#ffe0e2;border-color:#e14e5e;color:#9e1930;box-shadow:0 0 0 4px #e14e5e24}
+.danger-inline.risk-4,textarea.typing-box.risk-4,textarea.typing-box.risk-4:focus{background:#f6bec7;border-color:#ad102d;color:#75051a;box-shadow:0 0 0 5px #ad102d30}
+.pill.risk-1{background:#fff8cf;color:#785400}.pill.risk-2{background:#ffe8ce;color:#8e4300}.pill.risk-3{background:#ffe0e2;color:#9e1930}.pill.risk-4{background:#f6bec7;color:#75051a}
 </style></head>
 <body><header><small>KEYDNA · CONTINUOUS BEHAVIORAL AUTHENTICATION</small><h1>⌨️ KeyDNA Continuous</h1><div>Thiết kế lại theo kiến trúc TrueStroke · Xử lý cục bộ trong trình duyệt · Bản POC</div></header>
 <main>
@@ -193,8 +200,12 @@ function soundAlert(){
  audioCtx.resume();const t=audioCtx.currentTime;
  for(const offset of [0,.2,.4]){const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.frequency.value=880;o.type="square";g.gain.setValueAtTime(.1,t+offset);g.gain.exponentialRampToValueAtTime(.001,t+offset+.14);o.connect(g);g.connect(audioCtx.destination);o.start(t+offset);o.stop(t+offset+.15)}}catch(e){console.warn(e)}
 }
-function setTypingState(state){$("monitorText").classList.remove("suspect","alert");if(state!=="normal")$("monitorText").classList.add(state)}
-function clearAlertUI(){$("dangerBanner").hidden=true;$("dangerBanner").className="danger-inline";setTypingState("normal");alertLogged=false}
+function setTypingState(state){
+ const box=$("monitorText");
+ box.classList.remove("suspect","alert","risk-1","risk-2","risk-3","risk-4");
+ if(state!=="normal")box.classList.add(state);
+}
+function clearAlertUI(){$("dangerBanner").hidden=true;$("dangerBanner").className="danger-inline";$("dangerBanner").querySelector("b").textContent="⚠️ Phát hiện hành vi gõ bất thường";setTypingState("normal");alertLogged=false}
 function alertNow(score,count,locked){
  const pct=Math.round(score*100);
  $("dangerBanner").hidden=false;$("dangerBanner").className="danger-inline"+(locked?" strong":"");$("dangerDetail").textContent="Điểm nghi vấn: "+pct+"%";setTypingState(locked?"alert":"suspect");
@@ -307,10 +318,22 @@ function updateMonitor(){
  let f=windows(monitor).at(-1),r=evaluate(f);nDone=count;
  badStreak=r.flag?badStreak+1:0;
  const locked=badStreak>=tuning.streak;
- if(locked)alertNow(r.anomaly,count,true);else if(r.flag){$("dangerBanner").hidden=false;$("dangerBanner").className="danger-inline";$("dangerDetail").textContent="Tương đồng "+Math.round(r.confidence*100)+"% · Cần kiểm tra thêm";setTypingState("suspect")}else clearAlertUI()
+ if(r.flag){
+  const level=Math.min(4,badStreak);
+  const names=["","🟡 Nghi vấn nhẹ","🟠 Nghi vấn tăng","🔴 Cảnh báo cao","🔴 CẢNH BÁO NGƯỜI GÕ KHÁC BIỆT"];
+  $("dangerBanner").hidden=false;
+  $("dangerBanner").className="danger-inline risk-"+level;
+  $("dangerBanner").querySelector("b").textContent=names[level];
+  $("dangerDetail").textContent="Tương đồng "+Math.round(r.confidence*100)+"% · "+badStreak+" cửa sổ nghi vấn liên tiếp";
+  setTypingState("risk-"+level);
+  if(locked&&!alertLogged){
+    alertLogged=true;soundAlert();
+    if(currentUser)sb.from("kd_continuous_alerts").insert({user_id:currentUser,profile_id:selectedProfileId,suspicion:Math.round(r.anomaly*100),anomaly_score:r.anomaly,windows_count:count}).then(({error})=>{if(error)console.warn(error.message)});
+  }
+ }else clearAlertUI()
  $("nWindows").textContent=count;$("confidence").textContent=Math.round(r.confidence*100)+"%";$("streak").textContent=badStreak+"/"+tuning.streak;
- $("liveState").textContent=locked?"Cảnh báo: hành vi khác biệt":r.flag?"Đang nghi vấn · tiếp tục gõ":"Đang theo dõi";
- $("liveState").className="pill "+(locked?"alert":r.flag?"suspect":"good");
+ $("liveState").textContent=badStreak>=4?"Cảnh báo đỏ đậm":badStreak===3?"Cảnh báo đỏ":badStreak===2?"Nghi vấn cam":badStreak===1?"Nghi vấn vàng":"Đang theo dõi";
+ $("liveState").className="pill "+(r.flag?"risk-"+Math.min(4,badStreak):"good");
  const line=document.createElement("div");
  line.textContent="Window "+count+" | IF "+r.iso.toFixed(3)+" | Mah "+r.mah.toFixed(3)+" | similarity "+Math.round(r.confidence*100)+"% / min "+tuning.threshold+"% | "+(locked?"ALERT":r.flag?"SUSPECT":"OK");
  $("log").prepend(line);
