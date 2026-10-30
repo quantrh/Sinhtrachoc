@@ -236,7 +236,7 @@ E('statsBtn').onclick=async()=>{
  try{
  const selectedProfile=profiles.find(p=>p.id===E('verifyPicker').value);
  if(!selectedProfile)throw Error('Hãy chọn một hồ sơ để xem thống kê.');
- if(!selectedProfile.owner)throw Error('Chỉ chủ hồ sơ đang chọn có thể xem thống kê của hồ sơ này.');
+
  const data=await api('stats',{profile_id:selectedProfile.id});
  const far=data.impostor>0?100*data.false_accept/data.impostor:null;
  const frr=data.genuine>0?100*data.false_reject/data.genuine:null;
