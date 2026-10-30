@@ -69,7 +69,7 @@ button:not(.nav button){box-shadow:0 2px 4px rgba(0,89,85,.08)}button:focus-visi
 <section class="card"><div class="step">BƯỚC 1 · ĐĂNG KÝ VÀ LẤY MẪU</div><h2>Tạo dấu vân tay gõ phím</h2><p class="muted">Chọn tên, đọc câu mẫu rồi gõ lại. Mỗi lượt đúng sẽ được lưu trên Supabase. Chọn từ 5–40 mẫu V3 theo mục đích thử nghiệm. Nhiều mẫu qua nhiều phiên thường cho dữ liệu đa dạng hơn.</p>
 <div id="enrollArea"><label for="name">Tên người tham gia</label><input id="name" maxlength="60" placeholder="Ví dụ: Nguyễn Văn A"><label for="sampleTarget">Số mẫu V3 yêu cầu (5–40)</label><select id="sampleTarget"><option value="5">5 mẫu — thử nhanh</option><option value="10">10 mẫu — demo ban đầu</option><option value="15" selected>15 mẫu — khuyến nghị demo</option><option value="20">20 mẫu — nhiều dữ liệu hơn</option><option value="30">30 mẫu — kiểm thử mở rộng</option><option value="40">40 mẫu — tối đa POC</option></select><div class="example" id="v3Advice"><b>V3:</b> Đo thời gian giữ phím, nhấn–nhấn và nhả–nhấn trên toàn bộ câu. Mẫu V3 được lưu thành một bộ dữ liệu riêng. Khuyến nghị lấy 20–30 mẫu ở nhiều buổi và kiểm thử với người khác.</div><div id="sampleAdvice" class="example"></div><p class="help">Có thể đổi cấu hình sau khi đăng ký. Không cần xóa các mẫu đã lấy.</p></div>
 <div id="verifyArea" hidden><label for="profiles">Hồ sơ muốn thử</label><select id="profiles"></select><label><input type="checkbox" id="ownerCheck"> Tôi là chính chủ hồ sơ đã chọn</label></div>
-<div class="phrase" id="phrase"></div><p class="help"><b>Tự động xóa khi gõ sai:</b> Nếu nhập sai ký tự hoặc bấm Backspace/Delete, ứng dụng sẽ xóa lượt đang gõ để bạn bắt đầu lại từ đầu. Các mẫu đã lưu vẫn được giữ nguyên. Không sử dụng copy/paste.</p>
+<div class="phrase" id="phrase"></div><p class="help"><b>Tự động xóa từ sai:</b> Nếu nhập sai ký tự hoặc bấm Backspace/Delete, ứng dụng chỉ xóa từ đang gõ, giữ các từ trước đó. Thời gian dừng để sửa từ không được tính vào mẫu V3. Các mẫu đã lưu vẫn được giữ nguyên. Không sử dụng copy/paste.</p>
 <label for="typing">Gõ câu ở đây</label><input id="typing" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Bắt đầu gõ...">
 <div class="kpis"><div class="kpi"><b id="progress">0/15</b><small>Mẫu đã học</small></div><div class="kpi"><b id="duration">0.0</b><small>Giây đã gõ</small></div><div class="kpi"><b>126</b><small>Đặc trưng V3</small></div></div>
 <button id="send">Lưu mẫu gõ</button><button class="light" id="clear">Gõ lại</button><div id="msg">Đang kết nối...</div><p id="result"></p>
@@ -162,9 +162,9 @@ button:not(.nav button){box-shadow:0 2px 4px rgba(0,89,85,.08)}button:focus-visi
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.57.0';
 const url='https://rmbsxccrwrktbjlnezpu.supabase.co',key='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJtYnN4Y2N'+'yd3JrdGJqbG5lenB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg2MjczNjQsImV4cCI6MjA2NDIwMzM2NH0.ydCqificftdtn1niRciFCifeuo8aX6SDGti-hCY5Z_Y',sb=createClient(url,key);
 const P='hom nay toi muon hoc them nhieu dieu moi',E=id=>document.getElementById(id);E('phrase').textContent=P;E('verifyPhrase').textContent=P;
-let mode='enroll',me=null,profiles=[],keys=[],active=new Map(),invalid=false,start=null,editCount=0;
+let mode='enroll',me=null,profiles=[],keys=[],active=new Map(),invalid=false,start=null,editCount=0,timingOffset=0,resumeAnchor=null;
 function say(s){E('msg').textContent=s}
-function reset(){keys=[];active.clear();invalid=false;start=null;editCount=0;E('typing').value='';E('duration').textContent='0.0';E('result').textContent='';draw();E('typing').focus()}
+function reset(){keys=[];active.clear();invalid=false;start=null;editCount=0;timingOffset=0;resumeAnchor=null;E('typing').value='';E('duration').textContent='0.0';E('result').textContent='';draw();E('typing').focus()}
 const avg=a=>a.length?a.reduce((s,x)=>s+x,0)/a.length:0,sd=a=>Math.sqrt(avg(a.map(x=>(x-avg(a))**2)));
 function featsV3(){
  const d=keys.map(x=>x.up-x.down);
@@ -179,48 +179,65 @@ typing.onpaste=e=>{e.preventDefault();say('Vui lòng tự gõ, không dán văn 
 typing.ondrop=e=>e.preventDefault();
 // V3 enrollment: an incorrect character invalidates the timing sequence.
 // Restart the whole in-progress attempt; previously stored training samples stay intact.
-function restartAfterTypingError(position,reason){
- const word=P.slice(0,Math.max(0,position)).split(' ').length;
- const expected=P.split(' ')[Math.max(0,word-1)]||'câu mẫu';
- keys=[];active.clear();invalid=false;start=null;editCount=0;
- typing.value='';E('duration').textContent='0.0';E('result').textContent='';draw();
- typing.focus();
- say('⚠ '+reason+' (từ “'+expected+'”). Đã tự xóa lượt gõ đang nhập. Hãy gõ lại từ đầu; các mẫu đã lưu không bị ảnh hưởng.');
+// V3: keep correctly typed words; only retry the word containing the error.
+// Compress correction pause so rejected keystrokes do not enter the V3 vector.
+function retryCurrentWord(reason,deletePreviousAtBoundary=false){
+ const typed=keys.map(k=>k.char).join('');
+ const wordStart=deletePreviousAtBoundary&&typed.endsWith(' ')
+  ?Math.max(0,typed.lastIndexOf(' ',typed.length-2)+1)
+  :typed.lastIndexOf(' ')+1;
+ const prefix=P.slice(0,wordStart);
+ const removed=keys.slice(wordStart);
+ const clock=performance.now()-timingOffset;
+ const anchor=removed.length?removed[0].down:clock;
+ keys=keys.slice(0,wordStart);
+ for(const [code,entry] of active){if(!keys.includes(entry))active.delete(code)}
+ typing.value=prefix;typing.setSelectionRange(prefix.length,prefix.length);
+ invalid=false;editCount++;
+ if(!keys.length){start=null;timingOffset=0;resumeAnchor=null}
+ else{resumeAnchor=anchor}
+ E('duration').textContent=start===null?'0.0':(Math.max(0,(keys.at(-1).up??keys.at(-1).down)-start)/1000).toFixed(1);
+ E('result').textContent='';draw();typing.focus();
+ const word=P.slice(wordStart).split(' ')[0]||'từ hiện tại';
+ say('⚠ '+reason+' (từ “'+word+'”). Đã xóa riêng từ đang gõ, giữ nguyên các từ trước. Bạn hãy gõ lại từ này.');
 }
 typing.onkeydown=e=>{
- if(e.key==='Tab'||e.key==='Shift'||e.key==='Control'||e.key==='Alt'||e.key==='Meta')return;
+ if(['Tab','Shift','Control','Alt','Meta'].includes(e.key))return;
  if(['ArrowLeft','ArrowRight','Home','End','ArrowUp','ArrowDown'].includes(e.key)){e.preventDefault();return}
  if(e.ctrlKey||e.altKey||e.metaKey||e.repeat){if(e.key.length===1)e.preventDefault();return}
  if(e.isComposing||e.key==='Process'||e.key==='Dead'){
-  e.preventDefault();restartAfterTypingError(typing.value.length,'Không hỗ trợ bàn phím đang ghép ký tự');return;
+  e.preventDefault();retryCurrentWord('Không hỗ trợ cách nhập ghép ký tự');return;
  }
  const pos=typing.selectionStart??typing.value.length,end=typing.selectionEnd??pos;
  if(e.key==='Backspace'||e.key==='Delete'){
   e.preventDefault();
-  if(typing.value.length)restartAfterTypingError(pos,'Có thao tác sửa/xóa trong lượt lấy mẫu');
+  if(keys.length)retryCurrentWord('Có thao tác sửa/xóa',true);
   return;
  }
  if(e.key.length!==1)return;
  if(pos!==typing.value.length||end!==pos){
-  e.preventDefault();restartAfterTypingError(pos,'Không thể chèn hoặc thay chữ giữa câu');return;
+  e.preventDefault();retryCurrentWord('Không thể thay chữ giữa câu');return;
  }
  if(e.key!==P[pos]){
-  e.preventDefault();restartAfterTypingError(pos,'Bạn vừa gõ sai so với câu mẫu');return;
+  e.preventDefault();retryCurrentWord('Bạn gõ sai so với câu mẫu');return;
  }
- const t=performance.now();if(start===null)start=t;
+ const rawTime=performance.now();
+ if(resumeAnchor!==null){timingOffset=rawTime-resumeAnchor;resumeAnchor=null}
+ const t=rawTime-timingOffset;
+ if(start===null)start=t;
  const entry={down:t,up:null,char:e.key};keys.push(entry);
  active.set(e.code||e.key,entry);
 };
 typing.onkeyup=e=>{
- const k=e.code||e.key,entry=active.get(k);
- if(entry){entry.up=performance.now();active.delete(k);draw()}
+ const code=e.code||e.key,entry=active.get(code);
+ if(entry){entry.up=performance.now()-timingOffset;active.delete(code);draw()}
 };
 typing.oninput=()=>{
  const typed=keys.map(k=>k.char).join('');
  if(typing.value!==typed||!P.startsWith(typing.value)){
-  restartAfterTypingError(typing.value.length,'Nội dung không khớp hoặc bị tự động sửa');return;
+  retryCurrentWord('Nội dung không khớp hoặc được tự động sửa');return;
  }
- if(start!==null)E('duration').textContent=((performance.now()-start)/1000).toFixed(1);
+ if(start!==null)E('duration').textContent=(Math.max(0,performance.now()-timingOffset-start)/1000).toFixed(1);
 };
 
 // Mobile navigation: separate enrollment, verification, and course.
@@ -290,7 +307,7 @@ E('send').onclick=async()=>{
   if(invalid||E('typing').value!==P||keys.length!==P.length||keys.some(k=>k.up===null)||active.size)throw Error('Hãy gõ đúng toàn bộ câu và nhả hết các phím trước khi lưu.');
   const result=await api('enroll_v3',{name:E('name').value.trim(),target_samples:Number(E('sampleTarget').value),features_v3:featsV3()});
   say('Đã lưu '+result.count+'/'+result.required+' mẫu V3. Nên lấy mẫu ở nhiều buổi để tăng tính đa dạng.');
-  keys=[];active.clear();invalid=false;start=null;editCount=0;E('typing').value='';await refresh();
+  keys=[];active.clear();invalid=false;start=null;editCount=0;timingOffset=0;resumeAnchor=null;E('typing').value='';await refresh();
  }catch(e){say('⚠ '+e.message)}finally{E('send').disabled=false}
 };
 function selected(){
