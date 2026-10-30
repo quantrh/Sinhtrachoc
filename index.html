@@ -52,6 +52,9 @@ textarea.typing-box.alert,textarea.typing-box.alert:focus{background:#ffe9ed;bor
 <section class="card page" data-page="enroll">
 <h2>Tạo mẫu hành vi gõ phím</h2>
 <p class="muted">Không cần gõ câu cố định. Gõ tự nhiên ít nhất 200 phím hợp lệ. Hệ thống tạo các cửa sổ 30 phím, bước dịch 15 phím và học đặc trưng của nhịp gõ.</p>
+<div class="info"><b>Huấn luyện đa phiên:</b> mỗi phiên tối thiểu 200 phím. Chọn “Bổ sung phiên” để làm giàu mẫu của chính mình. Không sử dụng dữ liệu từ phần kiểm tra người gõ để học tự động.</div>
+<label for="enrollMode">Chế độ huấn luyện</label><select id="enrollMode" style="width:100%;padding:11px;margin:7px 0 12px"><option value="new">Tạo mẫu hành vi mới</option><option value="append">Bổ sung phiên cho mẫu đã chọn</option></select>
+<p id="sessionInfo" class="muted">Phiên 1: bắt đầu tạo mẫu mới.</p>
 <label for="person">Tên người tạo mẫu</label><input id="person" placeholder="Ví dụ: Người dùng A" maxlength="60">
 <label for="enrollText">Nhập nội dung tự nhiên để huấn luyện</label>
 <textarea id="enrollText" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="Hãy gõ liên tục một đoạn văn đủ dài bằng bàn phím..."></textarea>
@@ -178,7 +181,7 @@ async function loadProfiles(preferred){
  profiles=data||[];
  const id=preferred||selectedProfileId;
  selectedProfileId=profiles.some(p=>p.id===id)?id:(profiles.find(p=>p.user_id===currentUser)?.id||profiles[0]?.id||null);
- profile=profiles.find(p=>p.id===selectedProfileId)?.model||null;renderProfiles();
+ profile=profiles.find(p=>p.id===selectedProfileId)?.model||null;renderProfiles();updateSessionMode();
 }
 async function connect(){
  if(!sb){setInfo("Không tải được Supabase SDK");return}
@@ -187,6 +190,22 @@ async function connect(){
  currentUser=session?.user?.id;if(!currentUser)throw Error("Không có phiên đăng nhập");
  await loadProfiles();setInfo("Supabase đã kết nối, hỗ trợ nhiều mẫu hành vi.");
  }catch(e){setInfo("Lỗi Supabase: "+e.message)}
+}
+async function appendTrainingSession(rows){
+ const entry=profiles.find(p=>p.id===selectedProfileId);
+ if(!entry||entry.user_id!==currentUser||!Array.isArray(entry.model?.sessionRows))throw Error("Mẫu này không hỗ trợ cập nhật đa phiên hoặc không thuộc quyền sở hữu");
+ const prev=entry.model;
+ const sessionRows=prev.sessionRows.map(arr=>arr.map(row=>row.slice()));
+ if(sessionRows.length>=12)throw Error("Đã đạt tối đa 12 phiên. Hãy tạo một mẫu mới.");
+ sessionRows.push(rows);
+ const allRows=sessionRows.flat();
+ if(allRows.length>420)throw Error("Quá giới hạn dữ liệu huấn luyện.");
+ const model={...prev,...trainModel(allRows),count:(prev.count||0)+enroll.length,rows:allRows.length,sessions:[...(prev.sessions||[]),{date:new Date().toISOString(),keys:enroll.length,windows:rows.length}],sessionRows};
+ const {error}=await sb.from("kd_continuous_profiles").update({model,updated_at:new Date().toISOString()}).eq("id",entry.id).eq("user_id",currentUser);
+ if(error)throw error;
+ await loadProfiles(entry.id);
+ setInfo("Đã huấn luyện lại từ "+sessionRows.length+" phiên, tổng "+allRows.length+" cửa sổ. Mẫu gốc trên Supabase đã cập nhật.");
+ $("enrollReset").click();
 }
 async function persistProfile(model){
  if(!currentUser){setInfo("Chưa kết nối Supabase");return}
@@ -308,9 +327,25 @@ function evaluate(f){
 function showProfile(){
  $("profileState").textContent=profile?"Đã có mẫu hành vi":"Chưa có mẫu hành vi";
  $("profileState").className="pill"+(profile?" good":"");
- $("profileInfo").textContent=profile?profile.name+" · "+profile.count+" phím · "+profile.rows+" cửa sổ · "+new Date(profile.created).toLocaleString("vi-VN"):"Hãy đăng ký để bắt đầu.";
+ $("profileInfo").textContent=profile?profile.name+" · "+(profile.sessions?.length||1)+" phiên · "+profile.count+" phím · "+profile.rows+" cửa sổ · "+new Date(profile.created).toLocaleString("vi-VN"):"Hãy đăng ký để bắt đầu.";
 }
-function updateEnroll(){const n=enroll.length,$bar=$("enrollBar");$bar.style.width=100*Math.min(1,n/200)+"%";$("enrollCount").textContent=n+" / 200 phím";$("enrollWindows").textContent=windows(enroll).length+" cửa sổ";$("train").disabled=n<200;}
+function updateSessionMode(){
+ const append=$("enrollMode").value==="append",entry=profiles.find(p=>p.id===selectedProfileId),own=entry&&entry.user_id===currentUser;
+ $("person").disabled=append;
+ if(append){
+  if(!own){$("sessionInfo").textContent="Hãy chọn mẫu của chính mình trong Quản lý mẫu. Không thể huấn luyện mẫu cộng đồng."; }
+  else if(!Array.isArray(entry.model?.sessionRows)){
+   $("sessionInfo").textContent="Mẫu cũ không có dữ liệu cửa sổ huấn luyện gốc nên không thể ghép chính xác. Hãy tạo mẫu đa phiên mới để huấn luyện từ nhiều phiên.";
+  }else{
+   $("sessionInfo").textContent="Bổ sung phiên "+((entry.model.sessions?.length||1)+1)+" cho "+entry.name+" · "+(entry.model.sessions?.length||1)+" phiên đã lưu.";
+  }
+ }else{$("sessionInfo").textContent="Tạo mẫu mới: phiên số 1, tối thiểu 200 phím.";}
+ updateEnroll();
+}
+function updateEnroll(){const n=enroll.length,$bar=$("enrollBar");$bar.style.width=100*Math.min(1,n/200)+"%";$("enrollCount").textContent=n+" / 200 phím";$("enrollWindows").textContent=windows(enroll).length+" cửa sổ";const entry=profiles.find(p=>p.id===selectedProfileId);
+ const append=$("enrollMode").value==="append";
+ $("train").disabled=n<200||(append&&(!entry||entry.user_id!==currentUser||!Array.isArray(entry.model?.sessionRows)));
+ $("train").textContent=append?"Bổ sung phiên và huấn luyện lại":"Phân tích và lưu mẫu";}
 function updateMonitor(){
  let count=windows(monitor).length;
  if(!profile){$("liveState").textContent="Chưa có mẫu hành vi";return}
@@ -340,12 +375,20 @@ function updateMonitor(){
 }
 keyCollector($("enrollText"),enroll,updateEnroll);
 keyCollector($("monitorText"),monitor,updateMonitor);
-$("train").onclick=()=>{
+$("train").onclick=async()=>{
  const rows=windows(enroll);if(rows.length<10){setInfo("Chưa đủ cửa sổ để huấn luyện.");return}
- try{profile={name:$("person").value.trim()||"Người dùng",count:enroll.length,rows:rows.length,created:new Date().toISOString(),...trainModel(rows)};
- persistProfile(profile);}
- catch(e){setInfo("Không huấn luyện được: "+e.message)}
+ $("train").disabled=true;
+ try{
+  if($("enrollMode").value==="append"){await appendTrainingSession(rows)}
+  else{
+   const now=new Date().toISOString();
+   const model={name:$("person").value.trim()||"Người dùng",count:enroll.length,rows:rows.length,created:now,sessions:[{date:now,keys:enroll.length,windows:rows.length}],sessionRows:[rows],...trainModel(rows)};
+   await persistProfile(model);$("enrollReset").click();
+  }
+ }catch(e){setInfo("Không huấn luyện được: "+e.message)}
+ finally{updateEnroll()}
 };
+$("enrollMode").onchange=updateSessionMode;
 $("enrollReset").onclick=()=>{enroll.length=0;$("enrollText").value="";updateEnroll()};
 $("monitorReset").onclick=()=>{monitor.length=0;$("monitorText").value="";nDone=0;badStreak=0;clearAlertUI();$("nWindows").textContent="0";$("confidence").textContent="—";$("streak").textContent="0/3";$("liveState").textContent="Chưa đủ dữ liệu";$("liveState").className="pill";$("log").innerHTML="<div>Đã đặt lại phiên.</div>"};
 function applyTuning(t,reset=true){
