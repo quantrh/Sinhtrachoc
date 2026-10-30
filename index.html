@@ -69,8 +69,8 @@ button:not(.nav button){box-shadow:0 2px 4px rgba(0,89,85,.08)}button:focus-visi
 <section class="card"><div class="step">BƯỚC 1 · ĐĂNG KÝ VÀ LẤY MẪU</div><h2>Tạo dấu vân tay gõ phím</h2><p class="muted">Chọn tên, đọc câu mẫu rồi gõ lại. Mỗi lượt đúng sẽ được lưu trên Supabase. Chọn từ 5–40 mẫu V3 theo mục đích thử nghiệm. Nhiều mẫu qua nhiều phiên thường cho dữ liệu đa dạng hơn.</p>
 <div id="enrollArea"><label for="name">Tên người tham gia</label><input id="name" maxlength="60" placeholder="Ví dụ: Nguyễn Văn A"><label for="sampleTarget">Số mẫu V3 yêu cầu (5–40)</label><select id="sampleTarget"><option value="5">5 mẫu — thử nhanh</option><option value="10">10 mẫu — demo ban đầu</option><option value="15" selected>15 mẫu — khuyến nghị demo</option><option value="20">20 mẫu — nhiều dữ liệu hơn</option><option value="30">30 mẫu — kiểm thử mở rộng</option><option value="40">40 mẫu — tối đa POC</option></select><div class="example" id="v3Advice"><b>V3:</b> Đo thời gian giữ phím, nhấn–nhấn và nhả–nhấn trên toàn bộ câu. Mẫu V3 được lưu thành một bộ dữ liệu riêng. Khuyến nghị lấy 20–30 mẫu ở nhiều buổi và kiểm thử với người khác.</div><div id="sampleAdvice" class="example"></div><p class="help">Có thể đổi cấu hình sau khi đăng ký. Không cần xóa các mẫu đã lấy.</p></div>
 <div id="verifyArea" hidden><label for="profiles">Hồ sơ muốn thử</label><select id="profiles"></select><label><input type="checkbox" id="ownerCheck"> Tôi là chính chủ hồ sơ đã chọn</label></div>
-<div class="phrase" id="phrase"></div><p class="help"><b>Tự động bỏ ký tự sai:</b> Nhập nhầm chữ nào, ứng dụng chỉ bỏ chữ đó và giữ nguyên tất cả ký tự đúng đã gõ. Nhấn Backspace/Delete sẽ xóa đúng 1 ký tự. Khoảng dừng do gõ nhầm không được tính vào mẫu V3. Các mẫu đã lưu vẫn được giữ nguyên. Không sử dụng copy/paste.</p>
-<label for="typing">Gõ câu ở đây</label><input id="typing" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Bắt đầu gõ...">
+<div class="phrase" id="phrase"></div><p id="captureHint" class="example">Đang xác định bàn phím...</p><p class="help"><b>Tự động bỏ ký tự sai:</b> Nhập nhầm chữ nào, ứng dụng chỉ bỏ chữ đó và giữ nguyên tất cả ký tự đúng đã gõ. Nhấn Backspace/Delete sẽ xóa đúng 1 ký tự. Khoảng dừng do gõ nhầm không được tính vào mẫu V3. Các mẫu đã lưu vẫn được giữ nguyên. Không sử dụng copy/paste.</p>
+<label for="typing">Gõ câu ở đây</label><input id="typing" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Bắt đầu gõ...">
 <div class="kpis"><div class="kpi"><b id="progress">0/15</b><small>Mẫu đã học</small></div><div class="kpi"><b id="duration">0.0</b><small>Giây đã gõ</small></div><div class="kpi"><b>126</b><small>Đặc trưng V3</small></div></div>
 <button id="send">Lưu mẫu gõ</button><button class="light" id="clear">Gõ lại</button><div id="msg">Đang kết nối...</div><p id="result"></p>
 </section>
@@ -85,7 +85,7 @@ button:not(.nav button){box-shadow:0 2px 4px rgba(0,89,85,.08)}button:focus-visi
 <section class="card"><div class="step">BƯỚC 3 · KIỂM TRA</div><h2>Bạn có phải người đã đăng ký?</h2><p>Chọn hồ sơ cần thử. Người khác cũng có thể gõ câu giống hệt để kiểm tra khả năng phân biệt của Machine Learning.</p>
 <div id="verifyTarget"><label for="verifyPicker">Hồ sơ muốn thử</label><select id="verifyPicker"></select><div id="verifySummary" class="example"></div><label><input type="checkbox" id="verifyOwner"> Tôi thực sự là người đã đăng ký hồ sơ này</label>
 <p class="help" style="margin-top:5px"><b>Đánh dấu nếu bạn chính là chủ hồ sơ được chọn.</b> Nếu bạn đang thử giả làm người đó, hãy bỏ chọn. Thông tin này chỉ để đối chiếu kết quả, tính tỷ lệ nhận nhầm hoặc từ chối nhầm; <b>không ảnh hưởng đến thuật toán nhận diện.</b> Hãy khai báo đúng để thống kê có ý nghĩa.</p></div>
-<div class="phrase" id="verifyPhrase"></div><label for="verifyTyping">Gõ lại câu mẫu</label><input id="verifyTyping" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Gõ đúng câu trên..."><p class="help">Không copy/paste; chỉ dùng bàn phím vật lý.</p>
+<div class="phrase" id="verifyPhrase"></div><p id="verifyCaptureHint" class="help"></p><label for="verifyTyping">Gõ lại câu mẫu</label><input id="verifyTyping" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Gõ đúng câu trên..."><p class="help">Không dùng copy/paste; bàn phím ảo dùng nhịp chạm V3-mobile, bàn phím vật lý dùng thời gian nhấn/nhả thực.</p>
 <button id="verifySend">Kiểm tra nhịp gõ</button><button id="verifyReset" class="light">Gõ lại</button><div id="verifyMessage" class="example">Chọn hồ sơ đã đủ số mẫu cấu hình để bắt đầu.</div><div id="verifyOutcome"></div>
 </section>
 <section class="card"><h3>Thống kê kiểm thử</h3><p class="muted">Mọi người có thể xem FAR/FRR của mô hình V3 theo cấu hình hiện tại.</p><details class="lesson" open><summary>FAR và FRR có ý nghĩa gì?</summary><div>
@@ -162,6 +162,13 @@ button:not(.nav button){box-shadow:0 2px 4px rgba(0,89,85,.08)}button:focus-visi
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.57.0';
 const url='https://rmbsxccrwrktbjlnezpu.supabase.co',key='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJtYnN4Y2N'+'yd3JrdGJqbG5lenB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg2MjczNjQsImV4cCI6MjA2NDIwMzM2NH0.ydCqificftdtn1niRciFCifeuo8aX6SDGti-hCY5Z_Y',sb=createClient(url,key);
 const P='hom nay toi muon hoc them nhieu dieu moi',E=id=>document.getElementById(id);E('phrase').textContent=P;E('verifyPhrase').textContent=P;
+const isMobileKeyboard=(()=>{const ua=navigator.userAgent||'';return /Android|iPhone|iPad|iPod/i.test(ua)||(navigator.maxTouchPoints>0&&window.matchMedia?.('(pointer:coarse)').matches)})();
+const captureMode=isMobileKeyboard?'mobile':'physical';
+// Mobile browsers do not report real key-hold duration reliably. The constant
+// below is a compatibility placeholder, NOT a measured mobile dwell time.
+// The backend gives all mobile dwell components zero ML weight.
+const MOBILE_HOLD_ESTIMATE=75;
+
 let mode='enroll',me=null,profiles=[],keys=[],active=new Map(),invalid=false,start=null,editCount=0,timingOffset=0,resumeAnchor=null;
 function say(s){E('msg').textContent=s}
 function reset(){keys=[];active.clear();invalid=false;start=null;editCount=0;timingOffset=0;resumeAnchor=null;E('typing').value='';E('duration').textContent='0.0';E('result').textContent='';draw();E('typing').focus()}
@@ -175,6 +182,12 @@ function featsV3(){
 }
 function draw(){const c=E('plot'),ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);let a=keys.map(x=>x.up==null?0:x.up-x.down),max=Math.max(150,...a);a.forEach((v,i)=>{ctx.fillStyle='#008e86';ctx.fillRect(15+i*470/Math.max(1,P.length),185-v/max*170,Math.max(2,460/P.length-2),v/max*170)})}
 const typing=E('typing');
+const modeLabel=isMobileKeyboard?'BÀN PHÍM ẢO · V3-mobile':'BÀN PHÍM VẬT LÝ · V3';
+E('captureHint').textContent=isMobileKeyboard
+ ?'📱 '+modeLabel+': ứng dụng đo khoảng cách thời gian giữa các lần chạm ký tự. Trình duyệt không cung cấp thời gian giữ phím thật; V3-mobile dùng giá trị giữ phím thay thế và không đưa giá trị đó vào phép so khớp. Nên tắt tự sửa từ trên bàn phím.'
+ :'⌨ '+modeLabel+': đo trực tiếp thời gian nhấn, nhả và chuyển phím.';
+E('verifyCaptureHint').textContent=isMobileKeyboard?'Đang dùng bộ mẫu V3-mobile (không so với mẫu bàn phím vật lý).':'Đang dùng bộ mẫu V3 bàn phím vật lý.';
+
 typing.onpaste=e=>{e.preventDefault();say('Vui lòng tự gõ, không dán văn bản')};
 typing.ondrop=e=>e.preventDefault();
 // V3 enrollment: an incorrect character invalidates the timing sequence.
@@ -197,6 +210,7 @@ function markMistake(key){
  keepCorrectPrefix('⚠ Ký tự “'+display+'” không đúng. Đã bỏ riêng ký tự sai; hãy gõ tiếp tại vị trí hiện tại.');
 }
 typing.onkeydown=e=>{
+ if(isMobileKeyboard)return; // Virtual keyboard timings are derived from input events.
  if(['Tab','Shift','Control','Alt','Meta'].includes(e.key))return;
  if(['ArrowLeft','ArrowRight','Home','End','ArrowUp','ArrowDown'].includes(e.key)){
   e.preventDefault();typing.setSelectionRange(typing.value.length,typing.value.length);return;
@@ -237,6 +251,7 @@ typing.onkeydown=e=>{
  keys.push(entry);active.set(e.code||e.key,entry);
 };
 typing.onkeyup=e=>{
+ if(isMobileKeyboard)return;
  const code=e.code||e.key,entry=active.get(code);
  if(entry){
   // Use the offset from keydown, even if another key was rejected meanwhile.
@@ -245,6 +260,24 @@ typing.onkeyup=e=>{
  }
 };
 typing.oninput=()=>{
+ if(isMobileKeyboard){
+  const prefix=keys.map(k=>k.char).join(''),nowValue=typing.value;
+  if(nowValue===prefix)return;
+  if(prefix.length&&nowValue===prefix.slice(0,-1)){
+   const removed=keys.pop();resumeAnchor=removed.down;
+   if(!keys.length){start=null;resumeAnchor=null;timingOffset=0}
+   typing.setSelectionRange(nowValue.length,nowValue.length);editCount++;draw();say('Đã xóa một ký tự; các ký tự trước được giữ nguyên.');return;
+  }
+  if(nowValue.length===prefix.length+1&&nowValue.startsWith(prefix)&&P.startsWith(nowValue)){
+   const raw=performance.now();if(resumeAnchor!==null){timingOffset=raw-resumeAnchor;resumeAnchor=null}
+   const down=raw-timingOffset;
+   if(start===null)start=down;
+   keys.push({down,up:down+MOBILE_HOLD_ESTIMATE,char:nowValue.slice(-1),estimated:true});
+   draw();E('duration').textContent=((down+MOBILE_HOLD_ESTIMATE-start)/1000).toFixed(1);return;
+  }
+  if(resumeAnchor===null)resumeAnchor=performance.now()-timingOffset;
+  keepCorrectPrefix('⚠ Ký tự không đúng hoặc bàn phím đã tự thay chữ. Đã bỏ phần nhập sai, giữ nguyên các ký tự đúng.');return;
+ }
  const prefix=keys.map(k=>k.char).join('');
  if(typing.value!==prefix||!P.startsWith(typing.value)){
   if(resumeAnchor===null)resumeAnchor=performance.now()-timingOffset;
@@ -300,7 +333,7 @@ E('quizCheck').onclick=()=>{const xs=[...document.querySelectorAll('select.quiz'
 E('expandLessons').onclick=()=>document.querySelectorAll('details.lesson').forEach(x=>x.open=true);
 E('collapseLessons').onclick=()=>document.querySelectorAll('details.lesson').forEach(x=>x.open=false);
 
-async function api(action,more={}){let {data:{session}}=await sb.auth.getSession();if(!session)throw Error('Chưa đăng nhập');let r=await fetch(url+'/functions/v1/kd-api',{method:'POST',headers:{'Content-Type':'application/json',apikey:key,Authorization:'Bearer '+session.access_token},body:JSON.stringify({action,...more})});let d=await r.json();if(!r.ok||d.error)throw Error(d.error||'Lỗi API '+r.status);return d}
+async function api(action,more={}){let {data:{session}}=await sb.auth.getSession();if(!session)throw Error('Chưa đăng nhập');let r=await fetch(url+'/functions/v1/kd-api',{method:'POST',headers:{'Content-Type':'application/json',apikey:key,Authorization:'Bearer '+session.access_token},body:JSON.stringify({action,capture_mode:captureMode,...more})});let d=await r.json();if(!r.ok||d.error)throw Error(d.error||'Lỗi API '+r.status);return d}
 async function refresh(){
  const d=await api('list');profiles=d.profiles;me=profiles.find(x=>x.owner);
  E('progress').textContent=(me?.count??0)+'/'+(me?.required_samples??Number(E('sampleTarget').value));
