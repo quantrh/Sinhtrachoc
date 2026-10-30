@@ -60,12 +60,17 @@ button:not(.nav button){box-shadow:0 2px 4px rgba(0,89,85,.08)}button:focus-visi
 .tuneTable td button{padding:7px 9px;min-height:31px;font-size:11px;margin:0}
 #tuneChart{height:auto;max-height:255px}
 @media(max-width:510px){.nav button{font-size:10px;letter-spacing:-.03em;padding:10px 1px}}
+</style><style>
+#enrollMethod{border:2px solid #f1cc63;background:#fffaf0;font-weight:700;color:#006B68}
+#v3Advice{background:#e5f5ef;border-left:4px solid #006B68}
 </style></head><body>
 <header><div class="inner"><div class="step" style="color:#c5f3e8">KEYDNA · BEHAVIORAL BIOMETRICS POC</div><h1>⌨ KeyDNA Lab</h1><p>Học thói quen gõ phím · Thử nhận diện · Tìm hiểu Machine Learning</p></div></header>
 <main><button id="enrollTab" hidden type="button"></button><button id="verifyTab" hidden type="button"></button><nav class="nav"><button type="button" data-tab="learn">① Lấy mẫu</button><button type="button" class="active" data-tab="verify">② Thử nhận diện</button><button type="button" data-tab="academy">③ Giáo trình</button><button type="button" data-tab="tune">④ Tinh chỉnh</button></nav>
 <div class="view" data-view="learn" hidden>
 <section class="card"><div class="step">BƯỚC 1 · ĐĂNG KÝ VÀ LẤY MẪU</div><h2>Tạo dấu vân tay gõ phím</h2><p class="muted">Chọn tên, đọc câu mẫu rồi gõ lại. Mỗi lượt đúng sẽ được lưu trên Supabase. Chọn từ 3–40 mẫu theo mục đích thử nghiệm. Nhiều mẫu qua nhiều phiên thường cho dữ liệu đa dạng hơn.</p>
-<div id="enrollArea"><label for="name">Tên người tham gia</label><input id="name" maxlength="60" placeholder="Ví dụ: Nguyễn Văn A"><label for="sampleTarget">Số mẫu yêu cầu (3–40)</label><select id="sampleTarget"><option value="3">3 mẫu — thử cực nhanh</option><option value="5">5 mẫu — thử nhanh</option><option value="10">10 mẫu — demo ban đầu</option><option value="15" selected>15 mẫu — khuyến nghị demo</option><option value="20">20 mẫu — nhiều dữ liệu hơn</option><option value="30">30 mẫu — kiểm thử mở rộng</option><option value="40">40 mẫu — tối đa POC</option></select><div id="sampleAdvice" class="example"></div><p class="help">Có thể đổi cấu hình sau khi đăng ký. Không cần xóa các mẫu đã lấy.</p></div>
+<div id="enrollArea"><label for="name">Tên người tham gia</label><input id="name" maxlength="60" placeholder="Ví dụ: Nguyễn Văn A"><label for="sampleTarget">Số mẫu yêu cầu (3–40)</label><select id="sampleTarget"><option value="3">3 mẫu — thử cực nhanh</option><option value="5">5 mẫu — thử nhanh</option><option value="10">10 mẫu — demo ban đầu</option><option value="15" selected>15 mẫu — khuyến nghị demo</option><option value="20">20 mẫu — nhiều dữ liệu hơn</option><option value="30">30 mẫu — kiểm thử mở rộng</option><option value="40">40 mẫu — tối đa POC</option></select><label for="enrollMethod">Phương pháp lấy mẫu</label>
+<select id="enrollMethod"><option value="timing_v3" selected>V3 — Độ chính xác thử nghiệm (thu mẫu mới)</option><option value="legacy">V1/V2 — Tiếp tục dùng bộ mẫu cũ</option></select>
+<div class="example" id="v3Advice"><b>V3:</b> Đo thời gian giữ phím, nhấn–nhấn và nhả–nhấn trên toàn bộ câu. Mẫu V3 lưu riêng, không xóa bộ mẫu V1/V2. Khuyến nghị lấy 20–30 mẫu ở nhiều buổi và kiểm thử với người khác.</div><div id="sampleAdvice" class="example"></div><p class="help">Có thể đổi cấu hình sau khi đăng ký. Không cần xóa các mẫu đã lấy.</p></div>
 <div id="verifyArea" hidden><label for="profiles">Hồ sơ muốn thử</label><select id="profiles"></select><label><input type="checkbox" id="ownerCheck"> Tôi là chính chủ hồ sơ đã chọn</label></div>
 <div class="phrase" id="phrase"></div><p class="help">Dùng bàn phím vật lý; được sửa bằng Backspace/Delete, không copy/paste. Chỉ lưu khi nội dung khớp hoàn toàn.</p>
 <label for="typing">Gõ câu ở đây</label><input id="typing" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Bắt đầu gõ...">
@@ -74,7 +79,7 @@ button:not(.nav button){box-shadow:0 2px 4px rgba(0,89,85,.08)}button:focus-visi
 </section>
 <section class="card"><h3>Nhịp gõ của lần hiện tại</h3><p class="muted">Các cột thể hiện thời gian giữ mỗi phím (mili giây), giúp bạn nhìn thấy nhịp gõ riêng của mình.</p><canvas id="plot" width="500" height="200"></canvas></section>
 <section class="card"><div class="step">BƯỚC 2 · QUẢN LÝ HỒ SƠ</div><h2>Quản lý cấu hình và mẫu</h2><p class="muted">Cấu hình số mẫu nằm trong phần lấy mẫu. Chọn hồ sơ tại mục “Thử nhận diện” để quản lý. Chỉ chính chủ được tải/xóa dữ liệu. Tệp JSON giúp mang bộ mẫu sang tài khoản khác.</p>
-<div id="selectedDetails"></div><button id="refresh" class="light" type="button">↻ Làm mới danh sách</button><div class="actions"><button id="exportBtn">↓ Xuất JSON</button><button class="light" id="importBtn">↑ Nhập JSON</button><input type="file" id="importFile" accept=".json,application/json" hidden></div>
+<div id="selectedDetails"></div><div class="actions"><button id="deleteV3Btn" class="light" type="button" hidden>Xóa toàn bộ mẫu V3 (giữ V1/V2)</button></div><button id="refresh" class="light" type="button">↻ Làm mới danh sách</button><div class="actions"><button id="exportBtn">↓ Xuất JSON</button><button class="light" id="importBtn">↑ Nhập JSON</button><input type="file" id="importFile" accept=".json,application/json" hidden></div>
 <div id="sampleList"></div><button class="danger" id="deleteProfileBtn">Xóa toàn bộ hồ sơ</button>
 <p class="help">Xóa hồ sơ cũng xóa lịch sử kiểm thử. Nhập JSON chỉ thực hiện khi tài khoản chưa có hồ sơ.</p>
 </section>
@@ -97,8 +102,8 @@ button:not(.nav button){box-shadow:0 2px 4px rgba(0,89,85,.08)}button:focus-visi
 <div class="view" data-view="tune" hidden>
 <section class="card"><div class="step">PHÒNG THÍ NGHIỆM MACHINE LEARNING</div><h2>Tinh chỉnh &amp; kiểm định mô hình</h2>
 <p class="muted">Thử nhiều mức ngưỡng và phương án K láng giềng gần nhất. Mô phỏng không làm thay đổi hệ thống; chỉ nút <b>Lưu cấu hình</b> mới có hiệu lực. Chỉ chủ hồ sơ được kiểm định chi tiết.</p>
-<label for="tuneProfile">Hồ sơ của bạn</label><select id="tuneProfile"></select><div id="tuneStatus" class="example">Đang tải dữ liệu...</div>
-<div class="cols" style="margin-top:16px"><div><label for="tuneKind">Bộ đặc trưng</label><select id="tuneKind"><option value="legacy">V1 — mẫu cũ, tương thích</option><option value="improved">V2 — đặc trưng trải đều cả câu</option></select></div><div><label for="tuneK">Số láng giềng</label><select id="tuneK"><option value="1">k = 1</option><option value="3">k = 3</option><option value="5">k = 5</option></select></div></div>
+<label for="tuneProfile">Hồ sơ của bạn</label><select id="tuneProfile"></select><div id="tuneStatus" class="example">Đang tải dữ liệu...</div><div class="example"><b>V3 theo dự án tham khảo:</b> Đo dwell time (thời gian giữ phím), down–down (khoảng nhấn liên tiếp), up–down (khoảng nhả phím đến nhấn tiếp). Dữ liệu V3 độc lập với V1/V2. Dùng thử kNN chuẩn hóa và Cosine; không giả định ngưỡng 70% mặc định sẽ có độ chính xác cao. Chỉ chuyển mô hình sau khi có kết quả FAR/FRR trên lượt thử riêng.</div>
+<div class="cols" style="margin-top:16px"><div><label for="tuneKind">Bộ đặc trưng</label><select id="tuneKind"><option value="legacy">V1 — mẫu cũ, tương thích</option><option value="improved">V2 — đặc trưng trải đều cả câu</option><option value="timing_v3">V3 — Toàn bộ thời gian nhấn/nhả phím</option></select></div><div><label for="tuneK">Số láng giềng</label><select id="tuneK"><option value="1">k = 1</option><option value="3">k = 3</option><option value="5">k = 5</option></select></div></div>
 <label for="tuneMetric">Cách tính khoảng cách</label><select id="tuneMetric"><option value="euclidean">Euclidean — căn trung bình bình phương</option><option value="manhattan">Manhattan — trung bình chênh lệch tuyệt đối</option><option value="cosine_knn">Cosine kNN — khoảng cách góc, lấy k mẫu gần nhất</option><option value="cosine_median">Cosine Median — trung vị độ tương đồng (theo app tham khảo)</option></select>
 <label for="tuneFactor">Hệ số ngưỡng: <b id="tuneFactorText">1,25</b></label><input id="tuneFactor" type="range" min="0.5" max="2" step="0.05" value="1.25">
 <div class="example"><b>Phương pháp mới từ dự án keystroke-dynamics:</b> Cosine Similarity so sánh hình dạng nhịp gõ; Cosine Median lấy trung vị của tất cả mẫu. Tôi đã bổ sung chuẩn hóa từng đặc trưng để tránh thời gian gõ tổng thể lấn át các thành phần còn lại, đồng thời học ngưỡng riêng từ mẫu chính chủ thay vì dùng cố định 70%. <b>Cosine Median không sử dụng tham số k</b>.</div>
@@ -164,6 +169,13 @@ let mode='enroll',me=null,profiles=[],keys=[],active=new Map(),invalid=false,sta
 function say(s){E('msg').textContent=s}
 function reset(){keys=[];active.clear();invalid=false;start=null;editCount=0;E('typing').value='';E('duration').textContent='0.0';E('result').textContent='';draw();E('typing').focus()}
 const avg=a=>a.length?a.reduce((s,x)=>s+x,0)/a.length:0,sd=a=>Math.sqrt(avg(a.map(x=>(x-avg(a))**2)));
+function featsV3(){
+ const d=keys.map(x=>x.up-x.down);
+ const pp=keys.slice(1).map((x,i)=>x.down-keys[i].down);
+ const ud=keys.slice(1).map((x,i)=>x.down-keys[i].up);
+ const total=keys.at(-1).up-keys[0].down;
+ return [avg(d),sd(d),avg(pp),sd(pp),avg(ud),sd(ud),total,pp.filter(x=>x>350).length,...d,...pp,...ud].map(x=>Math.round(x*100)/100);
+}
 function featsV2(){
  const d=keys.map(x=>x.up-x.down),p=keys.slice(1).map((x,i)=>x.down-keys[i].down);
  const f=p.map((v,i)=>v-d[i]),total=keys.at(-1).up-keys[0].down;
@@ -214,9 +226,9 @@ document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>showView(b.data
 function advice(){const n=Number(E('sampleTarget').value);let text=n<=5?'3–5 mẫu: chỉ phù hợp xem ứng dụng hoạt động; mô hình cực thiếu dữ liệu và điểm dễ biến động.':n<=10?'6–10 mẫu: thử chức năng và quan sát khoảng cách, chưa phù hợp kết luận ai là chính chủ.':n<=19?'11–19 mẫu: phù hợp POC demo ban đầu, vẫn cần thử với nhiều người khác nhau.':n<=30?'20–30 mẫu: mức nên chọn để đánh giá thử tốt hơn, nên thu ở nhiều buổi và kiểm định riêng.':'31–40 mẫu: nhiều ví dụ hơn nhưng không tự bảo đảm độ chính xác; cần kiểm định FAR/FRR.';E('sampleAdvice').textContent=text;}
 E('sampleTarget').onchange=async()=>{advice();if(!me){E('progress').textContent='0/'+E('sampleTarget').value;return;}try{await api('set_target',{target_samples:Number(E('sampleTarget').value)});await refresh();say('Đã lưu cấu hình số mẫu của hồ sơ')}catch(e){say('⚠ '+e.message)}};
 function syncPicker(){const picker=E('verifyPicker'),old=picker.value||E('profiles').value;picker.replaceChildren();
- for(const p of profiles){const o=document.createElement('option');o.value=p.id;o.textContent=p.name+' — '+p.count+'/'+p.target_samples+' mẫu'+(p.ready?'':' (chưa đủ)');picker.append(o)}
+ for(const p of profiles){const o=document.createElement('option');o.value=p.id;o.textContent=p.name+' — '+(p.model_kind==='timing_v3'?(p.v3_count??0)+' mẫu V3':p.count+'/'+p.target_samples+' mẫu V1/V2')+(p.ready?'':' (chưa đủ)');picker.append(o)}
  if(profiles.some(p=>p.id===old))picker.value=old;E('profiles').value=picker.value;selected();
- const p=profiles.find(x=>x.id===picker.value);E('clearStatsBtn').hidden=!(p&&p.owner);syncTune();E('verifySummary').textContent=p?'Hồ sơ '+p.name+' có '+p.count+'/'+p.target_samples+' mẫu. '+(p.ready?'Sẵn sàng thử.':'Cần đủ '+p.target_samples+' mẫu để thử.'):'Chưa có hồ sơ nào';
+ const p=profiles.find(x=>x.id===picker.value);E('clearStatsBtn').hidden=!(p&&p.owner);syncTune();E('verifySummary').textContent=p?'Hồ sơ '+p.name+' · '+(p.model_kind==='timing_v3'?(p.v3_count??0)+' mẫu V3':'V1/V2 '+p.count+'/'+p.target_samples+' mẫu')+'. '+(p.ready?'Sẵn sàng thử.':'Chưa đủ mẫu cho mô hình đang chọn.'):'Chưa có hồ sơ nào';
 }
 E('verifyPicker').onchange=()=>{E('stats').textContent='';E('verifyOutcome').textContent='';E('verifyMessage').textContent='Hãy gõ câu mẫu để kiểm tra hồ sơ đã chọn.';E('profiles').value=E('verifyPicker').value;syncPicker();manage().catch(e=>say(e.message))};
 E('verifyReset').onclick=()=>{E('verifyTyping').value='';E('verifyOutcome').textContent='';E('verifyMessage').textContent='Hãy gõ lại câu mẫu'};
@@ -237,8 +249,8 @@ E('verifyReset').onclick=()=>{vKeys=[];vActive.clear();vInvalid=false;E('verifyT
 E('verifySend').onclick=async()=>{const btn=E('verifySend');E('verifyOutcome').textContent='';E('verifyMessage').textContent='Đang kiểm tra nhịp gõ mới...';btn.disabled=true;try{
  const p=profiles.find(x=>x.id===E('verifyPicker').value);if(!p)throw Error('Chưa chọn hồ sơ');if(!p.ready)throw Error('Hồ sơ chưa đủ '+p.target_samples+' mẫu');
  if(vInvalid||E('verifyTyping').value!==P||vKeys.length!==P.length||vKeys.some(x=>x.up===null)||vActive.size)throw Error('Hãy gõ đúng đủ câu, nhả hết phím và không dùng copy/paste');
- const saved=keys;keys=vKeys;let features,features_v2;try{features=feats();features_v2=featsV2()}finally{keys=saved}
- const d=await api('verify',{profile_id:p.id,claimed_owner:E('verifyOwner').checked,features,features_v2});
+ const saved=keys;keys=vKeys;let features,features_v2,features_v3;try{features=feats();features_v2=featsV2();features_v3=featsV3()}finally{keys=saved}
+ const d=await api('verify',{profile_id:p.id,claimed_owner:E('verifyOwner').checked,features,features_v2,features_v3});
  E('verifyOutcome').textContent=(d.uncertain?'⚠ GẦN NGƯỠNG — NÊN GÕ THÊM':d.accepted?'✓ PHÙ HỢP':'✕ KHÔNG PHÙ HỢP')+' · Điểm '+d.score.toFixed(3)+' / ngưỡng '+d.threshold.toFixed(3);
  E('verifyMessage').textContent=d.uncertain?'Điểm nằm trong vùng gần ngưỡng ±10%. Nên gõ thêm một lần; lượt vừa rồi vẫn được tính theo ngưỡng hiện tại.':'Điểm thấp hơn ngưỡng là gần giống mẫu gõ của '+p.name+'. Đây là nhận định ML, không phải xác minh danh tính chắc chắn.';
  vKeys=[];vActive.clear();vInvalid=false;E('verifyTyping').value='';
@@ -251,15 +263,19 @@ E('expandLessons').onclick=()=>document.querySelectorAll('details.lesson').forEa
 E('collapseLessons').onclick=()=>document.querySelectorAll('details.lesson').forEach(x=>x.open=false);
 
 async function api(action,more={}){let {data:{session}}=await sb.auth.getSession();if(!session)throw Error('Chưa đăng nhập');let r=await fetch(url+'/functions/v1/kd-api',{method:'POST',headers:{'Content-Type':'application/json',apikey:key,Authorization:'Bearer '+session.access_token},body:JSON.stringify({action,...more})});let d=await r.json();if(!r.ok||d.error)throw Error(d.error||'Lỗi API '+r.status);return d}
-async function refresh(){let d=await api('list');profiles=d.profiles;me=profiles.find(x=>x.owner);E('progress').textContent=(me?.count??0)+'/'+(me?.target_samples??+E('sampleTarget').value);if(me){E('name').value=me.name;E('sampleTarget').value=String(me.target_samples??15)}advice();const selectedId=E('profiles').value;E('profiles').replaceChildren();profiles.forEach(p=>{let o=document.createElement('option');o.value=p.id;o.textContent=p.name+' — '+p.count+'/'+p.target_samples+' mẫu — '+(p.ready?'Sẵn sàng':'Chưa đủ mẫu')+(p.owner?' (của tôi)':'');E('profiles').append(o)});if(profiles.some(p=>p.id===selectedId))E('profiles').value=selectedId;selected();syncPicker();say(me?.ready?'Đã có hồ sơ. Bạn có thể kiểm thử.':'Đăng ký 15 lần để tạo hồ sơ nhận diện.')}
+async function refresh(){let d=await api('list');profiles=d.profiles;me=profiles.find(x=>x.owner);E('progress').textContent=(E('enrollMethod').value==='timing_v3'?(me?.v3_count??0):(me?.count??0))+'/'+(me?.target_samples??+E('sampleTarget').value);if(me){E('name').value=me.name;E('sampleTarget').value=String(me.target_samples??15)}advice();const selectedId=E('profiles').value;E('profiles').replaceChildren();profiles.forEach(p=>{let o=document.createElement('option');o.value=p.id;o.textContent=p.name+' — '+(p.model_kind==='timing_v3'?(p.v3_count??0)+' mẫu V3':p.count+'/'+p.target_samples+' mẫu V1')+' — '+(p.ready?'Sẵn sàng':'Chưa đủ mẫu')+(p.owner?' (của tôi)':'');E('profiles').append(o)});if(profiles.some(p=>p.id===selectedId))E('profiles').value=selectedId;selected();syncPicker();say(me?.ready?'Hồ sơ đã sẵn sàng nhận diện.':'Có thể tiếp tục thu mẫu. V3 dùng bộ mẫu độc lập; hãy đạt tối thiểu 15 mẫu nếu cấu hình 15.')}
 function switchTo(m){mode=m;E('enrollArea').hidden=m!=='enroll';E('verifyArea').hidden=m!=='verify';E('send').textContent=m==='enroll'?'Lưu mẫu gõ':'Chấm điểm nhận diện';reset()}
 E('enrollTab').onclick=()=>switchTo('enroll');E('verifyTab').onclick=()=>switchTo('verify');E('clear').onclick=reset;E('refresh').onclick=()=>refresh().catch(e=>say(e.message));E('profiles').onchange=()=>{syncPicker();manage().catch(e=>say(e.message))};
-E('send').onclick=async()=>{E('send').disabled=true;try{if(invalid||E('typing').value!==P||keys.length!==P.length||keys.some(k=>k.up===null)||active.size)throw Error('Hãy gõ đúng toàn bộ câu và nhả hết các phím trước khi lưu');let features=feats(),features_v2=featsV2();if(mode==='enroll'){let d=await api('enroll',{name:E('name').value.trim(),target_samples:Number(E('sampleTarget').value),features,features_v2});say('Đã lưu mẫu '+d.count+'/'+d.target_samples);await refresh()}else{if(!E('profiles').value)throw Error('Chưa có hồ sơ');let r=await api('verify',{profile_id:E('profiles').value,claimed_owner:E('ownerCheck').checked,features,features_v2});E('result').textContent=(r.accepted?'✓ PHÙ HỢP':'✕ KHÔNG PHÙ HỢP')+' — điểm '+r.score.toFixed(3)+' / ngưỡng '+r.threshold.toFixed(3);say('Kết quả được lưu vào Supabase')}keys=[];active.clear();invalid=false;start=null;editCount=0;E('typing').value=''}catch(e){say('⚠ '+e.message)}finally{E('send').disabled=false}};
-function selected(){const p=profiles.find(x=>x.id===E('profiles').value);E('selectedDetails').textContent=p?p.name+' · '+p.count+'/'+p.target_samples+' mẫu · '+(p.ready?'Sẵn sàng':'Chưa đủ mẫu')+(p.owner?' · Của bạn':' · Người khác'):'Chưa có hồ sơ';return p}
+E('send').onclick=async()=>{E('send').disabled=true;try{if(invalid||E('typing').value!==P||keys.length!==P.length||keys.some(k=>k.up===null)||active.size)throw Error('Hãy gõ đúng toàn bộ câu và nhả hết các phím trước khi lưu');let features=feats(),features_v2=featsV2(),features_v3=featsV3();if(mode==='enroll'){
+ const v3=E('enrollMethod').value==='timing_v3';
+ const d=v3?await api('enroll_v3',{name:E('name').value.trim(),target_samples:Number(E('sampleTarget').value),features_v3}):await api('enroll',{name:E('name').value.trim(),target_samples:Number(E('sampleTarget').value),features,features_v2});
+ say(v3?'Đã lưu mẫu V3 '+d.count+' / tối thiểu '+d.required+'. Hãy thu thêm đến 20–30 mẫu qua nhiều buổi.':'Đã lưu mẫu V1/V2 '+d.count+'/'+d.target_samples);await refresh();
+ }else{if(!E('profiles').value)throw Error('Chưa có hồ sơ');let r=await api('verify',{profile_id:E('profiles').value,claimed_owner:E('ownerCheck').checked,features,features_v2,features_v3});E('result').textContent=(r.accepted?'✓ PHÙ HỢP':'✕ KHÔNG PHÙ HỢP')+' — điểm '+r.score.toFixed(3)+' / ngưỡng '+r.threshold.toFixed(3);say('Kết quả được lưu vào Supabase')}keys=[];active.clear();invalid=false;start=null;editCount=0;E('typing').value=''}catch(e){say('⚠ '+e.message)}finally{E('send').disabled=false}};
+function selected(){const p=profiles.find(x=>x.id===E('profiles').value);E('selectedDetails').textContent=p?p.name+' · V1/V2: '+p.count+' mẫu · V3: '+(p.v3_count??0)+' mẫu · '+(p.ready?'Sẵn sàng':'Chưa đủ mẫu')+(p.owner?' · Của bạn':' · Người khác'):'Chưa có hồ sơ';return p}
 async function manage(){
  const p=selected(),list=E('sampleList');list.replaceChildren();
- if(!p){E('exportBtn').disabled=true;E('deleteProfileBtn').disabled=true;return {profile:null,owner:false,samples:[]}}
- const d=await api('manage',{profile_id:p.id});E('exportBtn').disabled=!d.owner;E('deleteProfileBtn').disabled=!d.owner;
+ if(!p){E('deleteV3Btn').hidden=true;E('exportBtn').disabled=true;E('deleteProfileBtn').disabled=true;return {profile:null,owner:false,samples:[]}}
+ const d=await api('manage',{profile_id:p.id});E('deleteV3Btn').hidden=!(d.owner&&d.v3_count);E('exportBtn').disabled=!d.owner;E('deleteProfileBtn').disabled=!d.owner;
  if(!d.owner){list.textContent='Bạn có thể thử nhận diện hồ sơ này. Chỉ chủ hồ sơ có thể xem và xóa từng mẫu, xuất JSON hoặc xóa hồ sơ.';return d}
  const detail=document.createElement('details'),summary=document.createElement('summary');summary.textContent='Xem và xóa '+d.count+' mẫu';detail.append(summary);
  for(const sample of d.samples){const line=document.createElement('p'),txt=document.createElement('small'),btn=document.createElement('button');txt.textContent='#'+sample.id+' · '+new Date(sample.created_at).toLocaleString('vi-VN')+' ';btn.textContent='Xóa';btn.onclick=async()=>{if(!confirm('Xóa mẫu #'+sample.id+'?'))return;try{await api('delete_sample',{sample_id:sample.id});await refresh();await manage()}catch(e){say(e.message)}};line.append(txt,btn);detail.append(line)}list.append(detail);return d
@@ -281,12 +297,12 @@ E('deleteProfileBtn').onclick=async()=>{try{const d=await manage();if(!d.profile
 function syncTune(){
  const picker=E('tuneProfile');if(!picker)return;
  const previous=picker.value;picker.replaceChildren();
- for(const p of profiles.filter(x=>x.owner)){const option=document.createElement('option');option.value=p.id;option.textContent=p.name+' ('+p.count+' mẫu, V2: '+(p.v2_count??0)+')';picker.append(option)}
+ for(const p of profiles.filter(x=>x.owner)){const option=document.createElement('option');option.value=p.id;option.textContent=p.name+' (V1: '+p.count+', V2: '+(p.v2_count??0)+', V3: '+(p.v3_count??0)+')';picker.append(option)}
  if([...picker.options].some(o=>o.value===previous))picker.value=previous;
  const p=profiles.find(x=>x.id===picker.value);
  if(!p){E('tuneStatus').textContent='Chưa có hồ sơ thuộc quyền sở hữu. Hãy tạo hồ sơ ở tab Lấy mẫu.';return}
  E('tuneKind').value=p.model_kind||'legacy';E('tuneK').value=String(p.knn_k||3);E('tuneMetric').value=p.distance_metric||'euclidean';E('tuneFactor').value=String(p.threshold_factor??1.25);displayFactor();displayMethod();
- E('tuneStatus').textContent='Đang dùng: '+(p.model_kind==='improved'?'V2':'V1')+' · '+(p.v2_count??0)+' mẫu V2. Cần ít nhất '+Math.max(3,Math.min(10,p.target_samples))+' mẫu V2 trước khi chọn đặc trưng cải tiến.';
+ E('tuneStatus').textContent='Đang dùng: '+(p.model_kind==='timing_v3'?'V3':p.model_kind==='improved'?'V2':'V1')+' · V2: '+(p.v2_count??0)+' mẫu; V3: '+(p.v3_count??0)+' mẫu. V3 cần ít nhất '+Math.max(5,Math.min(15,p.target_samples))+' mẫu mới; nên thu 20–30 mẫu ở nhiều buổi.';
 }
 function displayFactor(){E('tuneFactorText').textContent=Number(E('tuneFactor').value).toLocaleString('vi-VN',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function displayMethod(){
@@ -313,12 +329,12 @@ function tuneDraw(pts){
  ctx.fillStyle='#5b7b72';ctx.textAlign='center';ctx.font='12px system-ui';pts.forEach((p,i)=>ctx.fillText(Math.round(p.factor*100)+'%',px(i),h-15));
 }
 function tuneRender(d){
- E('tuneCounts').textContent='Số lượt thử đã ghi: '+d.counts.historical+' · Lượt có đặc trưng mới: '+d.counts.recorded_features+' · Mẫu V1: '+d.counts.legacy+' · Mẫu V2: '+d.counts.improved+'. Không nên kết luận nếu số lượt thử ít.';
+ E('tuneCounts').textContent='Lượt thử: '+d.counts.historical+' · có V1/V2: '+d.counts.recorded_features+' · mẫu V1: '+d.counts.legacy+' · V2: '+d.counts.improved+' · V3: '+(d.counts.timing_v3??0)+'. Chỉ số trên các lượt thử đã ghi, chưa phải độ chính xác đã kiểm định độc lập.';
  tuneDraw(d.sweep);const body=E('tuneVariants');body.replaceChildren();
  if(!d.candidates.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=7;td.textContent='Chưa đủ mẫu để so sánh các phương án.';tr.append(td);body.append(tr);return}
  for(const c of d.candidates){
  const tr=document.createElement('tr');
- const arr=[c.kind==='improved'?'V2 — toàn câu':'V1 — mẫu cũ',c.metric==='cosine_median'?'—':c.k,({euclidean:'Euclidean',manhattan:'Manhattan',cosine_knn:'Cosine kNN',cosine_median:'Cosine Median'})[c.metric]||c.metric,c.genuine+' chính chủ / '+c.impostor+' người khác',pctText(c.far),pctText(c.frr)];
+ const arr=[c.kind==='timing_v3'?'V3 — đầy đủ thời gian':c.kind==='improved'?'V2 — toàn câu':'V1 — mẫu cũ',c.metric==='cosine_median'?'—':c.k,({euclidean:'Euclidean',manhattan:'Manhattan',cosine_knn:'Cosine kNN',cosine_median:'Cosine Median'})[c.metric]||c.metric,c.genuine+' chính chủ / '+c.impostor+' người khác',pctText(c.far),pctText(c.frr)];
  for(const v of arr){const td=document.createElement('td');td.textContent=String(v);tr.append(td)}
  const td=document.createElement('td'),b=document.createElement('button');b.textContent='Dùng thử';b.className='light';
  b.onclick=()=>{E('tuneKind').value=c.kind;E('tuneK').value=String(c.k);E('tuneMetric').value=c.metric;displayMethod();E('tuneMessage').textContent='Đã điền cấu hình '+c.kind+' / k='+c.k+'. Chưa lưu lên hệ thống.';window.scrollTo({top:0,behavior:'smooth'})};
@@ -355,6 +371,13 @@ E('clearStatsBtn').onclick=async()=>{
  }catch(e){E('stats').textContent='⚠ '+e.message}finally{button.disabled=false}
 };
 
+E('deleteV3Btn').onclick=async()=>{
+ const p=profiles.find(x=>x.owner);if(!p)return;
+ if(!confirm('Xóa toàn bộ mẫu V3 của '+p.name+'? V1/V2 và lịch sử FAR/FRR sẽ được giữ nguyên. Nếu đang dùng V3, hệ thống sẽ chuyển về V1. Không thể hoàn tác.'))return;
+ E('deleteV3Btn').disabled=true;
+ try{const result=await api('delete_v3_samples');await refresh();await manage();say('Đã xóa '+result.deleted_count+' mẫu V3. Mẫu V1/V2 giữ nguyên.')}
+ catch(e){say('⚠ '+e.message)}finally{E('deleteV3Btn').disabled=false}
+};
 E('statsBtn').onclick=async()=>{
  const area=E('stats');area.replaceChildren();area.textContent='Đang tính thống kê...';
  try{
