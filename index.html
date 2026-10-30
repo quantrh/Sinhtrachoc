@@ -87,7 +87,7 @@ E('deleteProfileBtn').onclick=async()=>{try{const d=await manage();if(!d.profile
  if(!confirm('XÓA VĨNH VIỄN hồ sơ '+d.profile.display_name+', toàn bộ mẫu và các lượt kiểm thử?'))return;
  const typed=prompt('Nhập XOA để xác nhận xóa toàn bộ');if(typed!=='XOA')return;
  await api('delete_profile');await refresh();await manage();say('Đã xóa hồ sơ, các mẫu và lịch sử kiểm thử')}catch(e){say('⚠ '+e.message)}};
-manage().catch(e=>{E('sampleList').textContent='Chưa thể tải hồ sơ: '+e.message});
+
 E('statsBtn').onclick=async()=>{try{if(!me)throw Error('Bạn chưa đăng ký');let s=await api('stats',{profile_id:me.id});E('stats').textContent='Tổng '+s.total+' lượt; chính chủ '+s.genuine+', từ chối nhầm '+s.false_reject+'; người khác '+s.impostor+', chấp nhận nhầm '+s.false_accept+'. Nhãn do người thử tự khai báo.'}catch(e){E('stats').textContent=e.message}};
-(async()=>{try{let {data:{session}}=await sb.auth.getSession();if(!session){let x=await sb.auth.signInAnonymously();if(x.error)throw x.error}await refresh()}catch(e){say('Lỗi kết nối: '+e.message+'. Kiểm tra Anonymous Sign-ins trên Supabase.') }})();
+(async()=>{try{let {data:{session}}=await sb.auth.getSession();if(!session){let x=await sb.auth.signInAnonymously();if(x.error)throw x.error}await refresh();await manage()}catch(e){say('Lỗi kết nối: '+e.message+'. Kiểm tra Anonymous Sign-ins trên Supabase.') }})();
 </script></body></html>
