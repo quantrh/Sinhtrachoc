@@ -77,7 +77,14 @@ textarea.typing-box.alert,textarea.typing-box.alert:focus{background:#ffe9ed;bor
 <label>Dung sai khi gõ chậm: <b id="slowValue">20%</b></label><input id="slowTolerance" type="range" min="0" max="60" step="5" value="20" style="width:100%">
 <p class="muted">Cho phép tốc độ chậm hơn khi tạo mẫu, vẫn kiểm tra hình dạng nhịp gõ.</p>
 <label>Cửa sổ liên tiếp để cảnh báo mạnh</label><select id="alertWindows" style="width:100%;padding:10px"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select>
-<p id="tuningSummary" class="info"></p><button id="resetTuning" class="alt">Khôi phục mặc định</button></details><p class="muted"><b>Chế độ chống báo nhầm:</b> quyết định dựa trên 12 đặc trưng thời gian, giảm ảnh hưởng của nội dung gõ và bỏ qua hai độ lệch lớn nhất có thể do lỗi phím. Isolation Forest và Mahalanobis vẫn được hiển thị trong nhật ký phục vụ nghiên cứu nhưng không trực tiếp kích hoạt cảnh báo. Điểm hiển thị là mức khác biệt tương đối, không phải xác suất người lạ.</p><h3>Nhật ký quyết định</h3><div class="log" id="log"><div>Chưa có dữ liệu phiên.</div></div>
+<p id="tuningSummary" class="info"></p><button id="resetTuning" class="alt">Khôi phục mặc định</button></details><p class="muted"><b>Chế độ chống báo nhầm:</b> quyết định dựa trên 12 đặc trưng thời gian, giảm ảnh hưởng của nội dung gõ và bỏ qua hai độ lệch lớn nhất có thể do lỗi phím. Isolation Forest và Mahalanobis vẫn được hiển thị trong nhật ký phục vụ nghiên cứu nhưng không trực tiếp kích hoạt cảnh báo. Điểm hiển thị là mức khác biệt tương đối, không phải xác suất người lạ.</p><section class="info" style="margin-top:16px"><h3>📊 Đánh giá FAR / FRR bằng lượt thử thực tế</h3>
+<p>Trước khi gõ, chọn đúng người đang thử. Gõ đủ ít nhất <b>3 cửa sổ</b> và bấm <b>Ghi nhận lượt thử</b>. Mỗi lần gõ là 1 lượt thử, không tính mỗi cửa sổ chồng lấn thành một lượt.</p>
+<label for="trialIdentity">Người đang gõ là ai?</label><select id="trialIdentity" style="width:100%;padding:10px"><option value="owner">Chính chủ của mẫu tham chiếu</option><option value="other">Người khác (không phải chính chủ)</option></select>
+<div class="row" style="margin-top:12px"><button id="recordTrial">Ghi nhận lượt thử</button><button id="refreshMetrics" class="alt">Cập nhật thống kê</button></div>
+<p id="trialMessage" class="muted">Chưa ghi nhận lượt thử nào ở phiên hiện tại.</p>
+<div class="stats"><div class="stat"><small>FAR · Chấp nhận nhầm người khác</small><strong id="farValue">—</strong><small id="farCount">0 / 0 lượt người khác</small></div><div class="stat"><small>FRR · Từ chối nhầm chính chủ</small><strong id="frrValue">—</strong><small id="frrCount">0 / 0 lượt chính chủ</small></div></div>
+<p class="muted"><b>FAR</b> = số lượt người khác được chấp nhận / tổng lượt thử người khác. <b>FRR</b> = số lượt chính chủ bị từ chối / tổng lượt thử chính chủ. Chưa có lượt thử tương ứng thì hiển thị “—”, không phải 0%. Số liệu chỉ gồm lượt kiểm thử do tài khoản trình duyệt hiện tại ghi nhận với mẫu đang chọn; chưa phải đánh giá toàn cộng đồng.</p>
+</section><h3>Nhật ký quyết định</h3><div class="log" id="log"><div>Chưa có dữ liệu phiên.</div></div>
 </section>
 <section class="card page" data-page="guide" hidden>
 <h2>Hướng dẫn sử dụng KeyDNA Continuous</h2>
@@ -153,7 +160,7 @@ textarea.typing-box.alert,textarea.typing-box.alert:focus{background:#ffe9ed;bor
 <script>
 "use strict";
 const $=id=>document.getElementById(id), K="keydna_continuous_profile_v1", W=30, STRIDE=15;
-let profile=null, enroll=[], monitor=[], down=new Map(), epoch=0, nDone=0, badStreak=0, alertLogged=false, soundEnabled=false, audioCtx=null;
+let profile=null, enroll=[], monitor=[], down=new Map(), epoch=0, nDone=0, badStreak=0, alertLogged=false, soundEnabled=false, audioCtx=null, trialRejected=false, trialRecorded=false;
 
 const sb=window.supabase?.createClient("https://rmbsxccrwrktbjlnezpu.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJtYnN4Y2Nyd3JrdGJqbG5lenB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg2MjczNjQsImV4cCI6MjA2NDIwMzM2NH0.ydCqificftdtn1niRciFCifeuo8aX6SDGti-hCY5Z_Y");
 let currentUser=null, profiles=[], selectedProfileId=null;
@@ -173,7 +180,7 @@ function renderProfiles(){
  $("exportProfile").disabled=!selected;
  showProfile();
 }
-function selectProfile(id){selectedProfileId=id||null;profile=profiles.find(p=>p.id===id)?.model||null;$("monitorReset").click();renderProfiles()}
+function selectProfile(id){selectedProfileId=id||null;profile=profiles.find(p=>p.id===id)?.model||null;$("monitorReset").click();renderProfiles();refreshMetrics()}
 async function loadProfiles(preferred){
  if(!currentUser)return;
  const {data,error}=await sb.from("kd_continuous_profiles").select("id,user_id,name,model,is_shared,created_at,updated_at").order("updated_at",{ascending:false}).limit(250);
@@ -188,7 +195,7 @@ async function connect(){
  try{let {data:{session},error}=await sb.auth.getSession();if(error)throw error;
  if(!session){const r=await sb.auth.signInAnonymously();if(r.error)throw r.error;session=r.data.session}
  currentUser=session?.user?.id;if(!currentUser)throw Error("Không có phiên đăng nhập");
- await loadProfiles();setInfo("Supabase đã kết nối, hỗ trợ nhiều mẫu hành vi.");
+ await loadProfiles();await refreshMetrics();setInfo("Supabase đã kết nối, hỗ trợ nhiều mẫu hành vi.");
  }catch(e){setInfo("Lỗi Supabase: "+e.message)}
 }
 async function appendTrainingSession(rows){
@@ -353,6 +360,7 @@ function updateMonitor(){
  let f=windows(monitor).at(-1),r=evaluate(f);nDone=count;
  badStreak=r.flag?badStreak+1:0;
  const locked=badStreak>=tuning.streak;
+ if(locked)trialRejected=true;
  if(r.flag){
   const level=Math.min(4,badStreak);
   const names=["","🟡 Nghi vấn nhẹ","🟠 Nghi vấn tăng","🔴 Cảnh báo cao","🔴 CẢNH BÁO NGƯỜI GÕ KHÁC BIỆT"];
@@ -390,7 +398,7 @@ $("train").onclick=async()=>{
 };
 $("enrollMode").onchange=updateSessionMode;
 $("enrollReset").onclick=()=>{enroll.length=0;$("enrollText").value="";updateEnroll()};
-$("monitorReset").onclick=()=>{monitor.length=0;$("monitorText").value="";nDone=0;badStreak=0;clearAlertUI();$("nWindows").textContent="0";$("confidence").textContent="—";$("streak").textContent="0/3";$("liveState").textContent="Chưa đủ dữ liệu";$("liveState").className="pill";$("log").innerHTML="<div>Đã đặt lại phiên.</div>"};
+$("monitorReset").onclick=()=>{monitor.length=0;$("monitorText").value="";nDone=0;badStreak=0;trialRejected=false;trialRecorded=false;clearAlertUI();$("trialMessage").textContent="Chưa ghi nhận lượt thử ở phiên hiện tại.";$("nWindows").textContent="0";$("confidence").textContent="—";$("streak").textContent="0/3";$("liveState").textContent="Chưa đủ dữ liệu";$("liveState").className="pill";$("log").innerHTML="<div>Đã đặt lại phiên.</div>"};
 function applyTuning(t,reset=true){
  tuning={threshold:Math.max(50,Math.min(90,+t.threshold)),slow:Math.max(0,Math.min(60,+t.slow)),streak:Math.max(1,Math.min(5,+t.streak))};
  $("anomalyThreshold").value=tuning.threshold;$("slowTolerance").value=tuning.slow;$("alertWindows").value=String(tuning.streak);
@@ -405,6 +413,38 @@ $("slowTolerance").onchange=e=>applyTuning({...tuning,slow:+e.target.value});
 $("alertWindows").onchange=e=>applyTuning({...tuning,streak:+e.target.value});
 $("resetTuning").onclick=()=>applyTuning(tuningDefaults);
 applyTuning(tuning,false);
+async function refreshMetrics(){
+ $("farValue").textContent="…";$("frrValue").textContent="…";
+ if(!currentUser||!selectedProfileId){$("farValue").textContent="—";$("frrValue").textContent="—";return}
+ const {data,error}=await sb.from("kd_continuous_trials").select("claimed_owner,accepted").eq("profile_id",selectedProfileId).eq("user_id",currentUser);
+ if(error){$("farValue").textContent="—";$("frrValue").textContent="—";$("trialMessage").textContent="Không tải được thống kê: "+error.message;return}
+ const others=data.filter(x=>!x.claimed_owner),owners=data.filter(x=>x.claimed_owner);
+ const fa=others.filter(x=>x.accepted).length,fr=owners.filter(x=>!x.accepted).length;
+ $("farValue").textContent=others.length?(100*fa/others.length).toFixed(1)+"%":"—";
+ $("frrValue").textContent=owners.length?(100*fr/owners.length).toFixed(1)+"%":"—";
+ $("farCount").textContent=fa+" / "+others.length+" lượt người khác";
+ $("frrCount").textContent=fr+" / "+owners.length+" lượt chính chủ";
+}
+$("refreshMetrics").onclick=refreshMetrics;
+$("recordTrial").onclick=async()=>{
+ if(trialRecorded)return $("trialMessage").textContent="Lượt thử này đã được ghi. Hãy đặt lại phiên để tạo lượt khác.";
+ if(!currentUser||!selectedProfileId||!profile)return $("trialMessage").textContent="Chọn mẫu tham chiếu và kết nối Supabase trước.";
+ const count=windows(monitor).length;
+ if(count<Math.max(3,tuning.streak))return $("trialMessage").textContent="Chưa đủ cửa sổ; cần tối thiểu "+Math.max(3,tuning.streak)+" cửa sổ để ghi lượt thử.";
+ const last=evaluate(windows(monitor).at(-1));
+ const accepted=!trialRejected;
+ $("recordTrial").disabled=true;
+ const {error}=await sb.from("kd_continuous_trials").insert({
+  user_id:currentUser,profile_id:selectedProfileId,profile_name:profile.name||"Mẫu hành vi",
+  claimed_owner:$("trialIdentity").value==="owner",accepted,
+  similarity:last.confidence*100,threshold:tuning.threshold,windows_count:count
+ });
+ $("recordTrial").disabled=false;
+ if(error){$("trialMessage").textContent="Lưu lượt thử thất bại: "+error.message;return}
+ trialRecorded=true;
+ $("trialMessage").textContent="Đã ghi: "+($("trialIdentity").value==="owner"?"Chính chủ":"Người khác")+" · "+(accepted?"Được chấp nhận":"Bị từ chối")+" · "+count+" cửa sổ. Đặt lại phiên trước lượt tiếp theo.";
+ await refreshMetrics();
+};
 $("soundEnable").onclick=async()=>{try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();await audioCtx.resume();soundEnabled=true;$("soundEnable").textContent="🔊 Đã bật âm thanh"}catch(e){alert("Không bật được âm thanh: "+e.message)}};
 $("profileList").onchange=e=>selectProfile(e.target.value);
 $("verifyProfile").onchange=e=>selectProfile(e.target.value);
