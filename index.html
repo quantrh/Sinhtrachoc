@@ -53,11 +53,17 @@ canvas{width:100%;height:155px;background:#f9fcfb;border:1px solid var(--line);b
 </div>
 <div class="view" data-view="verify" hidden>
 <section class="card"><div class="step">BƯỚC 3 · KIỂM TRA</div><h2>Bạn có phải người đã đăng ký?</h2><p>Chọn hồ sơ cần thử. Người khác cũng có thể gõ câu giống hệt để kiểm tra khả năng phân biệt của Machine Learning.</p>
-<div id="verifyTarget"><label for="verifyPicker">Hồ sơ muốn thử</label><select id="verifyPicker"></select><div id="verifySummary" class="example"></div><label><input type="checkbox" id="verifyOwner"> Tôi thực sự là người đã đăng ký hồ sơ này</label></div>
+<div id="verifyTarget"><label for="verifyPicker">Hồ sơ muốn thử</label><select id="verifyPicker"></select><div id="verifySummary" class="example"></div><label><input type="checkbox" id="verifyOwner"> Tôi thực sự là người đã đăng ký hồ sơ này</label>
+<p class="help" style="margin-top:5px"><b>Đánh dấu nếu bạn chính là chủ hồ sơ được chọn.</b> Nếu bạn đang thử giả làm người đó, hãy bỏ chọn. Thông tin này chỉ để đối chiếu kết quả, tính tỷ lệ nhận nhầm hoặc từ chối nhầm; <b>không ảnh hưởng đến thuật toán nhận diện.</b> Hãy khai báo đúng để thống kê có ý nghĩa.</p></div>
 <div class="phrase" id="verifyPhrase"></div><label for="verifyTyping">Gõ lại câu mẫu</label><input id="verifyTyping" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Gõ đúng câu trên..."><p class="help">Không copy/paste; chỉ dùng bàn phím vật lý.</p>
-<button id="verifySend">Kiểm tra nhịp gõ</button><button id="verifyReset" class="light">Gõ lại</button><div id="verifyMessage" class="example">Chọn hồ sơ đủ 15 mẫu để bắt đầu.</div><div id="verifyOutcome"></div>
+<button id="verifySend">Kiểm tra nhịp gõ</button><button id="verifyReset" class="light">Gõ lại</button><div id="verifyMessage" class="example">Chọn hồ sơ đã đủ số mẫu cấu hình để bắt đầu.</div><div id="verifyOutcome"></div>
 </section>
-<section class="card"><h3>Thống kê kiểm thử</h3><p class="muted">Chủ hồ sơ có thể xem kết quả các lượt test trước đó.</p><button id="statsBtn">Xem FAR / FRR</button><div id="stats"></div></section></div>
+<section class="card"><h3>Thống kê kiểm thử</h3><p class="muted">Chủ hồ sơ có thể xem kết quả các lượt test trước đó.</p><details class="lesson" open><summary>FAR và FRR có ý nghĩa gì?</summary><div>
+<p><b>FAR — Tỷ lệ chấp nhận nhầm:</b> Người khác gõ thử nhưng máy lại nhận là chính chủ. Ví dụ, 20 lượt người khác thử và có 2 lượt được chấp nhận → FAR = 10%. <b>Càng thấp càng tốt</b>, vì giảm nguy cơ nhận nhầm người lạ.</p>
+<p><b>FRR — Tỷ lệ từ chối nhầm:</b> Chính chủ gõ thử nhưng máy báo không phù hợp. Ví dụ, chính chủ thử 20 lần và bị từ chối 3 lần → FRR = 15%. <b>Càng thấp càng tốt</b>, vì giảm phiền hà cho người dùng thật.</p>
+<p><b>Vì sao cần checkbox?</b> Máy chỉ biết nhịp gõ và kết quả của nó. Checkbox cho biết thực tế người thử tự nhận là chính chủ hay người khác, để máy thống kê hai loại sai nói trên. Đánh dấu sai khiến FAR/FRR không đáng tin cậy.</p>
+<p class="help">FAR/FRR ở đây là số liệu thử nghiệm dựa trên lời tự khai, không phải độ chính xác đã được kiểm định độc lập. Không có lượt thử thuộc một nhóm thì chưa tính được tỷ lệ cho nhóm đó.</p>
+</div></details><button id="statsBtn">Xem FAR / FRR</button><div id="stats"></div></section></div>
 <div class="view" data-view="academy" hidden>
 <section class="card"><div class="step">GIÁO TRÌNH TƯƠNG TÁC</div><h2>Hiểu Machine Learning từ cơ bản đến kiểm định</h2><p>Tài liệu học theo chương, có ví dụ, công thức, thực hành chỉnh tham số và câu hỏi tự kiểm tra. Phong cách học tập dựa trên giáo trình Isolation Forest mà bạn cung cấp; nội dung dưới đây dành riêng cho mô hình <b>one-class kNN</b> thực sự đang chạy trong KeyDNA.</p><div class="actions"><button id="expandLessons">Mở tất cả</button><button id="collapseLessons" class="light">Thu gọn</button></div></section>
 <details class="lesson" open><summary>01 · Bài toán sinh trắc học hành vi</summary><div><p>Nếu hai người cùng gõ “hom nay ...”, nội dung giống nhau nhưng thói quen gõ có thể khác. Ứng dụng không đoán danh tính từ câu chữ; nó tìm xem nhịp gõ mới có quen thuộc với một hồ sơ hay không.</p><p class="example">Ví dụ: A giữ phím hơi lâu và dừng ở khoảng giữa câu; B gõ nhanh, khá đều. Đây là hai hành vi có thể phân biệt bằng các phép đo thời gian.</p><p><b>Hạn chế:</b> Mệt mỏi, đổi bàn phím, cách đặt tay và kích thước thiết bị có thể làm nhịp gõ của cùng một người thay đổi.</p></div></details>
@@ -126,7 +132,7 @@ function syncPicker(){const picker=E('verifyPicker'),old=picker.value||E('profil
  if(profiles.some(p=>p.id===old))picker.value=old;E('profiles').value=picker.value;selected();
  const p=profiles.find(x=>x.id===picker.value);E('verifySummary').textContent=p?'Hồ sơ '+p.name+' có '+p.count+'/'+p.target_samples+' mẫu. '+(p.ready?'Sẵn sàng thử.':'Cần đủ '+p.target_samples+' mẫu để thử.'):'Chưa có hồ sơ nào';
 }
-E('verifyPicker').onchange=()=>{E('profiles').value=E('verifyPicker').value;syncPicker();manage().catch(e=>say(e.message))};
+E('verifyPicker').onchange=()=>{E('verifyOutcome').textContent='';E('verifyMessage').textContent='Hãy gõ câu mẫu để kiểm tra hồ sơ đã chọn.';E('profiles').value=E('verifyPicker').value;syncPicker();manage().catch(e=>say(e.message))};
 E('verifyReset').onclick=()=>{E('verifyTyping').value='';E('verifyOutcome').textContent='';E('verifyMessage').textContent='Hãy gõ lại câu mẫu'};
 E('verifyTyping').onpaste=e=>{e.preventDefault();E('verifyMessage').textContent='Không dùng copy/paste'};
 E('verifyTyping').ondrop=e=>e.preventDefault();
@@ -142,7 +148,7 @@ E('verifyTyping').onkeydown=e=>{if(e.key==='Tab'||e.key==='Shift'||['ArrowLeft',
 E('verifyTyping').onkeyup=e=>{const a=vActive.get(e.code||e.key);if(a){a.up=performance.now();vActive.delete(e.code||e.key)}};
 E('verifyTyping').oninput=()=>{if(vKeys.map(x=>x.char).join('')!==E('verifyTyping').value)vInvalid=true};
 E('verifyReset').onclick=()=>{vKeys=[];vActive.clear();vInvalid=false;E('verifyTyping').value='';E('verifyOutcome').textContent='';E('verifyMessage').textContent='Có thể nhập lại'};
-E('verifySend').onclick=async()=>{const btn=E('verifySend');btn.disabled=true;try{
+E('verifySend').onclick=async()=>{const btn=E('verifySend');E('verifyOutcome').textContent='';E('verifyMessage').textContent='Đang kiểm tra nhịp gõ mới...';btn.disabled=true;try{
  const p=profiles.find(x=>x.id===E('verifyPicker').value);if(!p)throw Error('Chưa chọn hồ sơ');if(!p.ready)throw Error('Hồ sơ chưa đủ '+p.target_samples+' mẫu');
  if(vInvalid||E('verifyTyping').value!==P||vKeys.length!==P.length||vKeys.some(x=>x.up===null)||vActive.size)throw Error('Hãy gõ đúng đủ câu, nhả hết phím và không dùng copy/paste');
  const saved=keys;keys=vKeys;let features;try{features=feats()}finally{keys=saved}
