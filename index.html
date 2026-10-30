@@ -55,7 +55,7 @@ textarea.typing-box.alert,textarea.typing-box.alert:focus{background:#ffe9ed;bor
 </section>
 <section class="card page" data-page="monitor" hidden>
 <h2>Kiểm tra người đang gõ</h2><label for="verifyProfile">Mẫu hành vi tham chiếu</label><select id="verifyProfile" style="width:100%;padding:12px;margin-bottom:12px"><option>Chưa có mẫu hành vi</option></select>
-<p>Gõ nội dung tùy ý. Mỗi 15 phím mới sẽ kiểm tra một cửa sổ 30 phím, kết hợp Isolation Forest và Mahalanobis. Báo đỏ từ cửa sổ đầu tiên bất thường, ba cửa sổ liên tiếp tăng mức cảnh báo.</p>
+<p>Gõ nội dung tùy ý. Mỗi 15 phím mới sẽ kiểm tra một cửa sổ 30 phím, kết hợp Isolation Forest và Mahalanobis. Cửa sổ nghi vấn đơn lẻ chưa báo đỏ; chỉ cảnh báo mạnh khi đủ số cửa sổ liên tiếp đã cài đặt.</p>
 <div class="monitor-wrap"><div id="dangerBanner" role="alert" aria-live="polite" class="danger-inline" hidden><b>⚠️ Phát hiện hành vi gõ bất thường</b><div id="dangerDetail"></div></div><textarea id="monitorText" class="typing-box" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Người cần kiểm tra gõ ở đây..."></textarea></div>
 <div class="row"><button class="alt" id="soundEnable">🔊 Bật âm thanh</button><button class="alt" id="monitorReset">Đặt lại phiên</button><span id="liveState" class="pill">Chưa đủ dữ liệu</span></div>
 <div class="stats"><div class="stat"><small>Cửa sổ đã xử lý</small><strong id="nWindows">0</strong></div><div class="stat"><small>Điểm tương đồng tương đối</small><strong id="confidence">—</strong></div><div class="stat"><small>Cửa sổ nghi vấn liên tiếp</small><strong id="streak">0/3</strong></div></div>
@@ -67,7 +67,7 @@ textarea.typing-box.alert,textarea.typing-box.alert:focus{background:#ffe9ed;bor
 <label>Dung sai khi gõ chậm: <b id="slowValue">20%</b></label><input id="slowTolerance" type="range" min="0" max="60" step="5" value="20" style="width:100%">
 <p class="muted">Cho phép tốc độ chậm hơn khi tạo mẫu, vẫn kiểm tra hình dạng nhịp gõ.</p>
 <label>Cửa sổ liên tiếp để cảnh báo mạnh</label><select id="alertWindows" style="width:100%;padding:10px"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select>
-<p id="tuningSummary" class="info"></p><button id="resetTuning" class="alt">Khôi phục mặc định</button></details><h3>Nhật ký quyết định</h3><div class="log" id="log"><div>Chưa có dữ liệu phiên.</div></div>
+<p id="tuningSummary" class="info"></p><button id="resetTuning" class="alt">Khôi phục mặc định</button></details><p class="muted"><b>Chế độ chống báo nhầm:</b> quyết định dựa trên 12 đặc trưng thời gian, giảm ảnh hưởng của nội dung gõ và bỏ qua hai độ lệch lớn nhất có thể do lỗi phím. Isolation Forest và Mahalanobis vẫn được hiển thị trong nhật ký phục vụ nghiên cứu nhưng không trực tiếp kích hoạt cảnh báo. Điểm hiển thị là mức khác biệt tương đối, không phải xác suất người lạ.</p><h3>Nhật ký quyết định</h3><div class="log" id="log"><div>Chưa có dữ liệu phiên.</div></div>
 </section>
 <section class="card page" data-page="guide" hidden>
 <h2>Hướng dẫn sử dụng KeyDNA Continuous</h2>
@@ -281,11 +281,18 @@ function adjustedFeatures(f){
  return f.map((v,i)=>i===6?v*factor:(i<=5||(i>=7&&i<=39))?v/factor:v);
 }
 function evaluate(f){
- let adjusted=adjustedFeatures(f),z=adjusted.map((v,i)=>(v-profile.m[i])/profile.s[i]);
- let iso=ifScore(z,profile.forest,profile.n),mah=mahScore(z,profile.mm,profile.ss);
- const pif=percentile(profile.ifTrain,iso),pm=percentile(profile.mahTrain,mah);
- const anomaly=(pif+pm)/2;
- return {iso,mah,anomaly,confidence:1-anomaly,flag:anomaly>=tuning.threshold/100};
+ // Text-independent timing comparison: do not let hashed word/letter bins
+ // trigger a false alarm when the same person types a different sentence.
+ const adjusted=adjustedFeatures(f);
+ const dims=[0,1,2,3,4,5,6,37,38,39,40,41];
+ const deviations=dims.map(i=>Math.min(5,Math.abs(adjusted[i]-profile.m[i])/Math.max(profile.s[i]||1,Math.abs(profile.m[i])*.15,8)));
+ const ordered=[...deviations].sort((x,y)=>x-y);
+ const robustDistance=mean(ordered.slice(0,ordered.length-2));
+ const boundary=.95+(tuning.threshold-80)*.045;
+ const anomaly=clamp(robustDistance/Math.max(1.0,boundary*1.8),0,1);
+ const z=adjusted.map((v,i)=>(v-profile.m[i])/profile.s[i]);
+ const iso=ifScore(z,profile.forest,profile.n),mah=mahScore(z,profile.mm,profile.ss);
+ return {iso,mah,anomaly,confidence:1-anomaly,robustDistance,boundary,flag:robustDistance>=boundary};
 }
 function showProfile(){
  $("profileState").textContent=profile?"Đã có mẫu hành vi":"Chưa có mẫu hành vi";
@@ -300,12 +307,12 @@ function updateMonitor(){
  let f=windows(monitor).at(-1),r=evaluate(f);nDone=count;
  badStreak=r.flag?badStreak+1:0;
  const locked=badStreak>=tuning.streak;
- if(r.flag)alertNow(r.anomaly,count,locked);else clearAlertUI()
+ if(locked)alertNow(r.anomaly,count,true);else clearAlertUI()
  $("nWindows").textContent=count;$("confidence").textContent=Math.round(r.confidence*100)+"%";$("streak").textContent=badStreak+"/"+tuning.streak;
- $("liveState").textContent=locked?"Cảnh báo: hành vi khác biệt":r.flag?"Đang nghi vấn":"Đang theo dõi";
+ $("liveState").textContent=locked?"Cảnh báo: hành vi khác biệt":r.flag?"Đang nghi vấn · tiếp tục gõ":"Đang theo dõi";
  $("liveState").className="pill "+(locked?"alert":r.flag?"suspect":"good");
  const line=document.createElement("div");
- line.textContent="Window "+count+" | IF "+r.iso.toFixed(3)+" | Mah "+r.mah.toFixed(3)+" | anomaly "+r.anomaly.toFixed(2)+" | "+(locked?"ALERT":r.flag?"SUSPECT":"OK");
+ line.textContent="Window "+count+" | IF "+r.iso.toFixed(3)+" | Mah "+r.mah.toFixed(3)+" | distance "+r.robustDistance.toFixed(2)+" / "+r.boundary.toFixed(2)+" | "+(locked?"ALERT":r.flag?"SUSPECT":"OK");
  $("log").prepend(line);
 }
 keyCollector($("enrollText"),enroll,updateEnroll);
