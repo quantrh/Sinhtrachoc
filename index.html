@@ -59,7 +59,15 @@ textarea.typing-box.alert,textarea.typing-box.alert:focus{background:#ffe9ed;bor
 <div class="monitor-wrap"><div id="dangerBanner" role="alert" aria-live="polite" class="danger-inline" hidden><b>⚠️ Phát hiện hành vi gõ bất thường</b><div id="dangerDetail"></div></div><textarea id="monitorText" class="typing-box" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Người cần kiểm tra gõ ở đây..."></textarea></div>
 <div class="row"><button class="alt" id="soundEnable">🔊 Bật âm thanh</button><button class="alt" id="monitorReset">Đặt lại phiên</button><span id="liveState" class="pill">Chưa đủ dữ liệu</span></div>
 <div class="stats"><div class="stat"><small>Cửa sổ đã xử lý</small><strong id="nWindows">0</strong></div><div class="stat"><small>Điểm tương đồng tương đối</small><strong id="confidence">—</strong></div><div class="stat"><small>Cửa sổ nghi vấn liên tiếp</small><strong id="streak">0/3</strong></div></div>
-<h3>Nhật ký quyết định</h3><div class="log" id="log"><div>Chưa có dữ liệu phiên.</div></div>
+<details open style="margin-top:14px"><summary><b>⚙️ Tinh chỉnh độ nhạy</b></summary>
+<p class="muted">Các cài đặt chỉ thay đổi cách so khớp, không sửa mẫu gốc. Càng thoáng càng ít báo nhầm chính chủ nhưng dễ bỏ sót người khác.</p>
+<label>Chế độ</label><select id="sensitivityPreset" style="width:100%;padding:10px"><option value="balanced">Cân bằng</option><option value="strict">Chặt</option><option value="relaxed">Thoáng</option><option value="custom">Tùy chỉnh</option></select>
+<label>Ngưỡng nghi vấn: <b id="thresholdValue">95%</b></label><input id="anomalyThreshold" type="range" min="80" max="100" step="1" value="95" style="width:100%">
+<p class="muted">Tăng ngưỡng để khó bị cảnh báo hơn.</p>
+<label>Dung sai khi gõ chậm: <b id="slowValue">20%</b></label><input id="slowTolerance" type="range" min="0" max="60" step="5" value="20" style="width:100%">
+<p class="muted">Cho phép tốc độ chậm hơn khi tạo mẫu, vẫn kiểm tra hình dạng nhịp gõ.</p>
+<label>Cửa sổ liên tiếp để cảnh báo mạnh</label><select id="alertWindows" style="width:100%;padding:10px"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select>
+<p id="tuningSummary" class="info"></p><button id="resetTuning" class="alt">Khôi phục mặc định</button></details><h3>Nhật ký quyết định</h3><div class="log" id="log"><div>Chưa có dữ liệu phiên.</div></div>
 </section>
 <section class="card page" data-page="guide" hidden>
 <h2>Hướng dẫn sử dụng KeyDNA Continuous</h2>
@@ -263,12 +271,21 @@ function trainModel(rows){
  return {m,s,forest,mm,ss,n,ifTrain,mahTrain};
 }
 function percentile(a,value){return a.filter(x=>x<=value).length/Math.max(1,a.length)}
+const tuningKey="keydna_tuning_v1",tuningDefaults={threshold:95,slow:20,streak:3};let tuning={...tuningDefaults};
+try{const t=JSON.parse(localStorage.getItem(tuningKey)||"null");if(t&&Number.isInteger(t.threshold)&&t.threshold>=80&&t.threshold<=100&&Number.isInteger(t.slow)&&t.slow>=0&&t.slow<=60&&Number.isInteger(t.streak)&&t.streak>=1&&t.streak<=5)tuning=t}catch(e){}
+function adjustedFeatures(f){
+ const expected=profile?.m?.[6],actual=f[6];
+ if(!Number.isFinite(expected)||expected<=0||!Number.isFinite(actual)||actual<=0)return f;
+ const slowRatio=expected/actual;if(slowRatio<=1)return f;
+ const factor=Math.min(slowRatio,1+tuning.slow/100);
+ return f.map((v,i)=>i===6?v*factor:(i<=5||(i>=7&&i<=39))?v/factor:v);
+}
 function evaluate(f){
- let z=f.map((v,i)=>(v-profile.m[i])/profile.s[i]);
+ let adjusted=adjustedFeatures(f),z=adjusted.map((v,i)=>(v-profile.m[i])/profile.s[i]);
  let iso=ifScore(z,profile.forest,profile.n),mah=mahScore(z,profile.mm,profile.ss);
  const pif=percentile(profile.ifTrain,iso),pm=percentile(profile.mahTrain,mah);
  const anomaly=(pif+pm)/2;
- return {iso,mah,anomaly,confidence:1-anomaly,flag:anomaly>=.9};
+ return {iso,mah,anomaly,confidence:1-anomaly,flag:anomaly>=tuning.threshold/100};
 }
 function showProfile(){
  $("profileState").textContent=profile?"Đã có mẫu hành vi":"Chưa có mẫu hành vi";
@@ -282,9 +299,9 @@ function updateMonitor(){
  if(count<=nDone)return;
  let f=windows(monitor).at(-1),r=evaluate(f);nDone=count;
  badStreak=r.flag?badStreak+1:0;
- const locked=badStreak>=3;
+ const locked=badStreak>=tuning.streak;
  if(r.flag)alertNow(r.anomaly,count,locked);else clearAlertUI()
- $("nWindows").textContent=count;$("confidence").textContent=Math.round(r.confidence*100)+"%";$("streak").textContent=badStreak+"/3";
+ $("nWindows").textContent=count;$("confidence").textContent=Math.round(r.confidence*100)+"%";$("streak").textContent=badStreak+"/"+tuning.streak;
  $("liveState").textContent=locked?"Cảnh báo: hành vi khác biệt":r.flag?"Đang nghi vấn":"Đang theo dõi";
  $("liveState").className="pill "+(locked?"alert":r.flag?"suspect":"good");
  const line=document.createElement("div");
@@ -301,6 +318,20 @@ $("train").onclick=()=>{
 };
 $("enrollReset").onclick=()=>{enroll.length=0;$("enrollText").value="";updateEnroll()};
 $("monitorReset").onclick=()=>{monitor.length=0;$("monitorText").value="";nDone=0;badStreak=0;clearAlertUI();$("nWindows").textContent="0";$("confidence").textContent="—";$("streak").textContent="0/3";$("liveState").textContent="Chưa đủ dữ liệu";$("liveState").className="pill";$("log").innerHTML="<div>Đã đặt lại phiên.</div>"};
+function applyTuning(t,reset=true){
+ tuning={threshold:Math.max(80,Math.min(100,+t.threshold)),slow:Math.max(0,Math.min(60,+t.slow)),streak:Math.max(1,Math.min(5,+t.streak))};
+ $("anomalyThreshold").value=tuning.threshold;$("slowTolerance").value=tuning.slow;$("alertWindows").value=String(tuning.streak);
+ $("thresholdValue").textContent=tuning.threshold+"%";$("slowValue").textContent=tuning.slow+"%";
+ $("tuningSummary").textContent="Ngưỡng "+tuning.threshold+"% · Dung sai chậm "+tuning.slow+"% · Cảnh báo mạnh sau "+tuning.streak+" cửa sổ.";
+ $("sensitivityPreset").value=tuning.threshold===90&&tuning.slow===0&&tuning.streak===2?"strict":tuning.threshold===95&&tuning.slow===20&&tuning.streak===3?"balanced":tuning.threshold===99&&tuning.slow===40&&tuning.streak===5?"relaxed":"custom";
+ localStorage.setItem(tuningKey,JSON.stringify(tuning));if(reset)$("monitorReset").click();
+}
+$("sensitivityPreset").onchange=e=>{if(e.target.value==="strict")applyTuning({threshold:90,slow:0,streak:2});else if(e.target.value==="balanced")applyTuning(tuningDefaults);else if(e.target.value==="relaxed")applyTuning({threshold:99,slow:40,streak:5})};
+$("anomalyThreshold").onchange=e=>applyTuning({...tuning,threshold:+e.target.value});
+$("slowTolerance").onchange=e=>applyTuning({...tuning,slow:+e.target.value});
+$("alertWindows").onchange=e=>applyTuning({...tuning,streak:+e.target.value});
+$("resetTuning").onclick=()=>applyTuning(tuningDefaults);
+applyTuning(tuning,false);
 $("soundEnable").onclick=async()=>{try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();await audioCtx.resume();soundEnabled=true;$("soundEnable").textContent="🔊 Đã bật âm thanh"}catch(e){alert("Không bật được âm thanh: "+e.message)}};
 $("profileList").onchange=e=>selectProfile(e.target.value);
 $("verifyProfile").onchange=e=>selectProfile(e.target.value);
