@@ -3,25 +3,26 @@
 <header><h1>⌨ KeyDNA Lab</h1><div>POC sinh trắc học hành vi gõ phím · Machine Learning · Supabase</div></header>
 <main><section class="panel"><button id="enrollTab">Đăng ký / học mẫu</button><button id="verifyTab" class="light">Thử nhận diện</button>
 <div id="enrollArea"><label>Tên người tham gia</label><input id="name" maxlength="60" placeholder="Tên hiển thị"></div>
-<div id="verifyArea" hidden><label>Hồ sơ muốn thử</label><select id="profiles"></select><label><input type="checkbox" id="ownerCheck" style="width:auto"> Tôi thực sự là chính chủ hồ sơ này</label></div>
+<div id="verifyArea" hidden><label>Hồ sơ muốn thử</label><select id="profiles"></select><section class="panel" style="margin-top:16px"><h3>Quản lý hồ sơ muốn thử</h3>
+<small>Xuất bản sao JSON, nhập hồ sơ vào trình duyệt/tài khoản mới hoặc xóa các mẫu đã thu.</small>
+<p><button id="exportBtn">⬇ Tải hồ sơ JSON</button><button class="light" id="importBtn">⬆ Nhập JSON</button><input type="file" id="importFile" accept=".json,application/json" hidden></p>
+<div id="selectedDetails"></div><div id="sampleList"></div><p><button id="deleteProfileBtn" style="background:#ae3541">Xóa toàn bộ hồ sơ</button></p><small>Xóa hồ sơ sẽ xóa cả mẫu huấn luyện và lịch sử kiểm thử. Chỉ chủ hồ sơ có quyền quản lý.</small></section>
+<label><input type="checkbox" id="ownerCheck" style="width:auto"> Tôi thực sự là chính chủ hồ sơ này</label></div>
 <label>Câu mẫu (chỉ dùng bàn phím vật lý)</label><p class="phrase" id="phrase"></p><small>Có thể sửa lỗi bằng Backspace hoặc Delete (kể cả giữa câu). Không dán văn bản hoặc dùng bộ gõ IME.</small>
 <label style="display:block;margin-top:14px">Gõ câu vào đây</label><input id="typing" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Gõ câu mẫu...">
 <div><b id="progress">0/15</b> mẫu học · <span id="duration">0.0</span> giây</div><p><button id="send">Lưu mẫu gõ</button><button class="light" id="clear">Gõ lại</button></p><div id="msg">Đang kết nối...</div><p id="result"></p></section>
-<aside><section class="panel"><h3>Nhịp gõ vừa nhập</h3><small>Thời gian giữ mỗi phím (ms)</small><canvas id="plot" width="500" height="200"></canvas><p>Thu <b>15 mẫu</b> để tạo hồ sơ; khuyến nghị nâng lên 20–30 mẫu. Sau đó thử ít nhất 5 lượt chính chủ và 5 lượt người khác.</p><button class="light" id="refresh">Làm mới danh sách</button></section><section class="panel" style="margin-top:16px"><h3>Quản lý hồ sơ của tôi</h3>
-<small>Xuất bản sao JSON, nhập hồ sơ vào trình duyệt/tài khoản mới hoặc xóa các mẫu đã thu.</small>
-<p><button id="exportBtn">⬇ Tải hồ sơ JSON</button><button class="light" id="importBtn">⬆ Nhập JSON</button><input type="file" id="importFile" accept=".json,application/json" hidden></p>
-<div id="sampleList"></div><p><button id="deleteProfileBtn" style="background:#ae3541">Xóa toàn bộ hồ sơ</button></p><small>Xóa hồ sơ sẽ xóa cả mẫu huấn luyện và lịch sử kiểm thử. Chỉ chủ hồ sơ có quyền quản lý.</small></section>
-<section class="panel" style="margin-top:16px"><h3>💡 Ứng dụng nhận diện như thế nào?</h3>
-<p><b>1. Học nhịp gõ:</b> Bạn gõ cùng một câu ít nhất 15 lần. Ứng dụng đo thời gian giữ phím, thời gian giữa hai lần nhấn, khoảng dừng và tổng thời gian.</p>
-<p><b>2. Tạo dấu vân tay hành vi:</b> Mỗi lượt gõ được chuyển thành 64 đặc trưng số. Các mẫu lưu tại Supabase, không dùng nội dung gõ làm mật khẩu.</p>
-<p><b>3. Thuật toán one-class kNN:</b> Khi có lượt gõ mới, backend chuẩn hóa chênh lệch giữa các đặc trưng bằng độ phân tán robust (MAD), tìm 3 mẫu gần nhất và tính điểm khoảng cách trung bình.</p>
-<p><b>4. Ra kết quả:</b> Nếu khoảng cách không vượt ngưỡng suy ra từ các mẫu huấn luyện (leave-one-out, phân vị 90% nhân 1,25), hiển thị «Phù hợp», ngược lại «Không phù hợp».</p>
-<p><b>5. Đánh giá:</b> FAR là tỷ lệ chấp nhận nhầm người khác; FRR là tỷ lệ từ chối nhầm chính chủ. Các nhãn thử nghiệm do người tham gia tự khai báo.</p>
-<small>Đây là mô hình thử nghiệm với dữ liệu ít, không phải hệ thống xác thực bảo mật. Bản hiện tại cho phép sửa lỗi khi gõ, nhưng chưa mô hình hóa số lần sửa như đặc trưng riêng.</small></section>
+<aside><section class="panel"><h3>Nhịp gõ vừa nhập</h3><small>Thời gian giữ mỗi phím (ms)</small><canvas id="plot" width="500" height="200"></canvas><p>Thu <b>15 mẫu</b> để tạo hồ sơ; khuyến nghị nâng lên 20–30 mẫu. Sau đó thử ít nhất 5 lượt chính chủ và 5 lượt người khác.</p><button class="light" id="refresh">Làm mới danh sách</button></section><section class="panel" style="margin-top:16px"><h3>🧠 Máy học nhận ra nhịp gõ bằng cách nào?</h3>
+<p><b>Đây là Machine Learning (học máy), dùng thuật toán one-class kNN.</b> Hãy tưởng tượng mỗi người có một nhịp bước chân. Khi gõ cùng một câu, mỗi người cũng có nhịp riêng: có phím giữ lâu hơn, có đoạn nghỉ một chút.</p>
+<p><b>1. Máy học từ ví dụ:</b> Bạn gõ câu mẫu tối thiểu 15 lần (20–30 lần sẽ tốt hơn). Mỗi lần máy đo tốc độ, thời gian giữ phím, khoảng dừng rồi ghi lại thành 64 con số.</p>
+<p><b>2. So sánh:</b> Khi có người gõ thử, máy tìm 3 lần gõ gần giống nhất trong các mẫu cũ. Tưởng tượng như so nét chữ mới với 3 trang viết quen thuộc nhất.</p>
+<p><b>3. Quyết định:</b> Nếu nhịp gõ mới đủ gần với nhịp quen thuộc, máy báo «Phù hợp». Nếu quá khác, máy báo «Không phù hợp». Giới hạn «đủ gần» được ước tính từ mức khác nhau của chính những mẫu đã học.</p>
+<p><b>Ví dụ:</b> Bạn thường gõ cả câu khoảng 4 giây, hay dừng giữa câu. Người khác gõ đều trong 2 giây thì máy có thể nhận ra sự khác biệt. Máy cũng xét nhiều dấu hiệu khác, không chỉ tổng thời gian.</p>
+<p><b>Độ chính xác:</b> Máy có thể nhận nhầm người lạ hoặc từ chối nhầm chính chủ. Thống kê FAR/FRR cho biết hai loại sai đó, dựa vào nhãn do người thử tự khai báo.</p>
+<small>Đây chỉ là POC để tìm hiểu Machine Learning, không phải hệ thống xác thực bảo mật. Khi đổi bàn phím hay cách gõ, kết quả có thể khác. Tính năng sửa lỗi đã hoạt động nhưng chưa được học thành đặc trưng riêng.</small></section>
 <section class="panel" style="margin-top:16px"><h3>Thống kê hồ sơ của tôi</h3><button id="statsBtn">Xem FAR / FRR</button><div id="stats"></div></section></aside></main>
 <script type="module">
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.57.0';
-const url='https://rmbsxccrwrktbjlnezpu.supabase.co',key='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJtYnN4Y2Nyd3JrdGJqbG5lenB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg2MjczNjQsImV4cCI6MjA2NDIwMzM2NH0.ydCqificftdtn1niRciFCifeuo8aX6SDGti-hCY5Z_Y',sb=createClient(url,key);
+const url='https://rmbsxccrwrktbjlnezpu.supabase.co',key='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJtYnN4Y2N'+'yd3JrdGJqbG5lenB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg2MjczNjQsImV4cCI6MjA2NDIwMzM2NH0.ydCqificftdtn1niRciFCifeuo8aX6SDGti-hCY5Z_Y',sb=createClient(url,key);
 const P='hom nay toi muon hoc them nhieu dieu moi',E=id=>document.getElementById(id);E('phrase').textContent=P;
 let mode='enroll',me=null,profiles=[],keys=[],active=new Map(),invalid=false,start=null,editCount=0;
 function say(s){E('msg').textContent=s}
@@ -60,22 +61,20 @@ typing.oninput=()=>{
  if(start!==null)E('duration').textContent=((performance.now()-start)/1000).toFixed(1);
 };
 async function api(action,more={}){let {data:{session}}=await sb.auth.getSession();if(!session)throw Error('Chưa đăng nhập');let r=await fetch(url+'/functions/v1/kd-api',{method:'POST',headers:{'Content-Type':'application/json',apikey:key,Authorization:'Bearer '+session.access_token},body:JSON.stringify({action,...more})});let d=await r.json();if(!r.ok||d.error)throw Error(d.error||'Lỗi API '+r.status);return d}
-async function refresh(){let d=await api('list');profiles=d.profiles;me=profiles.find(x=>x.owner);E('progress').textContent=(me?.count??0)+'/15';if(me)E('name').value=me.name;E('profiles').replaceChildren();profiles.forEach(p=>{let o=document.createElement('option');o.value=p.id;o.textContent=p.name+' ('+p.count+' mẫu)';E('profiles').append(o)});say(me?.ready?'Đã có hồ sơ. Bạn có thể kiểm thử.':'Đăng ký 15 lần để tạo hồ sơ nhận diện.')}
+async function refresh(){let d=await api('list');profiles=d.profiles;me=profiles.find(x=>x.owner);E('progress').textContent=(me?.count??0)+'/15';if(me)E('name').value=me.name;const selectedId=E('profiles').value;E('profiles').replaceChildren();profiles.forEach(p=>{let o=document.createElement('option');o.value=p.id;o.textContent=p.name+' — '+p.count+' mẫu — '+(p.ready?'Sẵn sàng':'Chưa đủ mẫu')+(p.owner?' (của tôi)':'');E('profiles').append(o)});if(profiles.some(p=>p.id===selectedId))E('profiles').value=selectedId;selected();say(me?.ready?'Đã có hồ sơ. Bạn có thể kiểm thử.':'Đăng ký 15 lần để tạo hồ sơ nhận diện.')}
 function switchTo(m){mode=m;E('enrollArea').hidden=m!=='enroll';E('verifyArea').hidden=m!=='verify';E('send').textContent=m==='enroll'?'Lưu mẫu gõ':'Chấm điểm nhận diện';reset()}
-E('enrollTab').onclick=()=>switchTo('enroll');E('verifyTab').onclick=()=>switchTo('verify');E('clear').onclick=reset;E('refresh').onclick=()=>refresh().catch(e=>say(e.message));
+E('enrollTab').onclick=()=>switchTo('enroll');E('verifyTab').onclick=()=>switchTo('verify');E('clear').onclick=reset;E('refresh').onclick=()=>refresh().catch(e=>say(e.message));E('profiles').onchange=()=>manage().catch(e=>say(e.message));
 E('send').onclick=async()=>{E('send').disabled=true;try{if(invalid||E('typing').value!==P||keys.length!==P.length||keys.some(k=>k.up===null)||active.size)throw Error('Hãy gõ đúng toàn bộ câu và nhả hết các phím trước khi lưu');let features=feats();if(mode==='enroll'){let d=await api('enroll',{name:E('name').value.trim(),features});say('Đã lưu mẫu '+d.count+'/15');await refresh()}else{if(!E('profiles').value)throw Error('Chưa có hồ sơ');let r=await api('verify',{profile_id:E('profiles').value,claimed_owner:E('ownerCheck').checked,features});E('result').textContent=(r.accepted?'✓ PHÙ HỢP':'✕ KHÔNG PHÙ HỢP')+' — điểm '+r.score.toFixed(3)+' / ngưỡng '+r.threshold.toFixed(3);say('Kết quả được lưu vào Supabase')}keys=[];active.clear();invalid=false;start=null;editCount=0;E('typing').value=''}catch(e){say('⚠ '+e.message)}finally{E('send').disabled=false}};
+function selected(){const p=profiles.find(x=>x.id===E('profiles').value);E('selectedDetails').textContent=p?p.name+' · '+p.count+' mẫu · '+(p.ready?'Sẵn sàng':'Chưa đủ 15 mẫu')+(p.owner?' · Của bạn':' · Người khác'):'Chưa có hồ sơ';return p}
 async function manage(){
- let d=await api('manage'),list=E('sampleList');list.replaceChildren();
- if(!d.profile){list.textContent='Chưa có hồ sơ trong tài khoản này.';return d}
- const h=document.createElement('p');h.textContent=d.profile.display_name+' · '+d.samples.length+' mẫu đã lưu';list.append(h);
- const detail=document.createElement('details'),summary=document.createElement('summary');summary.textContent='Xem và xóa từng mẫu';detail.append(summary);
- for(const sample of d.samples){const line=document.createElement('div');line.style.cssText='display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #eee;padding:4px';
- const txt=document.createElement('small');txt.textContent='#'+sample.id+' · '+new Date(sample.created_at).toLocaleString('vi-VN');
- const btn=document.createElement('button');btn.textContent='Xóa';btn.style.background='#ae3541';btn.onclick=async()=>{if(!confirm('Xóa mẫu #'+sample.id+'?'))return;try{await api('delete_sample',{sample_id:sample.id});await manage();await refresh()}catch(e){say(e.message)}};
- line.append(txt,btn);detail.append(line)}
- list.append(detail);return d;
+ const p=selected(),list=E('sampleList');list.replaceChildren();
+ if(!p){E('exportBtn').disabled=true;E('deleteProfileBtn').disabled=true;return {profile:null,owner:false,samples:[]}}
+ const d=await api('manage',{profile_id:p.id});E('exportBtn').disabled=!d.owner;E('deleteProfileBtn').disabled=!d.owner;
+ if(!d.owner){list.textContent='Bạn có thể thử nhận diện hồ sơ này. Chỉ chủ hồ sơ có thể xem và xóa từng mẫu, xuất JSON hoặc xóa hồ sơ.';return d}
+ const detail=document.createElement('details'),summary=document.createElement('summary');summary.textContent='Xem và xóa '+d.count+' mẫu';detail.append(summary);
+ for(const sample of d.samples){const line=document.createElement('p'),txt=document.createElement('small'),btn=document.createElement('button');txt.textContent='#'+sample.id+' · '+new Date(sample.created_at).toLocaleString('vi-VN')+' ';btn.textContent='Xóa';btn.onclick=async()=>{if(!confirm('Xóa mẫu #'+sample.id+'?'))return;try{await api('delete_sample',{sample_id:sample.id});await refresh();await manage()}catch(e){say(e.message)}};line.append(txt,btn);detail.append(line)}list.append(detail);return d
 }
-E('exportBtn').onclick=async()=>{try{let d=await manage();if(!d.profile)throw Error('Chưa có hồ sơ để xuất');
+E('exportBtn').onclick=async()=>{try{let d=await manage();if(!d.profile||!d.owner)throw Error('Chỉ chủ hồ sơ được xuất dữ liệu');
  let payload={format:'keydna-profile',version:1,exported_at:new Date().toISOString(),name:d.profile.display_name,phrase:d.profile.phrase,samples:d.samples.map(x=>x.features)};
  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='keydna-profile-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000);say('Đã xuất '+payload.samples.length+' mẫu thành JSON')}catch(e){say(e.message)}};
 E('importBtn').onclick=()=>E('importFile').click();
@@ -83,7 +82,7 @@ E('importFile').onchange=async e=>{try{const file=e.target.files[0];if(!file)ret
  const d=JSON.parse(await file.text());if(d.format!=='keydna-profile'||d.version!==1||!Array.isArray(d.samples))throw Error('Không đúng định dạng KeyDNA JSON');
  if(!confirm('Nhập '+d.samples.length+' mẫu vào tài khoản này? Chỉ nhập khi chưa có hồ sơ.'))return;
  const r=await api('import',{name:d.name,phrase:d.phrase,samples:d.samples});await refresh();await manage();say('Đã nhập '+r.count+' mẫu thành công')}catch(e){say('⚠ '+e.message)}finally{e.target.value=''}};
-E('deleteProfileBtn').onclick=async()=>{try{const d=await manage();if(!d.profile)throw Error('Chưa có hồ sơ');
+E('deleteProfileBtn').onclick=async()=>{try{const d=await manage();if(!d.profile||!d.owner)throw Error('Chỉ chủ hồ sơ được xóa dữ liệu');
  if(!confirm('XÓA VĨNH VIỄN hồ sơ '+d.profile.display_name+', toàn bộ mẫu và các lượt kiểm thử?'))return;
  const typed=prompt('Nhập XOA để xác nhận xóa toàn bộ');if(typed!=='XOA')return;
  await api('delete_profile');await refresh();await manage();say('Đã xóa hồ sơ, các mẫu và lịch sử kiểm thử')}catch(e){say('⚠ '+e.message)}};
