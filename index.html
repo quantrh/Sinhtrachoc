@@ -91,7 +91,8 @@ button:not(.nav button){box-shadow:0 2px 4px rgba(0,89,85,.08)}button:focus-visi
 <p><b>FRR — Tỷ lệ từ chối nhầm:</b> Chính chủ gõ thử nhưng máy báo không phù hợp. Ví dụ, chính chủ thử 20 lần và bị từ chối 3 lần → FRR = 15%. <b>Càng thấp càng tốt</b>, vì giảm phiền hà cho người dùng thật.</p>
 <p><b>Vì sao cần checkbox?</b> Máy chỉ biết nhịp gõ và kết quả của nó. Checkbox cho biết thực tế người thử tự nhận là chính chủ hay người khác, để máy thống kê hai loại sai nói trên. Đánh dấu sai khiến FAR/FRR không đáng tin cậy.</p>
 <p><b>Có mức phần trăm nào là chuẩn?</b> Không có một mức FAR/FRR chung được coi là đạt cho mọi hệ thống. Khi nghiên cứu sinh trắc học, người ta thường báo cáo FAR, FRR và EER (điểm mà FAR và FRR bằng nhau) trên cùng một tập kiểm thử. Ví dụ <b>FAR 1%</b> có nghĩa trung bình khoảng 1 trên 100 lượt thử của người khác được chấp nhận, <b>không phải</b> tiêu chuẩn mặc định. Với xác thực có rủi ro cao, mục tiêu FAR thường phải rất thấp, nhưng cần tự xác định theo bối cảnh sử dụng và kiểm định độc lập.</p><p class="help">FAR/FRR ở đây là số liệu thử nghiệm dựa trên lời tự khai, không phải độ chính xác đã được kiểm định độc lập. Không có lượt thử thuộc một nhóm thì chưa tính được tỷ lệ cho nhóm đó.</p>
-</div></details><button id="statsBtn">Xem FAR / FRR</button><div id="stats"></div></section></div>
+</div></details><div class="actions"><button id="statsBtn">Xem FAR / FRR</button><button id="clearStatsBtn" class="light" hidden>Xóa lịch sử FAR / FRR</button></div>
+<p class="help">Xóa lịch sử kiểm thử sẽ đặt lại thống kê FAR/FRR của hồ sơ đang chọn, nhưng vẫn giữ nguyên mẫu gõ, hồ sơ và cấu hình mô hình. Chỉ chủ hồ sơ có quyền xóa.</p><div id="stats"></div></section></div>
 
 <div class="view" data-view="tune" hidden>
 <section class="card"><div class="step">PHÒNG THÍ NGHIỆM MACHINE LEARNING</div><h2>Tinh chỉnh &amp; kiểm định mô hình</h2>
@@ -208,9 +209,9 @@ E('sampleTarget').onchange=async()=>{advice();if(!me){E('progress').textContent=
 function syncPicker(){const picker=E('verifyPicker'),old=picker.value||E('profiles').value;picker.replaceChildren();
  for(const p of profiles){const o=document.createElement('option');o.value=p.id;o.textContent=p.name+' — '+p.count+'/'+p.target_samples+' mẫu'+(p.ready?'':' (chưa đủ)');picker.append(o)}
  if(profiles.some(p=>p.id===old))picker.value=old;E('profiles').value=picker.value;selected();
- const p=profiles.find(x=>x.id===picker.value);syncTune();E('verifySummary').textContent=p?'Hồ sơ '+p.name+' có '+p.count+'/'+p.target_samples+' mẫu. '+(p.ready?'Sẵn sàng thử.':'Cần đủ '+p.target_samples+' mẫu để thử.'):'Chưa có hồ sơ nào';
+ const p=profiles.find(x=>x.id===picker.value);E('clearStatsBtn').hidden=!(p&&p.owner);syncTune();E('verifySummary').textContent=p?'Hồ sơ '+p.name+' có '+p.count+'/'+p.target_samples+' mẫu. '+(p.ready?'Sẵn sàng thử.':'Cần đủ '+p.target_samples+' mẫu để thử.'):'Chưa có hồ sơ nào';
 }
-E('verifyPicker').onchange=()=>{E('verifyOutcome').textContent='';E('verifyMessage').textContent='Hãy gõ câu mẫu để kiểm tra hồ sơ đã chọn.';E('profiles').value=E('verifyPicker').value;syncPicker();manage().catch(e=>say(e.message))};
+E('verifyPicker').onchange=()=>{E('stats').textContent='';E('verifyOutcome').textContent='';E('verifyMessage').textContent='Hãy gõ câu mẫu để kiểm tra hồ sơ đã chọn.';E('profiles').value=E('verifyPicker').value;syncPicker();manage().catch(e=>say(e.message))};
 E('verifyReset').onclick=()=>{E('verifyTyping').value='';E('verifyOutcome').textContent='';E('verifyMessage').textContent='Hãy gõ lại câu mẫu'};
 E('verifyTyping').onpaste=e=>{e.preventDefault();E('verifyMessage').textContent='Không dùng copy/paste'};
 E('verifyTyping').ondrop=e=>e.preventDefault();
@@ -323,6 +324,22 @@ E('tuneSave').onclick=async()=>{
  E('tuneSave').disabled=true;
  try{await api('save_model',tuneConfig());await refresh();E('tuneMessage').textContent='Đã lưu mô hình cho hồ sơ. Lịch sử kiểm thử không thay đổi.'}
  catch(e){E('tuneMessage').textContent='⚠ '+e.message}finally{E('tuneSave').disabled=false}
+};
+
+E('clearStatsBtn').onclick=async()=>{
+ const p=profiles.find(x=>x.id===E('verifyPicker').value);
+ if(!p){E('stats').textContent='⚠ Hãy chọn hồ sơ trước.';return}
+ if(!p.owner){E('stats').textContent='⚠ Chỉ chủ hồ sơ mới được xóa lịch sử FAR/FRR.';return}
+ if(!confirm('XÓA TOÀN BỘ lịch sử kiểm thử FAR/FRR của hồ sơ "'+p.name+'"?\n\nThao tác này không thể hoàn tác. Mẫu gõ huấn luyện, hồ sơ và cấu hình mô hình sẽ được giữ nguyên.'))return;
+ const button=E('clearStatsBtn');button.disabled=true;E('stats').textContent='Đang xóa lịch sử kiểm thử...';
+ try{
+ const result=await api('clear_stats',{profile_id:p.id});
+ E('stats').textContent='Đã xóa '+result.deleted_count+' lượt kiểm thử của hồ sơ "'+p.name+'". FAR/FRR hiện chưa có dữ liệu.';
+ E('tuneCounts').textContent='Lịch sử kiểm thử đã được xóa. Nhấn Phân tích & so sánh để cập nhật biểu đồ.';
+ E('tuneVariants').replaceChildren();
+ const chart=E('tuneChart');chart.getContext('2d').clearRect(0,0,chart.width,chart.height);
+ E('statsBtn').click();
+ }catch(e){E('stats').textContent='⚠ '+e.message}finally{button.disabled=false}
 };
 
 E('statsBtn').onclick=async()=>{
