@@ -1,29 +1,80 @@
 <!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KeyDNA Lab</title><style>
-:root{font-family:system-ui,sans-serif;color:#173b3b;background:#f1f6f5}body{margin:0}header{background:#006b68;color:white;padding:18px max(18px,calc((100% - 950px)/2))}main{max-width:950px;margin:24px auto;padding:0 14px;display:grid;grid-template-columns:3fr 2fr;gap:18px}.panel{background:white;border-radius:14px;border:1px solid #d9e8e4;padding:22px;box-shadow:0 3px 10px #00000008}input,select{box-sizing:border-box;width:100%;padding:12px;margin:7px 0 15px;border:1px solid #b4cac7;border-radius:8px;font-size:16px}button{background:#006b68;border:0;color:white;padding:11px 15px;border-radius:8px;cursor:pointer;margin:4px 3px 8px 0}button:disabled{opacity:.4}.light{background:#d8ebe8;color:#006b68}.phrase{background:#eff8f5;border-radius:8px;padding:14px;font:17px monospace;line-height:1.6}small{color:#6b8080}#msg{background:#e9f4f1;padding:14px;border-radius:8px;line-height:1.5;min-height:38px}#result{font-size:24px;font-weight:bold}canvas{width:100%;height:180px;background:#f8fcfb}label{font-weight:600}h1{margin:0}h3{margin-top:0}@media(max-width:730px){main{display:block}.panel{margin-bottom:16px}}</style></head><body>
-<header><h1>⌨ KeyDNA Lab</h1><div>POC sinh trắc học hành vi gõ phím · Machine Learning · Supabase</div></header>
-<main><section class="panel"><button id="enrollTab">Đăng ký / học mẫu</button><button id="verifyTab" class="light">Thử nhận diện</button>
-<div id="enrollArea"><label>Tên người tham gia</label><input id="name" maxlength="60" placeholder="Tên hiển thị"></div>
-<div id="verifyArea" hidden><label>Hồ sơ muốn thử</label><select id="profiles"></select><section class="panel" style="margin-top:16px"><h3>Quản lý hồ sơ muốn thử</h3>
-<small>Xuất bản sao JSON, nhập hồ sơ vào trình duyệt/tài khoản mới hoặc xóa các mẫu đã thu.</small>
-<p><button id="exportBtn">⬇ Tải hồ sơ JSON</button><button class="light" id="importBtn">⬆ Nhập JSON</button><input type="file" id="importFile" accept=".json,application/json" hidden></p>
-<div id="selectedDetails"></div><div id="sampleList"></div><p><button id="deleteProfileBtn" style="background:#ae3541">Xóa toàn bộ hồ sơ</button></p><small>Xóa hồ sơ sẽ xóa cả mẫu huấn luyện và lịch sử kiểm thử. Chỉ chủ hồ sơ có quyền quản lý.</small></section>
-<label><input type="checkbox" id="ownerCheck" style="width:auto"> Tôi thực sự là chính chủ hồ sơ này</label></div>
-<label>Câu mẫu (chỉ dùng bàn phím vật lý)</label><p class="phrase" id="phrase"></p><small>Có thể sửa lỗi bằng Backspace hoặc Delete (kể cả giữa câu). Không dán văn bản hoặc dùng bộ gõ IME.</small>
-<label style="display:block;margin-top:14px">Gõ câu vào đây</label><input id="typing" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Gõ câu mẫu...">
-<div><b id="progress">0/15</b> mẫu học · <span id="duration">0.0</span> giây</div><p><button id="send">Lưu mẫu gõ</button><button class="light" id="clear">Gõ lại</button></p><div id="msg">Đang kết nối...</div><p id="result"></p></section>
-<aside><section class="panel"><h3>Nhịp gõ vừa nhập</h3><small>Thời gian giữ mỗi phím (ms)</small><canvas id="plot" width="500" height="200"></canvas><p>Thu <b>15 mẫu</b> để tạo hồ sơ; khuyến nghị nâng lên 20–30 mẫu. Sau đó thử ít nhất 5 lượt chính chủ và 5 lượt người khác.</p><button class="light" id="refresh">Làm mới danh sách</button></section><section class="panel" style="margin-top:16px"><h3>🧠 Máy học nhận ra nhịp gõ bằng cách nào?</h3>
-<p><b>Đây là Machine Learning (học máy), dùng thuật toán one-class kNN.</b> Hãy tưởng tượng mỗi người có một nhịp bước chân. Khi gõ cùng một câu, mỗi người cũng có nhịp riêng: có phím giữ lâu hơn, có đoạn nghỉ một chút.</p>
-<p><b>1. Máy học từ ví dụ:</b> Bạn gõ câu mẫu tối thiểu 15 lần (20–30 lần sẽ tốt hơn). Mỗi lần máy đo tốc độ, thời gian giữ phím, khoảng dừng rồi ghi lại thành 64 con số.</p>
-<p><b>2. So sánh:</b> Khi có người gõ thử, máy tìm 3 lần gõ gần giống nhất trong các mẫu cũ. Tưởng tượng như so nét chữ mới với 3 trang viết quen thuộc nhất.</p>
-<p><b>3. Quyết định:</b> Nếu nhịp gõ mới đủ gần với nhịp quen thuộc, máy báo «Phù hợp». Nếu quá khác, máy báo «Không phù hợp». Giới hạn «đủ gần» được ước tính từ mức khác nhau của chính những mẫu đã học.</p>
-<p><b>Ví dụ:</b> Bạn thường gõ cả câu khoảng 4 giây, hay dừng giữa câu. Người khác gõ đều trong 2 giây thì máy có thể nhận ra sự khác biệt. Máy cũng xét nhiều dấu hiệu khác, không chỉ tổng thời gian.</p>
-<p><b>Độ chính xác:</b> Máy có thể nhận nhầm người lạ hoặc từ chối nhầm chính chủ. Thống kê FAR/FRR cho biết hai loại sai đó, dựa vào nhãn do người thử tự khai báo.</p>
-<small>Đây chỉ là POC để tìm hiểu Machine Learning, không phải hệ thống xác thực bảo mật. Khi đổi bàn phím hay cách gõ, kết quả có thể khác. Tính năng sửa lỗi đã hoạt động nhưng chưa được học thành đặc trưng riêng.</small></section>
-<section class="panel" style="margin-top:16px"><h3>Thống kê hồ sơ của tôi</h3><button id="statsBtn">Xem FAR / FRR</button><div id="stats"></div></section></aside></main>
+:root{font-family:system-ui,sans-serif;color:#173b3b;background:#f1f6f5}body{margin:0}header{background:#006b68;color:white;padding:18px max(18px,calc((100% - 950px)/2))}main{max-width:950px;margin:24px auto;padding:0 14px;display:grid;grid-template-columns:3fr 2fr;gap:18px}.panel{background:white;border-radius:14px;border:1px solid #d9e8e4;padding:22px;box-shadow:0 3px 10px #00000008}input,select{box-sizing:border-box;width:100%;padding:12px;margin:7px 0 15px;border:1px solid #b4cac7;border-radius:8px;font-size:16px}button{background:#006b68;border:0;color:white;padding:11px 15px;border-radius:8px;cursor:pointer;margin:4px 3px 8px 0}button:disabled{opacity:.4}.light{background:#d8ebe8;color:#006b68}.phrase{background:#eff8f5;border-radius:8px;padding:14px;font:17px monospace;line-height:1.6}small{color:#6b8080}#msg{background:#e9f4f1;padding:14px;border-radius:8px;line-height:1.5;min-height:38px}#result{font-size:24px;font-weight:bold}canvas{width:100%;height:180px;background:#f8fcfb}label{font-weight:600}h1{margin:0}h3{margin-top:0}@media(max-width:730px){main{display:block}.panel{margin-bottom:16px}}</style><style>
+:root{--brand:#006b68;--gold:#ffc62f;--line:#dbe8e5;--ink:#183e3c;--muted:#647d79}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#f3f7f6;color:var(--ink);font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+header{background:linear-gradient(120deg,#034a49,#007b72);color:#fff;padding:22px 18px 32px}header .inner{max-width:970px;margin:auto}header h1{font-size:26px;margin:3px 0}header p{margin:0;opacity:.88}
+main{max-width:970px;margin:-16px auto 36px;padding:0 14px}section.card{background:white;border:1px solid var(--line);border-radius:17px;padding:18px;margin-bottom:14px;box-shadow:0 5px 17px #103e3910}
+.nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-bottom:16px;background:#fff;padding:6px;border-radius:15px;box-shadow:0 3px 12px #0001;position:sticky;top:0;z-index:5}
+.nav button{background:transparent;color:#366763;margin:0;padding:12px 5px;font-size:13px;border:0;border-radius:10px}.nav button.active{background:var(--brand);color:white;font-weight:750}
+.view[hidden],#enrollArea[hidden],#verifyArea[hidden]{display:none!important}
+h2{font-size:22px;margin:2px 0 8px}h3{font-size:17px;margin:0 0 9px}h4{margin:9px 0}p{margin:8px 0 13px}
+input:not([type=checkbox]):not([type=file]):not([type=range]),select{width:100%;border:1px solid #bbd1cb;padding:12px;border-radius:11px;background:#fff;color:var(--ink);font:inherit;margin:5px 0 12px}
+input[type=checkbox]{accent-color:var(--brand);width:18px;height:18px;vertical-align:middle}
+input[type=range]{width:100%;accent-color:var(--brand)}
+button{border:0;background:var(--brand);color:white;font:inherit;font-weight:680;border-radius:10px;padding:11px 15px;margin:3px 4px 7px 0;cursor:pointer;min-height:43px}
+button.light{background:#e7f4f0;color:#075d54}button.danger{background:#b9464b}button:disabled{opacity:.4;cursor:not-allowed}
+label{font-weight:700;font-size:13px}.help,.muted,small{color:var(--muted);font-size:12px}
+.phrase{padding:16px;background:#edf8f3;border:1px dashed #a9cdc3;border-radius:12px;font:16px/1.8 ui-monospace,Consolas,monospace;overflow-wrap:anywhere}
+#typing{font-size:16px;min-height:52px}
+#msg{padding:13px;background:#edf7f3;color:#245d56;border-radius:11px;min-height:46px}#result{font-size:20px;font-weight:800}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:13px 0}.kpi{background:#edf7f3;border-radius:11px;padding:12px;text-align:center}.kpi b{display:block;font-size:23px}.kpi small{display:block;font-size:11px}
+.actions{display:flex;flex-wrap:wrap;gap:5px}.step{color:#097466;font-weight:800;letter-spacing:.08em;font-size:11px}
+details.lesson{border:1px solid var(--line);border-radius:12px;margin:10px 0;overflow:hidden}
+details.lesson>summary{cursor:pointer;padding:15px;font-weight:760;color:#075e58;background:#f3faf7}
+details.lesson>div{padding:14px;line-height:1.7}
+.example{padding:13px;border-left:3px solid #149382;background:#f0f8f5;border-radius:5px}
+.math{font-family:ui-monospace,monospace;background:#eef4f2;padding:10px;border-radius:8px;overflow-x:auto;white-space:nowrap}
+canvas{width:100%;height:155px;background:#f9fcfb;border:1px solid var(--line);border-radius:9px}
+#sampleList details{padding:9px 0}#sampleList details p{display:flex;align-items:center;justify-content:space-between}
+#sampleList button{font-size:12px;min-height:31px;padding:6px 9px}
+#sampleList{max-height:280px;overflow:auto}
+.badge{font-size:12px;border-radius:30px;padding:4px 9px;background:#e4f4ec;color:#196b55;font-weight:700}
+#progress{font-weight:800}#sampleList:empty{display:none}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:620px){header{padding-bottom:30px}.nav button{font-size:12px;padding:9px 3px}h2{font-size:20px}.cols{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}section.card{padding:15px}button{font-size:13px}}
+</style></head><body>
+<header><div class="inner"><div class="step" style="color:#c5f3e8">KEYDNA · BEHAVIORAL BIOMETRICS POC</div><h1>⌨ KeyDNA Lab</h1><p>Học thói quen gõ phím · Thử nhận diện · Tìm hiểu Machine Learning</p></div></header>
+<main><nav class="nav"><button type="button" class="active" data-tab="learn">① Lấy mẫu</button><button type="button" data-tab="verify">② Thử nhận diện</button><button type="button" data-tab="academy">③ Giáo trình</button></nav>
+<div class="view" data-view="learn">
+<section class="card"><div class="step">BƯỚC 1 · ĐĂNG KÝ VÀ LẤY MẪU</div><h2>Tạo dấu vân tay gõ phím</h2><p class="muted">Chọn tên, đọc câu mẫu rồi gõ lại. Mỗi lượt đúng sẽ được lưu trên Supabase. Bắt đầu từ 15 mẫu; nên tăng lên 20–30 mẫu qua nhiều phiên.</p>
+<div id="enrollArea"><label for="name">Tên người tham gia</label><input id="name" maxlength="60" placeholder="Ví dụ: Nguyễn Văn A"></div>
+<div id="verifyArea" hidden><label for="profiles">Hồ sơ muốn thử</label><select id="profiles"></select><label><input type="checkbox" id="ownerCheck"> Tôi là chính chủ hồ sơ đã chọn</label></div>
+<div class="phrase" id="phrase"></div><p class="help">Dùng bàn phím vật lý; được sửa bằng Backspace/Delete, không copy/paste. Chỉ lưu khi nội dung khớp hoàn toàn.</p>
+<label for="typing">Gõ câu ở đây</label><input id="typing" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Bắt đầu gõ...">
+<div class="kpis"><div class="kpi"><b id="progress">0/15</b><small>Mẫu đã học</small></div><div class="kpi"><b id="duration">0.0</b><small>Giây đã gõ</small></div><div class="kpi"><b>64</b><small>Đặc trưng ML</small></div></div>
+<button id="send">Lưu mẫu gõ</button><button class="light" id="clear">Gõ lại</button><div id="msg">Đang kết nối...</div><p id="result"></p>
+</section>
+<section class="card"><h3>Nhịp gõ của lần hiện tại</h3><p class="muted">Các cột thể hiện thời gian giữ mỗi phím (mili giây), giúp bạn nhìn thấy nhịp gõ riêng của mình.</p><canvas id="plot" width="500" height="200"></canvas></section>
+<section class="card"><div class="step">BƯỚC 2 · QUẢN LÝ HỒ SƠ</div><h2>Quản lý cấu hình và mẫu</h2><p class="muted">Chọn hồ sơ tại mục “Thử nhận diện” để quản lý. Chỉ chính chủ được tải/xóa dữ liệu. Tệp JSON giúp mang bộ mẫu sang tài khoản khác.</p>
+<div id="selectedDetails"></div><div class="actions"><button id="exportBtn">↓ Xuất JSON</button><button class="light" id="importBtn">↑ Nhập JSON</button><input type="file" id="importFile" accept=".json,application/json" hidden></div>
+<div id="sampleList"></div><button class="danger" id="deleteProfileBtn">Xóa toàn bộ hồ sơ</button>
+<p class="help">Xóa hồ sơ cũng xóa lịch sử kiểm thử. Nhập JSON chỉ thực hiện khi tài khoản chưa có hồ sơ.</p>
+</section>
+</div>
+<div class="view" data-view="verify" hidden>
+<section class="card"><div class="step">BƯỚC 3 · KIỂM TRA</div><h2>Bạn có phải người đã đăng ký?</h2><p>Chọn hồ sơ cần thử. Người khác cũng có thể gõ câu giống hệt để kiểm tra khả năng phân biệt của Machine Learning.</p>
+<div id="verifyTarget"><label for="verifyPicker">Hồ sơ muốn thử</label><select id="verifyPicker"></select><div id="verifySummary" class="example"></div><label><input type="checkbox" id="verifyOwner"> Tôi thực sự là người đã đăng ký hồ sơ này</label></div>
+<div class="phrase" id="verifyPhrase"></div><label for="verifyTyping">Gõ lại câu mẫu</label><input id="verifyTyping" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Gõ đúng câu trên..."><p class="help">Không copy/paste; chỉ dùng bàn phím vật lý.</p>
+<button id="verifySend">Kiểm tra nhịp gõ</button><button id="verifyReset" class="light">Gõ lại</button><div id="verifyMessage" class="example">Chọn hồ sơ đủ 15 mẫu để bắt đầu.</div><div id="verifyOutcome"></div>
+</section>
+<section class="card"><h3>Thống kê kiểm thử</h3><p class="muted">Chủ hồ sơ có thể xem kết quả các lượt test trước đó.</p><button id="statsBtn">Xem FAR / FRR</button><div id="stats"></div></section></div>
+<div class="view" data-view="academy" hidden>
+<section class="card"><div class="step">GIÁO TRÌNH TƯƠNG TÁC</div><h2>Hiểu Machine Learning từ cơ bản đến kiểm định</h2><p>Tài liệu học theo chương, có ví dụ, công thức, thực hành chỉnh tham số và câu hỏi tự kiểm tra. Phong cách học tập dựa trên giáo trình Isolation Forest mà bạn cung cấp; nội dung dưới đây dành riêng cho mô hình <b>one-class kNN</b> thực sự đang chạy trong KeyDNA.</p><div class="actions"><button id="expandLessons">Mở tất cả</button><button id="collapseLessons" class="light">Thu gọn</button></div></section>
+<details class="lesson" open><summary>01 · Bài toán sinh trắc học hành vi</summary><div><p>Nếu hai người cùng gõ “hom nay ...”, nội dung giống nhau nhưng thói quen gõ có thể khác. Ứng dụng không đoán danh tính từ câu chữ; nó tìm xem nhịp gõ mới có quen thuộc với một hồ sơ hay không.</p><p class="example">Ví dụ: A giữ phím hơi lâu và dừng ở khoảng giữa câu; B gõ nhanh, khá đều. Đây là hai hành vi có thể phân biệt bằng các phép đo thời gian.</p><p><b>Hạn chế:</b> Mệt mỏi, đổi bàn phím, cách đặt tay và kích thước thiết bị có thể làm nhịp gõ của cùng một người thay đổi.</p></div></details>
+<details class="lesson"><summary>02 · Máy thu thập những thông tin gì?</summary><div><p>Mỗi phím có thời điểm nhấn xuống (keydown) và nhả ra (keyup). Từ đó đo:</p><ul><li><b>Dwell time:</b> giữ phím trong bao lâu.</li><li><b>Press-to-press:</b> khoảng cách giữa hai lần nhấn.</li><li><b>Flight time:</b> thời gian từ nhả phím trước đến nhấn phím tiếp theo; có thể âm khi nhấn chồng phím.</li><li><b>Tổng thời gian:</b> từ phím đầu đến phím cuối.</li></ul><p>Những thời gian này được tóm tắt và lấy một số vị trí, tạo vector 64 con số. Tệp JSON xuất hồ sơ lưu vector số, không chứa toàn bộ phím đã gõ từng thời điểm.</p></div></details>
+<details class="lesson"><summary>03 · Huấn luyện one-class kNN là gì?</summary><div><p><b>Machine Learning</b> là dùng ví dụ để tạo quy tắc so sánh thay vì tự chỉ định “gõ dưới 3 giây thì đúng”. <b>kNN</b> viết tắt của <i>k-Nearest Neighbors</i> — những hàng xóm gần nhất.</p><p>Mỗi lần gõ được xem như một điểm trong không gian đặc trưng. Hệ thống ghi nhớ tối đa 40 mẫu, khi thử sẽ tìm <b>3 mẫu gần nhất</b> và lấy khoảng cách trung bình.</p><p class="example">Ví dụ đơn giản: nhịp mới cách 3 mẫu gần nhất lần lượt 0,3; 0,4; 0,5 thì điểm khác biệt trung bình = (0,3 + 0,4 + 0,5)/3 = <b>0,4</b>. Điểm càng nhỏ càng giống các mẫu cũ.</p><p>Đây là <b>one-class</b> vì chỉ học từ mẫu của người được đăng ký, chưa cần tập mẫu của tất cả người khác.</p></div></details>
+<details class="lesson"><summary>04 · Chuẩn hóa và công thức khoảng cách</summary><div><p>Không thể cộng trực tiếp một khoảng dừng 500 ms với một dấu hiệu chỉ dao động 10 ms: thang đo khác nhau. Hệ thống dùng trung vị và độ lệch tuyệt đối trung vị (MAD) để xác định mức biến thiên điển hình, có mức sàn 24 ms.</p><div class="math">scaleⱼ = max(24, 1.4826 × MADⱼ)</div><div class="math">distance = √[mean(min(6, |xⱼ−sⱼ| / scaleⱼ)²)]</div><p>Mỗi chênh lệch được chia cho độ biến thiên của đặc trưng đó; thành phần quá lớn được giới hạn ở 6. Sau đó lấy trung bình bình phương và căn bậc hai.</p><p class="example">Bạn không cần tính tay 64 phép đo. Chỉ cần nhớ: <b>điểm càng thấp → nhịp gõ càng gần với hồ sơ.</b></p></div></details>
+<details class="lesson"><summary>05 · Hệ thống tự đặt ngưỡng thế nào?</summary><div><p>Để đặt giới hạn “đủ giống”, máy lần lượt bỏ một mẫu đã học ra, đem mẫu đó so với các mẫu còn lại (leave-one-out). Tập các điểm khác biệt cho thấy nhịp gõ của chính chủ thường thay đổi thế nào.</p><p>Ứng dụng chọn điểm ở gần phân vị 90%, nhân với 1,25 để nới biên độ và dùng giá trị sàn 0,18. Đây là <b>heuristic của POC</b>, chưa được tối ưu trên bộ kiểm định độc lập.</p><div class="math">Ngưỡng = max(0,18; P90(điểm leave-one-out) × 1,25)</div><p>Nếu điểm của lượt thử nhỏ hơn hoặc bằng ngưỡng, hệ thống báo “Phù hợp”. Nếu vượt ngưỡng, báo “Không phù hợp”.</p></div></details>
+<details class="lesson"><summary>06 · Thực hành: thay đổi điểm và ngưỡng</summary><div><p>Di chuyển hai thanh để xem một quyết định có thể thay đổi ra sao. Đây là minh họa, không thay đổi ngưỡng backend Supabase.</p><label>Điểm khác biệt: <b id="scoreSimValue">0.70</b></label><input type="range" min="0" max="3" step="0.05" value="0.7" id="scoreSim"><label>Ngưỡng chấp nhận: <b id="cutSimValue">1.00</b></label><input type="range" min="0.1" max="3" step="0.05" value="1" id="cutSim"><div id="simResult" class="example"></div><p>Ngưỡng cao hơn sẽ chấp nhận nhiều lượt gõ hơn, nhưng có nguy cơ nhận nhầm người lạ. Ngưỡng thấp hơn chặt chẽ hơn, nhưng có thể từ chối nhầm chính chủ.</p></div></details>
+<details class="lesson"><summary>07 · Đánh giá FAR, FRR và độ tin cậy</summary><div><p><b>FAR (False Acceptance Rate):</b> số lần người khác được chấp nhận / tổng số lượt người khác thử.</p><p><b>FRR (False Rejection Rate):</b> số lần chính chủ bị từ chối / tổng số lượt chính chủ thử.</p><p class="example">Nếu có 20 lượt người khác thử và 2 lượt được chấp nhận, FAR = 10%. Nếu chính chủ thử 20 lượt và 3 lần bị từ chối, FRR = 15%.</p><p>Để đánh giá công bằng, dùng nhiều người và nhiều buổi khác nhau; tách các lượt kiểm thử khỏi dữ liệu học. Nhãn “chính chủ” do người dùng tự khai nên không phải bằng chứng danh tính đã xác minh.</p></div></details>
+<details class="lesson"><summary>08 · Câu hỏi tự kiểm tra</summary><div><p><b>1.</b> Điểm kNN thấp nghĩa là gì?</p><select class="quiz" data-answer="a"><option value="">Chọn đáp án</option><option value="a">Giống hồ sơ hơn</option><option value="b">Khác hồ sơ hơn</option></select><p><b>2.</b> Dùng 15 mẫu có bảo đảm nhận đúng người không?</p><select class="quiz" data-answer="b"><option value="">Chọn đáp án</option><option value="a">Có, luôn đúng</option><option value="b">Không, chỉ là bước thử nghiệm</option></select><p><b>3.</b> Nếu tăng ngưỡng rất cao, điều gì dễ xảy ra?</p><select class="quiz" data-answer="a"><option value="">Chọn đáp án</option><option value="a">Dễ nhận nhầm người khác hơn</option><option value="b">Không có ảnh hưởng</option></select><button id="quizCheck">Chấm bài</button><div id="quizResult"></div></div></details>
+<details class="lesson"><summary>09 · Tổng kết và hướng nâng cấp</summary><div><p><b>Luồng đầy đủ:</b> gõ mẫu → đo thời gian → trích xuất 64 đặc trưng → ghi nhớ các mẫu → tìm 3 hàng xóm gần nhất → so với ngưỡng → đánh giá FAR/FRR.</p><p>Để nâng cấp POC: (1) thu mẫu qua nhiều ngày, (2) tách mô hình cho từng loại bàn phím, (3) thêm đặc trưng sửa lỗi, (4) so sánh kNN với Isolation Forest hoặc mô hình khác trên cùng dữ liệu kiểm định.</p><p class="example"><b>Phân biệt:</b> Giáo trình đính kèm giải thích Isolation Forest (phát hiện điểm dễ bị cô lập trong rừng cây). KeyDNA hiện đang dùng kNN để so nhịp gõ. Chúng đều thuộc Machine Learning, nhưng là hai thuật toán khác nhau.</p></div></details>
+</div>
+</main>
 <script type="module">
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.57.0';
 const url='https://rmbsxccrwrktbjlnezpu.supabase.co',key='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJtYnN4Y2N'+'yd3JrdGJqbG5lenB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg2MjczNjQsImV4cCI6MjA2NDIwMzM2NH0.ydCqificftdtn1niRciFCifeuo8aX6SDGti-hCY5Z_Y',sb=createClient(url,key);
-const P='hom nay toi muon hoc them nhieu dieu moi',E=id=>document.getElementById(id);E('phrase').textContent=P;
+const P='hom nay toi muon hoc them nhieu dieu moi',E=id=>document.getElementById(id);E('phrase').textContent=P;E('verifyPhrase').textContent=P;
 let mode='enroll',me=null,profiles=[],keys=[],active=new Map(),invalid=false,start=null,editCount=0;
 function say(s){E('msg').textContent=s}
 function reset(){keys=[];active.clear();invalid=false;start=null;editCount=0;E('typing').value='';E('duration').textContent='0.0';E('result').textContent='';draw();E('typing').focus()}
@@ -60,10 +111,55 @@ typing.oninput=()=>{
  if(keys.map(k=>k.char).join('')!==typing.value){invalid=true;say('Thao tác này chưa được hỗ trợ. Chọn Gõ lại để đo chính xác.')}
  if(start!==null)E('duration').textContent=((performance.now()-start)/1000).toFixed(1);
 };
+
+// Mobile navigation: separate enrollment, verification, and course.
+function showView(name){
+ document.querySelectorAll('[data-view]').forEach(el=>el.hidden=el.dataset.view!==name);
+ document.querySelectorAll('[data-tab]').forEach(el=>{el.classList.toggle('active',el.dataset.tab===name);el.setAttribute('aria-current',el.dataset.tab===name?'page':'false')});
+ if(name==='learn')switchTo('enroll');if(name==='verify'){switchTo('verify');syncPicker()}window.scrollTo({top:0,behavior:'smooth'});
+}
+document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>showView(b.dataset.tab));
+function syncPicker(){const picker=E('verifyPicker'),old=picker.value||E('profiles').value;picker.replaceChildren();
+ for(const p of profiles){const o=document.createElement('option');o.value=p.id;o.textContent=p.name+' — '+p.count+' mẫu'+(p.ready?'':' (chưa đủ)');picker.append(o)}
+ if(profiles.some(p=>p.id===old))picker.value=old;E('profiles').value=picker.value;selected();
+ const p=profiles.find(x=>x.id===picker.value);E('verifySummary').textContent=p?'Hồ sơ '+p.name+' có '+p.count+' mẫu. '+(p.ready?'Sẵn sàng thử.':'Cần ít nhất 15 mẫu để thử.'):'Chưa có hồ sơ nào';
+}
+E('verifyPicker').onchange=()=>{E('profiles').value=E('verifyPicker').value;syncPicker();manage().catch(e=>say(e.message))};
+E('verifyReset').onclick=()=>{E('verifyTyping').value='';E('verifyOutcome').textContent='';E('verifyMessage').textContent='Hãy gõ lại câu mẫu'};
+E('verifyTyping').onpaste=e=>{e.preventDefault();E('verifyMessage').textContent='Không dùng copy/paste'};
+E('verifyTyping').ondrop=e=>e.preventDefault();
+let vKeys=[],vActive=new Map(),vInvalid=false;
+E('verifyTyping').onkeydown=e=>{if(e.key==='Tab'||e.key==='Shift'||['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;
+ if(e.ctrlKey||e.altKey||e.metaKey||e.repeat){if(e.key.length===1)e.preventDefault();return}
+ if(e.isComposing||e.key==='Dead'||e.key==='Process'){vInvalid=true;return}
+ const input=E('verifyTyping'),p=input.selectionStart??input.value.length,q=input.selectionEnd??p;
+ if(e.key==='Backspace'||e.key==='Delete'){const a=p===q?(e.key==='Backspace'?Math.max(0,p-1):p):p,b=p===q?(e.key==='Delete'?Math.min(vKeys.length,p+1):p):q;vKeys.splice(a,b-a);return}
+ if(e.key.length!==1)return;if(q>p)vKeys.splice(p,q-p);
+ const obj={down:performance.now(),up:null,char:e.key};vKeys.splice(p,0,obj);vActive.set(e.code||e.key,obj);
+};
+E('verifyTyping').onkeyup=e=>{const a=vActive.get(e.code||e.key);if(a){a.up=performance.now();vActive.delete(e.code||e.key)}};
+E('verifyTyping').oninput=()=>{if(vKeys.map(x=>x.char).join('')!==E('verifyTyping').value)vInvalid=true};
+E('verifyReset').onclick=()=>{vKeys=[];vActive.clear();vInvalid=false;E('verifyTyping').value='';E('verifyOutcome').textContent='';E('verifyMessage').textContent='Có thể nhập lại'};
+E('verifySend').onclick=async()=>{const btn=E('verifySend');btn.disabled=true;try{
+ const p=profiles.find(x=>x.id===E('verifyPicker').value);if(!p)throw Error('Chưa chọn hồ sơ');if(!p.ready)throw Error('Hồ sơ chưa đủ 15 mẫu');
+ if(vInvalid||E('verifyTyping').value!==P||vKeys.length!==P.length||vKeys.some(x=>x.up===null)||vActive.size)throw Error('Hãy gõ đúng đủ câu, nhả hết phím và không dùng copy/paste');
+ const saved=keys;keys=vKeys;let features;try{features=feats()}finally{keys=saved}
+ const d=await api('verify',{profile_id:p.id,claimed_owner:E('verifyOwner').checked,features});
+ E('verifyOutcome').textContent=(d.accepted?'✓ PHÙ HỢP':'✕ KHÔNG PHÙ HỢP')+' · Điểm '+d.score.toFixed(3)+' / ngưỡng '+d.threshold.toFixed(3);
+ E('verifyMessage').textContent='Điểm thấp hơn ngưỡng là gần giống mẫu gõ của '+p.name+'. Đây là nhận định ML, không phải xác minh danh tính chắc chắn.';
+ vKeys=[];vActive.clear();vInvalid=false;E('verifyTyping').value='';
+ }catch(e){E('verifyMessage').textContent='⚠ '+e.message}finally{btn.disabled=false}};
+function sim(){const x=+E('scoreSim').value,y=+E('cutSim').value;E('scoreSimValue').textContent=x.toFixed(2);E('cutSimValue').textContent=y.toFixed(2);
+ E('simResult').textContent=x<=y?'✓ Phù hợp: điểm khác biệt không vượt ngưỡng.':'✕ Không phù hợp: điểm khác biệt lớn hơn ngưỡng.'}
+E('scoreSim').oninput=sim;E('cutSim').oninput=sim;sim();
+E('quizCheck').onclick=()=>{const xs=[...document.querySelectorAll('select.quiz')],correct=xs.filter(x=>x.value===x.dataset.answer).length;E('quizResult').textContent='Đúng '+correct+'/'+xs.length+' câu. '+(correct===xs.length?'Bạn đã nắm được ý chính!':'Hãy xem lại các chương rồi thử lại.')};
+E('expandLessons').onclick=()=>document.querySelectorAll('details.lesson').forEach(x=>x.open=true);
+E('collapseLessons').onclick=()=>document.querySelectorAll('details.lesson').forEach(x=>x.open=false);
+
 async function api(action,more={}){let {data:{session}}=await sb.auth.getSession();if(!session)throw Error('Chưa đăng nhập');let r=await fetch(url+'/functions/v1/kd-api',{method:'POST',headers:{'Content-Type':'application/json',apikey:key,Authorization:'Bearer '+session.access_token},body:JSON.stringify({action,...more})});let d=await r.json();if(!r.ok||d.error)throw Error(d.error||'Lỗi API '+r.status);return d}
-async function refresh(){let d=await api('list');profiles=d.profiles;me=profiles.find(x=>x.owner);E('progress').textContent=(me?.count??0)+'/15';if(me)E('name').value=me.name;const selectedId=E('profiles').value;E('profiles').replaceChildren();profiles.forEach(p=>{let o=document.createElement('option');o.value=p.id;o.textContent=p.name+' — '+p.count+' mẫu — '+(p.ready?'Sẵn sàng':'Chưa đủ mẫu')+(p.owner?' (của tôi)':'');E('profiles').append(o)});if(profiles.some(p=>p.id===selectedId))E('profiles').value=selectedId;selected();say(me?.ready?'Đã có hồ sơ. Bạn có thể kiểm thử.':'Đăng ký 15 lần để tạo hồ sơ nhận diện.')}
+async function refresh(){let d=await api('list');profiles=d.profiles;me=profiles.find(x=>x.owner);E('progress').textContent=(me?.count??0)+'/15';if(me)E('name').value=me.name;const selectedId=E('profiles').value;E('profiles').replaceChildren();profiles.forEach(p=>{let o=document.createElement('option');o.value=p.id;o.textContent=p.name+' — '+p.count+' mẫu — '+(p.ready?'Sẵn sàng':'Chưa đủ mẫu')+(p.owner?' (của tôi)':'');E('profiles').append(o)});if(profiles.some(p=>p.id===selectedId))E('profiles').value=selectedId;selected();syncPicker();say(me?.ready?'Đã có hồ sơ. Bạn có thể kiểm thử.':'Đăng ký 15 lần để tạo hồ sơ nhận diện.')}
 function switchTo(m){mode=m;E('enrollArea').hidden=m!=='enroll';E('verifyArea').hidden=m!=='verify';E('send').textContent=m==='enroll'?'Lưu mẫu gõ':'Chấm điểm nhận diện';reset()}
-E('enrollTab').onclick=()=>switchTo('enroll');E('verifyTab').onclick=()=>switchTo('verify');E('clear').onclick=reset;E('refresh').onclick=()=>refresh().catch(e=>say(e.message));E('profiles').onchange=()=>manage().catch(e=>say(e.message));
+E('enrollTab').onclick=()=>switchTo('enroll');E('verifyTab').onclick=()=>switchTo('verify');E('clear').onclick=reset;E('refresh').onclick=()=>refresh().catch(e=>say(e.message));E('profiles').onchange=()=>{syncPicker();manage().catch(e=>say(e.message))};
 E('send').onclick=async()=>{E('send').disabled=true;try{if(invalid||E('typing').value!==P||keys.length!==P.length||keys.some(k=>k.up===null)||active.size)throw Error('Hãy gõ đúng toàn bộ câu và nhả hết các phím trước khi lưu');let features=feats();if(mode==='enroll'){let d=await api('enroll',{name:E('name').value.trim(),features});say('Đã lưu mẫu '+d.count+'/15');await refresh()}else{if(!E('profiles').value)throw Error('Chưa có hồ sơ');let r=await api('verify',{profile_id:E('profiles').value,claimed_owner:E('ownerCheck').checked,features});E('result').textContent=(r.accepted?'✓ PHÙ HỢP':'✕ KHÔNG PHÙ HỢP')+' — điểm '+r.score.toFixed(3)+' / ngưỡng '+r.threshold.toFixed(3);say('Kết quả được lưu vào Supabase')}keys=[];active.clear();invalid=false;start=null;editCount=0;E('typing').value=''}catch(e){say('⚠ '+e.message)}finally{E('send').disabled=false}};
 function selected(){const p=profiles.find(x=>x.id===E('profiles').value);E('selectedDetails').textContent=p?p.name+' · '+p.count+' mẫu · '+(p.ready?'Sẵn sàng':'Chưa đủ 15 mẫu')+(p.owner?' · Của bạn':' · Người khác'):'Chưa có hồ sơ';return p}
 async function manage(){
