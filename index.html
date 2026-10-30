@@ -269,6 +269,62 @@ E('deleteProfileBtn').onclick=async()=>{try{const d=await manage();if(!d.profile
  const typed=prompt('Nhập XOA để xác nhận xóa toàn bộ');if(typed!=='XOA')return;
  await api('delete_profile');await refresh();await manage();say('Đã xóa hồ sơ, các mẫu và lịch sử kiểm thử')}catch(e){say('⚠ '+e.message)}};
 
+
+function syncTune(){
+ const picker=E('tuneProfile');if(!picker)return;
+ const previous=picker.value;picker.replaceChildren();
+ for(const p of profiles.filter(x=>x.owner)){const option=document.createElement('option');option.value=p.id;option.textContent=p.name+' ('+p.count+' mẫu, V2: '+(p.v2_count??0)+')';picker.append(option)}
+ if([...picker.options].some(o=>o.value===previous))picker.value=previous;
+ const p=profiles.find(x=>x.id===picker.value);
+ if(!p){E('tuneStatus').textContent='Chưa có hồ sơ thuộc quyền sở hữu. Hãy tạo hồ sơ ở tab Lấy mẫu.';return}
+ E('tuneKind').value=p.model_kind||'legacy';E('tuneK').value=String(p.knn_k||3);E('tuneMetric').value=p.distance_metric||'euclidean';E('tuneFactor').value=String(p.threshold_factor??1.25);displayFactor();
+ E('tuneStatus').textContent='Đang dùng: '+(p.model_kind==='improved'?'V2':'V1')+' · '+(p.v2_count??0)+' mẫu V2. Cần ít nhất '+Math.max(3,Math.min(10,p.target_samples))+' mẫu V2 trước khi chọn đặc trưng cải tiến.';
+}
+function displayFactor(){E('tuneFactorText').textContent=Number(E('tuneFactor').value).toLocaleString('vi-VN',{minimumFractionDigits:2,maximumFractionDigits:2})}
+E('tuneFactor').oninput=displayFactor;
+E('tuneProfile').onchange=()=>{syncTune();E('tuneVariants').replaceChildren();E('tuneMessage').textContent='Nhấn Phân tích & so sánh để xem hồ sơ đang chọn.'};
+function tuneConfig(){return {model_kind:E('tuneKind').value,knn_k:Number(E('tuneK').value),distance_metric:E('tuneMetric').value,threshold_factor:Number(E('tuneFactor').value)}}
+const pctText=v=>v===null||v===undefined?'Chưa có dữ liệu':Number(v).toLocaleString('vi-VN',{maximumFractionDigits:1})+'%';
+function tuneDraw(pts){
+ const c=E('tuneChart'),ctx=c.getContext('2d'),w=c.width,h=c.height;ctx.clearRect(0,0,w,h);
+ ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);ctx.font='14px system-ui';ctx.textAlign='right';
+ for(let i=0;i<=4;i++){const pct=i*25,y=25+(h-65)*(1-pct/100);ctx.strokeStyle='#e2eeea';ctx.beginPath();ctx.moveTo(52,y);ctx.lineTo(w-18,y);ctx.stroke();ctx.fillStyle='#5d7e76';ctx.fillText(pct+'%',44,y+5)}
+ const px=i=>60+i*(w-88)/Math.max(1,pts.length-1),py=v=>25+(h-65)*(1-v/100);
+ for(const [field,color] of [['far','#D99B24'],['frr','#006B68']]){
+ ctx.strokeStyle=color;ctx.lineWidth=3;ctx.beginPath();let active=false;
+ for(let i=0;i<pts.length;i++){const v=pts[i][field];if(v===null||!Number.isFinite(v)){active=false;continue}
+ const x=px(i),y=py(v);if(!active){ctx.moveTo(x,y);active=true}else ctx.lineTo(x,y)}ctx.stroke();
+ for(let i=0;i<pts.length;i++){const v=pts[i][field];if(v!==null&&Number.isFinite(v)){ctx.fillStyle=color;ctx.beginPath();ctx.arc(px(i),py(v),4,0,Math.PI*2);ctx.fill()}}
+ }
+ ctx.fillStyle='#5b7b72';ctx.textAlign='center';ctx.font='12px system-ui';pts.forEach((p,i)=>ctx.fillText(Math.round(p.factor*100)+'%',px(i),h-15));
+}
+function tuneRender(d){
+ E('tuneCounts').textContent='Số lượt thử đã ghi: '+d.counts.historical+' · Lượt có đặc trưng mới: '+d.counts.recorded_features+' · Mẫu V1: '+d.counts.legacy+' · Mẫu V2: '+d.counts.improved+'. Không nên kết luận nếu số lượt thử ít.';
+ tuneDraw(d.sweep);const body=E('tuneVariants');body.replaceChildren();
+ if(!d.candidates.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=7;td.textContent='Chưa đủ mẫu để so sánh các phương án.';tr.append(td);body.append(tr);return}
+ for(const c of d.candidates){
+ const tr=document.createElement('tr');
+ const arr=[c.kind==='improved'?'V2 — toàn câu':'V1 — mẫu cũ',c.k,c.metric==='euclidean'?'Euclidean':'Manhattan',c.genuine+' chính chủ / '+c.impostor+' người khác',pctText(c.far),pctText(c.frr)];
+ for(const v of arr){const td=document.createElement('td');td.textContent=String(v);tr.append(td)}
+ const td=document.createElement('td'),b=document.createElement('button');b.textContent='Dùng thử';b.className='light';
+ b.onclick=()=>{E('tuneKind').value=c.kind;E('tuneK').value=String(c.k);E('tuneMetric').value=c.metric;E('tuneMessage').textContent='Đã điền cấu hình '+c.kind+' / k='+c.k+'. Chưa lưu lên hệ thống.';window.scrollTo({top:0,behavior:'smooth'})};
+ td.append(b);tr.append(td);body.append(tr)
+ }
+}
+E('tunePreview').onclick=async()=>{
+ const id=E('tuneProfile').value;if(!id){E('tuneMessage').textContent='Chưa có hồ sơ';return}
+ E('tuneMessage').textContent='Đang phân tích...';E('tunePreview').disabled=true;
+ try{const d=await api('analyze',{profile_id:id,preview_factor:Number(E('tuneFactor').value)});tuneRender(d);E('tuneMessage').textContent='Đã chấm lại các phương án. Chưa thay đổi cấu hình trên Supabase.'}
+ catch(e){E('tuneMessage').textContent='⚠ '+e.message}finally{E('tunePreview').disabled=false}
+};
+E('tuneSave').onclick=async()=>{
+ const p=profiles.find(x=>x.id===E('tuneProfile').value);if(!p){E('tuneMessage').textContent='Chưa có hồ sơ';return}
+ if(!confirm('Áp dụng mô hình đã chọn cho các lượt kiểm thử tiếp theo của '+p.name+'?'))return;
+ E('tuneSave').disabled=true;
+ try{await api('save_model',tuneConfig());await refresh();E('tuneMessage').textContent='Đã lưu mô hình cho hồ sơ. Lịch sử kiểm thử không thay đổi.'}
+ catch(e){E('tuneMessage').textContent='⚠ '+e.message}finally{E('tuneSave').disabled=false}
+};
+
 E('statsBtn').onclick=async()=>{
  const area=E('stats');area.replaceChildren();area.textContent='Đang tính thống kê...';
  try{
