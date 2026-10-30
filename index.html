@@ -87,15 +87,44 @@ textarea.typing-box.alert,textarea.typing-box.alert:focus{background:#ffe9ed;bor
 </table>
 <div class="info"><b>Giới hạn quan trọng:</b> Ứng dụng chỉ thu thập khi gõ trong vùng nhập liệu của KeyDNA. Trên bàn phím mềm iPhone, sự kiện keyup có thể thiếu hoặc sai thời gian. Nên thử bằng bàn phím vật lý trước. Mẫu lưu theo tài khoản ẩn danh của trình duyệt, vì vậy không tự động chia sẻ giữa các thiết bị.</div>
 </section>
-<section class="card page" data-page="academy" hidden><h2>Giáo trình Keystroke Dynamics</h2><p>Học từ cơ bản tới nâng cao; mỗi bài có lý thuyết và ứng dụng KeyDNA.</p>
-<details open><summary><b>Bài 1 · Sinh trắc học hành vi</b></summary><p>Keystroke Dynamics nhận dạng người qua nhịp gõ, không phải nội dung. Fixed-text dùng câu cố định, free-text dùng văn bản tự do, continuous authentication kiểm tra nhịp gõ liên tục qua cửa sổ phím.</p></details>
-<details><summary><b>Bài 2 · Thu thập KeyDown và KeyUp</b></summary><p>Dwell = thời điểm nhả − nhấn. Press-to-Press = thời điểm nhấn phím sau − nhấn phím trước. Release-to-Press = nhấn sau − nhả trước. Không sử dụng paste/autofill, xử lý key repeat và sự kiện thiếu. Bàn phím mềm có thể không cung cấp KeyUp chính xác.</p></details>
-<details><summary><b>Bài 3 · 42 đặc trưng và cửa sổ trượt</b></summary><p>KeyDNA dùng cửa sổ 30 phím, stride 15 phím, gồm 7 thống kê, 20 nhóm digraph, 10 nhóm trigraph và 5 thống kê nhịp. Cửa sổ chồng lấn không phải mẫu đánh giá độc lập.</p></details>
-<details><summary><b>Bài 4 · Isolation Forest</b></summary><p>Mô hình gồm 100 cây chia ngẫu nhiên. Điểm dễ cô lập có đường đi ngắn. Công thức s(x,n)=2^(-E[h(x)]/c(n)). Không nên tin cậy kết quả với quá ít mẫu.</p></details>
-<details><summary><b>Bài 5 · Mahalanobis</b></summary><p>D(x)=√((x−μ)ᵀΣ⁻¹(x−μ)). KeyDNA hiện dùng phiên bản đường chéo có regularization, khác ma trận covariance đầy đủ của TrueStroke.</p></details>
-<details><summary><b>Bài 6 · Score Fusion và cảnh báo</b></summary><p>Điểm Isolation Forest và Mahalanobis được đổi thành phân vị trên tập train rồi lấy trung bình. Cửa sổ bất thường đầu tiên kích hoạt báo đỏ và âm thanh nếu đã bật. Ba cửa sổ liên tiếp sẽ tăng mức cảnh báo. Điểm nghi vấn không phải xác suất một người là người lạ.</p></details>
-<details><summary><b>Bài 7 · FAR, FRR, EER</b></summary><p>FAR = số lần người lạ được chấp nhận / tổng lần người lạ thử. FRR = số lần chính chủ bị từ chối / tổng lần chính chủ thử. EER là ngưỡng FAR gần FRR. Chia train/validation/test theo phiên, không chia ngẫu nhiên các cửa sổ chồng lấn.</p></details>
-<details><summary><b>Bài 8 · Thực hành đánh giá</b></summary><ol><li>Tạo hai mẫu hành vi của hai người khác nhau, mỗi mẫu hành vi tối thiểu 200 phím.</li><li>Chọn mẫu hành vi A và cho chính chủ A gõ thử.</li><li>Giữ mẫu hành vi A, cho người B gõ và quan sát cảnh báo.</li><li>Chọn mẫu hành vi B và kiểm thử tương tự, lặp lại ở nhiều phiên khác nhau.</li><li>Ghi số lần sai để tính FAR và FRR, không coi điểm nghi vấn là xác suất đã hiệu chuẩn.</li></ol></details></section>
+<section class="card page" data-page="academy" hidden>
+<h2>Giáo trình chuyên sâu & thực hành mô hình</h2>
+<p>Học cách dữ liệu bàn phím đi từ sự kiện thô đến quyết định. Mỗi bài có công thức, ví dụ và giới hạn của bản POC.</p>
+<details open><summary><b>Bài 1 · Luồng xử lý end-to-end</b></summary>
+<div class="info"><b>KEYDOWN/KEYUP</b> → kiểm tra sự kiện hợp lệ → tạo cửa sổ 30 phím (stride 15) → trích xuất 42 đặc trưng → chuẩn hóa theo mẫu học → chấm <b>Isolation Forest</b> và <b>Mahalanobis</b> → đổi score thành phân vị → hợp nhất → cảnh báo.</div>
+<p>Ví dụ ba phím A–N–H có sự kiện (ms): A↓100, A↑185; N↓240, N↑315; H↓375, H↑450. Dwell lần lượt 85, 75, 75ms. Press-to-press A→N = 140ms, N→H = 135ms. Release-to-press A→N = 55ms, N→H = 60ms.</p>
+<p>Một cửa sổ chỉ được chấm khi thu đủ 30 lần gõ hợp lệ. Cửa sổ tiếp theo dùng 15 sự kiện cũ và 15 sự kiện mới. Các giá trị tính toán minh họa ở dưới không đại diện xác suất nhận diện.</p></details>
+<details><summary><b>Bài 2 · Feature engineering và chuẩn hóa</b></summary>
+<p><b>7 feature nền:</b> mean/sd dwell, mean/sd press-to-press, mean/sd release-to-press, tốc độ WPM. <b>20 digraph bins:</b> gom cặp phím theo hash và tính trung bình timing. <b>10 trigraph bins:</b> gom bộ ba phím. <b>5 feature nhịp:</b> P10/P50/P90 latency, tỷ lệ nghỉ dài, hệ số biến thiên.</p>
+<p>Chuẩn hóa: zᵢ=(xᵢ−μᵢ)/sᵢ. Ví dụ dwell 120ms, μ=100ms, s=20ms → z=1. Dữ liệu khác câu có thể rơi vào các nhóm hash khác nhau; feature thiếu quan sát = 0 là một hạn chế của POC.</p></details>
+<details><summary><b>Bài 3 · Isolation Forest chi tiết</b></summary>
+<p>Ở mỗi nút cây, chọn ngẫu nhiên một feature và ngưỡng chia giữa min–max. Lặp lại đến lá; điểm lạ thường bị cô lập sớm. Mỗi cửa sổ đi qua 100 cây; tính trung bình độ sâu E[h(x)] và điểm s(x,n)=2^(−E[h(x)]/c(n)).</p>
+<p><b>Ví dụ:</b> cửa sổ A theo đường đi sâu trung bình 7 nút, cửa sổ B chỉ 3 nút. Cùng kích thước train, B thường có điểm bất thường cao hơn. Chiều sâu không nói trực tiếp ai là người lạ. Cây hiện lưu dưới dạng cấu trúc j/cut/l/r trong JSON.</p></details>
+<details><summary><b>Bài 4 · Mahalanobis chi tiết</b></summary>
+<p>D(x)=√((x−μ)ᵀΣ⁻¹(x−μ)). Bản KeyDNA POC sử dụng ma trận hiệp phương sai <b>đường chéo có điều chuẩn</b>, nên điểm được suy ra từ độ lệch chuẩn hóa mỗi chiều. Ví dụ hai feature có z=[1,2], nếu dùng trung bình bình phương: √((1²+2²)/2)≈1,58.</p>
+<p>Covariance đầy đủ xét tương quan giữa feature, nhưng với ít mẫu và 42 chiều có thể suy biến. Bản hiện tại không sử dụng Ledoit–Wolf đầy đủ của TrueStroke gốc.</p></details>
+<details><summary><b>Bài 5 · Score fusion, hysteresis và ngưỡng</b></summary>
+<p>Đối với mỗi score mới, lấy tỷ lệ điểm huấn luyện nhỏ hơn hoặc bằng score đó. Ví dụ percentile IF=0,8, Mahalanobis=1,0 → anomaly=(0,8+1,0)/2=0,9. Gắn cờ nếu anomaly ≥0,9. Điểm tương đồng tương đối hiển thị = (1−anomaly)×100.</p>
+<p>Một cửa sổ bị gắn cờ gây báo đỏ ngay. Ba cửa sổ bất thường liên tiếp làm tăng trạng thái cảnh báo. Cửa sổ bình thường đặt bộ đếm lại 0. Đây là <b>ngưỡng heuristic</b>, không phải FAR hay xác suất người lạ đã hiệu chuẩn.</p></details>
+<details><summary><b>Bài 6 · Huấn luyện, lỗi thường gặp và chất lượng mô hình</b></summary>
+<p>Gõ tối thiểu 200 phím, tạo các cửa sổ 30/15, ước lượng scaler, huấn luyện 100 cây IF, ước lượng mean/variance Mahalanobis và lưu phân phối score học. Nên lấy dữ liệu nhiều phiên, nhiều hoàn cảnh, có nhãn người thử. 200 phím chỉ là mức để POC hoạt động, không phải bằng chứng nhận diện chính xác.</p>
+<p>Nếu người gõ đổi bàn phím, dùng IME, gõ quá chậm, thiếu KeyUp hoặc thay đổi văn bản nhiều lần, kết quả có thể sai. Không tự học từ lần gõ bị nghi vấn vì dễ làm nhiễm hồ sơ tham chiếu.</p></details>
+<details><summary><b>Bài 7 · FAR, FRR, EER và thiết kế kiểm thử</b></summary>
+<p>FAR = số lần chấp nhận nhầm người khác / tổng lượt thử người khác. FRR = số lần từ chối nhầm người sở hữu mẫu / tổng lượt thử chính chủ. EER là điểm FAR gần FRR khi thay đổi threshold. Không chia các cửa sổ chồng lấn của một phiên vào cả train và test.</p>
+<p>Thí nghiệm: cho A gõ tạo mẫu; lấy phiên độc lập của A và ít nhất 5 người khác gõ thử; ghi số lượt chấp nhận/từ chối, thiết bị và thời điểm. Các tỷ lệ chỉ có giá trị khi thử nghiệm đủ rộng.</p></details>
+<details open><summary><b>Bài 8 · Quan sát dữ liệu chạy qua mô hình (tương tác)</b></summary>
+<p>Chọn mẫu đang lưu, sau đó gõ ở mục Kiểm tra người gõ để lấy cửa sổ mới nhất. Nhấn <b>Phân tích cửa sổ gần nhất</b> để xem vector đầu vào, chuẩn hóa, điểm hai thuật toán, phân vị và quyết định. Bấm <b>Chạy ví dụ minh họa</b> để xem các bước ngay cả khi chưa có dữ liệu.</p>
+<div class="row"><button id="inspectCurrent" class="alt">Phân tích cửa sổ gần nhất</button><button id="demoFlow" class="alt">Chạy ví dụ minh họa</button></div>
+<pre id="flowOutput" class="info" style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:460px;overflow:auto">Chưa chạy. Chọn mẫu và thử gõ hoặc mở ví dụ.</pre></details>
+<details open><summary><b>Bài 9 · Quản lý mô hình: xem, tải xuống, tải lên</b></summary>
+<p>Mô hình JSON gồm scaler m/s, 100 cây IF, mean và độ lệch Mahalanobis, phân phối score học cùng metadata. Tệp có thể chứa dữ liệu hành vi nhạy cảm; chỉ chia sẻ khi có sự đồng ý.</p>
+<div class="row"><button id="viewModel" class="alt">Xem mô hình đang chọn</button><button id="downloadModel" class="alt">Tải xuống JSON</button></div>
+<label for="modelUpload">Nhập mô hình JSON từ máy</label><input type="file" id="modelUpload" accept=".json,application/json">
+<label for="importName">Tên mẫu nhập vào Supabase</label><input id="importName" maxlength="60" placeholder="Ví dụ: Mẫu nhập từ thiết bị khác">
+<button id="uploadModel">Kiểm tra và lưu mô hình</button>
+<p class="muted">Tệp được kiểm tra cấu trúc, kích thước và giá trị số trước khi lưu. Không thực thi mã trong tệp. Tệp được nhập thành mẫu mới, không ghi đè mẫu cũ.</p>
+<pre id="modelOutput" class="info" style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:380px;overflow:auto">Chưa chọn thao tác.</pre></details>
+</section>
 </div>
 <aside>
 <section class="card"><h2>Quản lý mẫu hành vi gõ phím</h2><select id="profileList" style="width:100%;padding:12px;margin:8px 0 12px"><option>Đang kết nối...</option></select><div class="row"><button id="refreshProfiles" class="alt">Làm mới</button><button id="exportProfile" class="alt">Xuất JSON</button><button id="removeProfile" class="warn">Xóa mẫu</button></div><small id="profileCount">0 mẫu</small><h3>Mẫu đang chọn</h3><div id="profileState" class="pill">Chưa có mẫu hành vi</div><p id="profileInfo" class="muted"></p><div class="info">Phiên bản mới lưu mẫu hành vi và cảnh báo trong Supabase theo từng tài khoản ẩn danh. Dữ liệu V3 cũ được giữ nguyên.</div></section>
@@ -274,6 +303,67 @@ $("removeProfile").onclick=async()=>{
 document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{const tab=b.dataset.tab;document.querySelectorAll("[data-tab]").forEach(x=>{x.className=x===b?"active":"alt"});document.querySelectorAll("[data-page]").forEach(x=>x.hidden=x.dataset.page!==tab)});
 $("exportProfile").onclick=()=>{if(!profile){alert("Chưa có mẫu hành vi");return}const blob=new Blob([JSON.stringify(profile)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="keydna-continuous-profile.json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
 
+
+
+function describeModel(m){
+ return {name:m.name,created:m.created,trainingKeys:m.count,trainingWindows:m.rows,dimensions:m.m?.length,trees:m.forest?.length,forestSubsample:m.n,scoreDistribution:{isolationCount:m.ifTrain?.length,mahalanobisCount:m.mahTrain?.length},featureScaler:{means:m.m?.slice(0,7),scales:m.s?.slice(0,7)},note:"Hiển thị 7 đặc trưng đầu; tệp tải xuống chứa đầy đủ."};
+}
+function validateImportedModel(m){
+ if(!m||typeof m!=="object")throw Error("Không phải JSON object");
+ for(const k of ["m","s","mm","ss","forest","ifTrain","mahTrain"]){if(!Array.isArray(m[k]))throw Error("Thiếu mảng "+k)}
+ for(const k of ["m","s","mm","ss"]){if(m[k].length!==42||!m[k].every(x=>typeof x==="number"&&Number.isFinite(x)))throw Error("Sai vector "+k+"; yêu cầu 42 số hữu hạn")}
+ if(m.s.some(x=>x<=0)||m.ss.some(x=>x<=0))throw Error("Scale phải dương");
+ for(const k of ["ifTrain","mahTrain"]){if(!m[k].length||m[k].length>10000||!m[k].every(x=>Number.isFinite(x)))throw Error("Phân phối score "+k+" không hợp lệ")}
+ if(m.forest.length<1||m.forest.length>500)throw Error("Số cây ngoài giới hạn");
+ if(!Number.isInteger(m.n)||m.n<2||m.n>256)throw Error("Subsample không hợp lệ");
+ let nodes=0;
+ function checkTree(t,depth=0){
+  if(!t||typeof t!=="object"||depth>40||++nodes>100000)throw Error("Cây không hợp lệ hoặc quá lớn");
+  if(Object.prototype.hasOwnProperty.call(t,"n")){if(!Number.isInteger(t.n)||t.n<0||t.n>256)throw Error("Lá cây không hợp lệ");return}
+  if(!Number.isInteger(t.j)||t.j<0||t.j>=42||!Number.isFinite(t.cut))throw Error("Nút chia cây không hợp lệ");
+  checkTree(t.l,depth+1);checkTree(t.r,depth+1);
+ }
+ for(const t of m.forest)checkTree(t);
+ return {...m,name:String(m.name||"Mẫu nhập").slice(0,60),count:Number(m.count)||0,rows:Number(m.rows)||m.ifTrain.length,created:m.created||new Date().toISOString()};
+}
+$("viewModel").onclick=()=>{$("modelOutput").textContent=profile?JSON.stringify(describeModel(profile),null,2):"Chưa chọn mẫu tham chiếu"};
+$("downloadModel").onclick=()=>{$("exportProfile").click()};
+$("uploadModel").onclick=async()=>{
+ const file=$("modelUpload").files?.[0];
+ if(!file)return $("modelOutput").textContent="Hãy chọn tệp JSON";
+ if(file.size>3*1024*1024)return $("modelOutput").textContent="Tệp vượt 3 MB";
+ if(!currentUser)return $("modelOutput").textContent="Chưa kết nối Supabase";
+ try{
+  const m=validateImportedModel(JSON.parse(await file.text()));
+  m.name=$("importName").value.trim()||m.name;
+  const r=await sb.from("kd_continuous_profiles").insert({user_id:currentUser,name:m.name,model:m}).select("id").single();
+  if(r.error)throw r.error;
+  await loadProfiles(r.data.id);
+  $("modelOutput").textContent="Đã nhập mẫu mới: "+m.name+"\n42 đặc trưng · "+m.forest.length+" cây · "+m.ifTrain.length+" điểm train.";
+ }catch(e){$("modelOutput").textContent="Không nhập được: "+e.message}
+};
+$("inspectCurrent").onclick=()=>{
+ if(!profile)return $("flowOutput").textContent="Hãy chọn mẫu tham chiếu";
+ const w=windows(monitor),f=w[w.length-1];
+ if(!f)return $("flowOutput").textContent="Hãy gõ đủ 30 phím trong phần Kiểm tra người gõ";
+ const z=f.map((v,i)=>(v-profile.m[i])/profile.s[i]),r=evaluate(f);
+ $("flowOutput").textContent=JSON.stringify({step1:"30 sự kiện gõ gần nhất",step2_rawFeaturesFirst7:f.slice(0,7),step3_normalizedFirst7:z.slice(0,7),step4_isolationForestScore:r.iso,step5_mahalanobisScore:r.mah,step6_fusedAnomaly:r.anomaly,step7_decision:r.flag?"NGHI VẤN":"CHƯA VƯỢT NGƯỠNG",note:"Đây là điểm tương đối của POC, không phải xác suất danh tính."},null,2);
+};
+$("demoFlow").onclick=()=>{
+ $("flowOutput").textContent=[
+ "VÍ DỤ MINH HỌA (không dùng mô hình đã lưu)",
+ "A↓100 A↑185; N↓240 N↑315; H↓375 H↑450",
+ "Dwell = [85,75,75] ms; press-to-press = [140,135] ms",
+ "→ đủ 30 phím: tạo vector 42 chiều",
+ "→ chuẩn hóa: ví dụ dwell 120ms, mean 100, scale 20 => z=1",
+ "→ IF: giả sử phân vị score = 0.80",
+ "→ Mahalanobis: giả sử phân vị score = 1.00",
+ "→ Fusion = (0.80+1.00)/2 = 0.90",
+ "→ ngưỡng 0.90: cửa sổ NGHI VẤN, báo đỏ",
+ "→ 3 cửa sổ nghi vấn liên tiếp: mức cảnh báo tăng",
+ "Các điểm IF/Mahalanobis trong ví dụ chỉ minh họa, không phải chạy mô hình thật."
+ ].join("\n");
+};
 
 showProfile();updateEnroll();connect();
 </script></body></html>
