@@ -1,546 +1,188 @@
-<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KeyDNA Lab</title><style>
-:root{font-family:system-ui,sans-serif;color:#173b3b;background:#f1f6f5}body{margin:0}header{background:#006b68;color:white;padding:18px max(18px,calc((100% - 950px)/2))}main{max-width:950px;margin:24px auto;padding:0 14px;display:grid;grid-template-columns:3fr 2fr;gap:18px}.panel{background:white;border-radius:14px;border:1px solid #d9e8e4;padding:22px;box-shadow:0 3px 10px #00000008}input,select{box-sizing:border-box;width:100%;padding:12px;margin:7px 0 15px;border:1px solid #b4cac7;border-radius:8px;font-size:16px}button{background:#006b68;border:0;color:white;padding:11px 15px;border-radius:8px;cursor:pointer;margin:4px 3px 8px 0}button:disabled{opacity:.4}.light{background:#d8ebe8;color:#006b68}.phrase{background:#eff8f5;border-radius:8px;padding:14px;font:17px monospace;line-height:1.6}small{color:#6b8080}#msg{background:#e9f4f1;padding:14px;border-radius:8px;line-height:1.5;min-height:38px}#result{font-size:24px;font-weight:bold}canvas{width:100%;height:180px;background:#f8fcfb}label{font-weight:600}h1{margin:0}h3{margin-top:0}@media(max-width:730px){main{display:block}.panel{margin-bottom:16px}}</style><style>
-:root{--brand:#006b68;--gold:#ffc62f;--line:#dbe8e5;--ink:#183e3c;--muted:#647d79}
-*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#f3f7f6;color:var(--ink);font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
-header{background:linear-gradient(120deg,#034a49,#007b72);color:#fff;padding:22px 18px 32px}header .inner{max-width:970px;margin:auto}header h1{font-size:26px;margin:3px 0}header p{margin:0;opacity:.88}
-main{max-width:970px;margin:-16px auto 36px;padding:0 14px}section.card{background:white;border:1px solid var(--line);border-radius:17px;padding:18px;margin-bottom:14px;box-shadow:0 5px 17px #103e3910}
-.nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-bottom:16px;background:#fff;padding:6px;border-radius:15px;box-shadow:0 3px 12px #0001;position:sticky;top:0;z-index:5}
-.nav button{background:transparent;color:#366763;margin:0;padding:12px 5px;font-size:13px;border:0;border-radius:10px}.nav button.active{background:var(--brand);color:white;font-weight:750}
-.view[hidden],#enrollArea[hidden],#verifyArea[hidden]{display:none!important}
-h2{font-size:22px;margin:2px 0 8px}h3{font-size:17px;margin:0 0 9px}h4{margin:9px 0}p{margin:8px 0 13px}
-input:not([type=checkbox]):not([type=file]):not([type=range]),select{width:100%;border:1px solid #bbd1cb;padding:12px;border-radius:11px;background:#fff;color:var(--ink);font:inherit;margin:5px 0 12px}
-input[type=checkbox]{accent-color:var(--brand);width:18px;height:18px;vertical-align:middle}
-input[type=range]{width:100%;accent-color:var(--brand)}
-button{border:0;background:var(--brand);color:white;font:inherit;font-weight:680;border-radius:10px;padding:11px 15px;margin:3px 4px 7px 0;cursor:pointer;min-height:43px}
-button.light{background:#e7f4f0;color:#075d54}button.danger{background:#b9464b}button:disabled{opacity:.4;cursor:not-allowed}
-label{font-weight:700;font-size:13px}.help,.muted,small{color:var(--muted);font-size:12px}
-.phrase{padding:16px;background:#edf8f3;border:1px dashed #a9cdc3;border-radius:12px;font:16px/1.8 ui-monospace,Consolas,monospace;overflow-wrap:anywhere}
-#typing{font-size:16px;min-height:52px}
-#msg{padding:13px;background:#edf7f3;color:#245d56;border-radius:11px;min-height:46px}#result{font-size:20px;font-weight:800}
-.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:13px 0}.kpi{background:#edf7f3;border-radius:11px;padding:12px;text-align:center}.kpi b{display:block;font-size:23px}.kpi small{display:block;font-size:11px}
-.actions{display:flex;flex-wrap:wrap;gap:5px}.step{color:#097466;font-weight:800;letter-spacing:.08em;font-size:11px}
-details.lesson{border:1px solid var(--line);border-radius:12px;margin:10px 0;overflow:hidden}
-details.lesson>summary{cursor:pointer;padding:15px;font-weight:760;color:#075e58;background:#f3faf7}
-details.lesson>div{padding:14px;line-height:1.7}
-.example{padding:13px;border-left:3px solid #149382;background:#f0f8f5;border-radius:5px}
-.math{font-family:ui-monospace,monospace;background:#eef4f2;padding:10px;border-radius:8px;overflow-x:auto;white-space:nowrap}
-canvas{width:100%;height:155px;background:#f9fcfb;border:1px solid var(--line);border-radius:9px}
-#sampleList details{padding:9px 0}#sampleList details p{display:flex;align-items:center;justify-content:space-between}
-#sampleList button{font-size:12px;min-height:31px;padding:6px 9px}
-#sampleList{max-height:280px;overflow:auto}
-.badge{font-size:12px;border-radius:30px;padding:4px 9px;background:#e4f4ec;color:#196b55;font-weight:700}
-#progress{font-weight:800}#sampleList:empty{display:none}
-.cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-@media(max-width:620px){header{padding-bottom:30px}.nav button{font-size:12px;padding:9px 3px}h2{font-size:20px}.cols{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}section.card{padding:15px}button{font-size:13px}}
-</style><style>
-/* KeyDNA BIDV-inspired identity: no logo. */
-:root{--brand:#006B68;--gold:#FFC62F;--line:#d5e8e3;--ink:#123e3b;--muted:#648580}
-body{background:radial-gradient(circle at top right,#e0f5ef 0,#f3f8f6 45%,#edf5f2 100%);color:var(--ink)}
-header{background:linear-gradient(125deg,#004e50 0%,#006B68 60%,#009183 100%);border-bottom:5px solid var(--gold);padding-top:30px;padding-bottom:41px}
-header h1{font-size:clamp(28px,4vw,39px);font-weight:850;letter-spacing:-.04em}
-header .step{color:#fff4b3!important}
-section.card{border-radius:20px;border-color:#d8eae5;box-shadow:0 8px 24px rgba(0,78,74,.07)}
-.nav{border:1px solid #dceee8;border-radius:16px;box-shadow:0 5px 18px rgba(0,78,74,.09)}
-.nav button{font-weight:750}.nav button.active{background:var(--brand);box-shadow:inset 0 -3px 0 var(--gold)}
-button:not(.nav button){box-shadow:0 2px 4px rgba(0,89,85,.08)}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid rgba(255,198,47,.7);outline-offset:2px}
-.phrase{background:linear-gradient(120deg,#fff2ba,#ffdf91);border:2px solid #efbc47;border-left:6px solid #dba014;box-shadow:0 5px 14px rgba(209,147,39,.15);color:#5a400e;font-weight:800;font-size:clamp(17px,3vw,22px);letter-spacing:.012em;padding:19px;border-radius:15px}
-.kpi{background:#e7f5ef}.kpi b{color:#006B68}
-.example{background:#eef8f4;border-left-color:#006B68}
-.metricGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:15px 0}
-.metricCard{display:flex;flex-direction:column;gap:6px;background:#f1f8f6;border:1px solid #d7e8e3;border-radius:15px;padding:17px}
-.metricCard small{font-size:13px;font-weight:850;color:#346c62}.metricCard strong{font-size:clamp(23px,4vw,34px);line-height:1.2;overflow-wrap:anywhere;color:#006B68}.metricCard span{font-size:12px;color:#5b7770}.metricCard.far{border-top:4px solid #e19f2d}.metricCard.frr{border-top:4px solid #208d7c}
-@media(max-width:430px){.metricGrid{grid-template-columns:1fr}.nav{gap:3px}.nav button{font-size:11px}.phrase{padding:14px}}
-</style><style>.knn-figure{margin:17px 0;border:1px solid #d6eae2;border-radius:14px;padding:10px;background:#fff}.knn-figure svg{display:block;width:100%;height:auto}.knn-figure figcaption{text-align:center;font-size:12px;color:#658077;margin:7px 0 3px}@media(max-width:500px){.knn-figure{padding:4px}.knn-figure figcaption{font-size:11px}}</style><style>
-.nav{grid-template-columns:repeat(4,minmax(0,1fr))}
-.tuneLegend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:#4e7770;margin:8px 0}
-.tuneLegend span{display:inline-flex;align-items:center;gap:6px}
-.tuneDot{width:11px;height:11px;border-radius:50%;display:inline-block}
-.tuneTableWrap{width:100%;overflow-x:auto}.tuneTable{width:100%;border-collapse:collapse;font-size:12px;min-width:590px}
-.tuneTable th{background:#e5f3ef;color:#075d56;text-align:left}.tuneTable td,.tuneTable th{padding:11px 9px;border-bottom:1px solid #e3ece8}
-.tuneTable td button{padding:7px 9px;min-height:31px;font-size:11px;margin:0}
-#tuneChart{height:auto;max-height:255px}
-@media(max-width:510px){.nav button{font-size:10px;letter-spacing:-.03em;padding:10px 1px}}
-</style><style>
-#v3Advice{background:#e5f5ef;border-left:4px solid #006B68}
-</style></head><body>
-<header><div class="inner"><div class="step" style="color:#c5f3e8">KEYDNA · BEHAVIORAL BIOMETRICS POC</div><h1>⌨ KeyDNA Lab</h1><p>Học thói quen gõ phím · Thử nhận diện · Tìm hiểu Machine Learning</p></div></header>
-<main><button id="enrollTab" hidden type="button"></button><button id="verifyTab" hidden type="button"></button><nav class="nav"><button type="button" data-tab="learn">① Lấy mẫu</button><button type="button" class="active" data-tab="verify">② Thử nhận diện</button><button type="button" data-tab="academy">③ Giáo trình</button><button type="button" data-tab="tune">④ Tinh chỉnh</button></nav>
-<div class="view" data-view="learn" hidden>
-<section class="card"><div class="step">BƯỚC 1 · ĐĂNG KÝ VÀ LẤY MẪU</div><h2>Tạo dấu vân tay gõ phím</h2><p class="muted">Chọn tên, đọc câu mẫu rồi gõ lại. Mỗi lượt đúng sẽ được lưu trên Supabase. Chọn từ 5–40 mẫu V3 theo mục đích thử nghiệm. Nhiều mẫu qua nhiều phiên thường cho dữ liệu đa dạng hơn.</p>
-<div id="enrollArea"><label for="name">Tên người tham gia</label><input id="name" maxlength="60" placeholder="Ví dụ: Nguyễn Văn A"><label for="sampleTarget">Số mẫu V3 yêu cầu (5–40)</label><select id="sampleTarget"><option value="5">5 mẫu — thử nhanh</option><option value="10">10 mẫu — demo ban đầu</option><option value="15" selected>15 mẫu — khuyến nghị demo</option><option value="20">20 mẫu — nhiều dữ liệu hơn</option><option value="30">30 mẫu — kiểm thử mở rộng</option><option value="40">40 mẫu — tối đa POC</option></select><div class="example" id="v3Advice"><b>V3:</b> Đo thời gian giữ phím, nhấn–nhấn và nhả–nhấn trên toàn bộ câu. Mẫu V3 được lưu thành một bộ dữ liệu riêng. Khuyến nghị lấy 20–30 mẫu ở nhiều buổi và kiểm thử với người khác.</div><div id="sampleAdvice" class="example"></div><p class="help">Có thể đổi cấu hình sau khi đăng ký. Không cần xóa các mẫu đã lấy.</p></div>
-<div id="verifyArea" hidden><label for="profiles">Hồ sơ muốn thử</label><select id="profiles"></select><label><input type="checkbox" id="ownerCheck"> Tôi là chính chủ hồ sơ đã chọn</label></div>
-<div class="phrase" id="phrase"></div><p id="captureHint" class="example">Đang xác định bàn phím...</p><p class="help"><b>Tự động bỏ ký tự sai:</b> Nhập nhầm chữ nào, ứng dụng chỉ bỏ chữ đó và giữ nguyên tất cả ký tự đúng đã gõ. Nhấn Backspace/Delete sẽ xóa đúng 1 ký tự. Khoảng dừng do gõ nhầm không được tính vào mẫu V3. Các mẫu đã lưu vẫn được giữ nguyên. Không sử dụng copy/paste.</p>
-<label for="typing">Gõ câu ở đây</label><input id="typing" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Bắt đầu gõ...">
-<div class="kpis"><div class="kpi"><b id="progress">0/15</b><small>Mẫu đã học</small></div><div class="kpi"><b id="duration">0.0</b><small>Giây đã gõ</small></div><div class="kpi"><b>126</b><small>Đặc trưng V3</small></div></div>
-<button id="send">Lưu mẫu gõ</button><button class="light" id="clear">Gõ lại</button><div id="msg">Đang kết nối...</div><p id="result"></p>
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KeyDNA Continuous · TrueStroke-inspired</title>
+<style>
+:root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#173b3b;background:#f0f6f4;--c:#006B68;--g:#FFC62F}
+*{box-sizing:border-box}body{margin:0}header{padding:27px max(18px,calc((100% - 1080px)/2));background:linear-gradient(120deg,#004d4e,#007c72);color:white;border-bottom:5px solid var(--g)}
+h1{font-size:clamp(24px,4vw,38px);margin:5px 0}h2{font-size:20px;margin-top:0}p{line-height:1.6}small,.muted{color:#627f78}
+header small{color:#d5f0e7}main{max-width:1080px;margin:25px auto;padding:0 15px}
+.grid{display:grid;grid-template-columns:1.4fr 1fr;gap:18px}.card{background:#fff;border:1px solid #d4e7e0;border-radius:18px;padding:22px;margin-bottom:17px;box-shadow:0 7px 22px #04443c0a}
+input,textarea{width:100%;padding:13px;border-radius:12px;border:1px solid #b9d5ce;font:16px system-ui;margin:7px 0 12px}
+textarea{min-height:175px;resize:vertical;line-height:1.8}button{background:var(--c);border:none;color:white;border-radius:10px;padding:12px 16px;font-size:14px;font-weight:700;cursor:pointer;margin:4px 6px 6px 0}button.alt{background:#e5f2ee;color:#075f57}button.warn{background:#af4550}button:disabled{opacity:.4;cursor:not-allowed}
+.row{display:flex;gap:9px;flex-wrap:wrap;align-items:center}.tabs{margin-bottom:14px}.tabs button.active{box-shadow:inset 0 -4px var(--g)}
+.page[hidden]{display:none}.pill{display:inline-block;padding:6px 11px;border-radius:20px;background:#e7f1ed;color:#285f54;font-weight:750}
+.pill.good{background:#def5e5;color:#136744}.pill.bad{background:#fde5e6;color:#a12638}
+.meter{height:14px;border-radius:20px;background:#e0ece8;overflow:hidden;margin:10px 0}.meter>div{height:100%;background:linear-gradient(90deg,var(--c),#24bd94);transition:width .2s}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{padding:13px;background:#f1f8f5;border-radius:12px}.stat strong{display:block;font-size:26px;color:var(--c)}
+.info{background:#edf8f4;border-left:4px solid var(--c);border-radius:8px;padding:12px;margin:10px 0;font-size:13px}
+.log{max-height:280px;overflow:auto;border:1px solid #e0ebe7;border-radius:10px;padding:7px;font:12px ui-monospace,monospace}
+.log div{padding:7px;border-bottom:1px solid #edf2f0}
+table{width:100%;border-collapse:collapse;font-size:13px}td,th{text-align:left;padding:10px;border-bottom:1px solid #e3eee8}
+label{font-weight:700;font-size:14px}
+footer{text-align:center;padding:30px;color:#66837b}
+@media(max-width:750px){.grid{grid-template-columns:1fr}.card{padding:16px}.stats{grid-template-columns:1fr 1fr}}
+</style></head>
+<body><header><small>KEYDNA · CONTINUOUS BEHAVIORAL AUTHENTICATION</small><h1>⌨️ KeyDNA Continuous</h1><div>Thiết kế lại theo kiến trúc TrueStroke · Xử lý cục bộ trong trình duyệt · Bản POC</div></header>
+<main>
+<div class="tabs row">
+<button class="active" data-tab="enroll">1. Đăng ký hành vi</button>
+<button class="alt" data-tab="monitor">2. Xác thực liên tục</button>
+<button class="alt" data-tab="lab">3. Model Lab</button>
+</div>
+<div class="grid">
+<div>
+<section class="card page" data-page="enroll">
+<h2>Đăng ký dấu vân tay gõ phím</h2>
+<p class="muted">Không cần gõ câu cố định. Gõ tự nhiên ít nhất 200 phím hợp lệ. Hệ thống tạo các cửa sổ 30 phím, bước dịch 15 phím và học đặc trưng của nhịp gõ.</p>
+<label for="person">Tên hồ sơ trên thiết bị này</label><input id="person" placeholder="Ví dụ: Người dùng A" maxlength="60">
+<label for="enrollText">Nhập nội dung tự nhiên để huấn luyện</label>
+<textarea id="enrollText" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="Hãy gõ liên tục một đoạn văn đủ dài bằng bàn phím..."></textarea>
+<div class="meter"><div id="enrollBar" style="width:0"></div></div>
+<div class="row"><span id="enrollCount" class="pill">0 / 200 phím</span><span id="enrollWindows" class="muted">0 cửa sổ</span></div>
+<div class="row"><button id="train" disabled>Huấn luyện hồ sơ</button><button id="enrollReset" class="alt">Nhập lại</button></div>
+<div id="trainMsg" class="info">Bộ thu chỉ ghi thời gian phím khi vùng nhập đang được chọn. Hạn chế sửa bằng paste, autofill hoặc dictation.</div>
 </section>
-<section class="card"><h3>Nhịp gõ của lần hiện tại</h3><p class="muted">Trên bàn phím vật lý: biểu đồ thời gian giữ phím. Trên điện thoại: biểu đồ khoảng thời gian giữa hai lần chạm liên tiếp (ms).</p><canvas id="plot" width="500" height="200"></canvas></section>
-<section class="card"><div class="step">BƯỚC 2 · QUẢN LÝ HỒ SƠ</div><h2>Quản lý cấu hình và mẫu</h2><p class="muted">Cấu hình số mẫu nằm trong phần lấy mẫu. Chọn hồ sơ tại mục “Thử nhận diện” để quản lý. Chỉ chính chủ được tải/xóa dữ liệu. Tệp JSON giúp mang bộ mẫu sang tài khoản khác.</p>
-<div id="selectedDetails"></div><div class="actions"><button id="deleteV3Btn" class="light" type="button" hidden>Xóa toàn bộ mẫu V3</button></div><button id="refresh" class="light" type="button">↻ Làm mới danh sách</button><div class="actions"><button id="exportBtn">↓ Xuất JSON</button><button class="light" id="importBtn">↑ Nhập JSON</button><input type="file" id="importFile" accept=".json,application/json" hidden></div>
-<div id="sampleList"></div><button class="danger" id="deleteProfileBtn">Xóa toàn bộ hồ sơ</button>
-<p class="help">Xóa hồ sơ cũng xóa lịch sử kiểm thử. Nhập JSON chỉ thực hiện khi tài khoản chưa có hồ sơ.</p>
+<section class="card page" data-page="monitor" hidden>
+<h2>Xác thực liên tục</h2>
+<p>Gõ nội dung tùy ý. Mỗi 15 phím mới sẽ kiểm tra một cửa sổ 30 phím, kết hợp Isolation Forest và Mahalanobis. Cần 3 cửa sổ bất thường liên tiếp để chuyển sang trạng thái cảnh báo.</p>
+<textarea id="monitorText" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Gõ ở đây để hệ thống theo dõi nhịp gõ..."></textarea>
+<div class="row"><button class="alt" id="monitorReset">Đặt lại phiên</button><span id="liveState" class="pill">Chưa đủ dữ liệu</span></div>
+<div class="stats"><div class="stat"><small>Cửa sổ đã xử lý</small><strong id="nWindows">0</strong></div><div class="stat"><small>Độ tin cậy (POC)</small><strong id="confidence">—</strong></div><div class="stat"><small>Bất thường liên tiếp</small><strong id="streak">0/3</strong></div></div>
+<h3>Nhật ký quyết định</h3><div class="log" id="log"><div>Chưa có dữ liệu phiên.</div></div>
+</section>
+<section class="card page" data-page="lab" hidden>
+<h2>Model Lab</h2>
+<p>Hồ sơ được huấn luyện bằng hai bộ chấm điểm. Đây là phiên bản JavaScript mô phỏng kiến trúc TrueStroke, không phải engine WASM/C++ nguyên bản.</p>
+<table><tr><th>Thông số</th><th>Giá trị</th></tr>
+<tr><td>Đặc trưng</td><td>42 chiều (7 thống kê + 20 digraph + 10 trigraph + 5 nhịp)</td></tr>
+<tr><td>Window / stride</td><td>30 / 15 phím</td></tr>
+<tr><td>Isolation Forest</td><td>100 cây, subsample tối đa 256</td></tr>
+<tr><td>Mahalanobis</td><td>Diagonal covariance có regularization</td></tr>
+<tr><td>Score fusion</td><td>Trung bình 2 percentile score</td></tr>
+<tr><td>Hysteresis</td><td>3 cửa sổ liên tiếp</td></tr></table>
+<h3>Đánh giá</h3>
+<p class="muted">FAR/FRR cần mẫu chính chủ và người lạ được gán nhãn độc lập. Vì vậy không hiển thị độ chính xác tự ước tính từ tập train.</p>
+<button id="export" class="alt">Xuất hồ sơ JSON</button><button id="wipe" class="warn">Xóa hồ sơ cục bộ</button>
 </section>
 </div>
-<div class="view" data-view="verify">
-<section class="card"><div class="step">BƯỚC 3 · KIỂM TRA</div><h2>Bạn có phải người đã đăng ký?</h2><p>Chọn hồ sơ cần thử. Người khác cũng có thể gõ câu giống hệt để kiểm tra khả năng phân biệt của Machine Learning.</p>
-<div id="verifyTarget"><label for="verifyPicker">Hồ sơ muốn thử</label><select id="verifyPicker"></select><div id="verifySummary" class="example"></div><label><input type="checkbox" id="verifyOwner"> Tôi thực sự là người đã đăng ký hồ sơ này</label>
-<p class="help" style="margin-top:5px"><b>Đánh dấu nếu bạn chính là chủ hồ sơ được chọn.</b> Nếu bạn đang thử giả làm người đó, hãy bỏ chọn. Thông tin này chỉ để đối chiếu kết quả, tính tỷ lệ nhận nhầm hoặc từ chối nhầm; <b>không ảnh hưởng đến thuật toán nhận diện.</b> Hãy khai báo đúng để thống kê có ý nghĩa.</p></div>
-<div class="phrase" id="verifyPhrase"></div><p id="verifyCaptureHint" class="help"></p><label for="verifyTyping">Gõ lại câu mẫu</label><input id="verifyTyping" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Gõ đúng câu trên..."><p class="help">Không dùng copy/paste; bàn phím ảo dùng nhịp chạm V3-mobile, bàn phím vật lý dùng thời gian nhấn/nhả thực.</p>
-<button id="verifySend">Kiểm tra nhịp gõ</button><button id="verifyReset" class="light">Gõ lại</button><div id="verifyMessage" class="example">Chọn hồ sơ đã đủ số mẫu cấu hình để bắt đầu.</div><div id="verifyOutcome"></div>
-</section>
-<section class="card"><h3>Thống kê kiểm thử</h3><p class="muted">Mọi người có thể xem FAR/FRR của mô hình V3 theo cấu hình hiện tại.</p><details class="lesson" open><summary>FAR và FRR có ý nghĩa gì?</summary><div>
-<p><b>FAR — Tỷ lệ chấp nhận nhầm:</b> Người khác gõ thử nhưng máy lại nhận là chính chủ. Ví dụ, 20 lượt người khác thử và có 2 lượt được chấp nhận → FAR = 10%. <b>Càng thấp càng tốt</b>, vì giảm nguy cơ nhận nhầm người lạ.</p>
-<p><b>FRR — Tỷ lệ từ chối nhầm:</b> Chính chủ gõ thử nhưng máy báo không phù hợp. Ví dụ, chính chủ thử 20 lần và bị từ chối 3 lần → FRR = 15%. <b>Càng thấp càng tốt</b>, vì giảm phiền hà cho người dùng thật.</p>
-<p><b>Vì sao cần checkbox?</b> Máy chỉ biết nhịp gõ và kết quả của nó. Checkbox cho biết thực tế người thử tự nhận là chính chủ hay người khác, để máy thống kê hai loại sai nói trên. Đánh dấu sai khiến FAR/FRR không đáng tin cậy.</p>
-<p><b>Có mức phần trăm nào là chuẩn?</b> Không có một mức FAR/FRR chung được coi là đạt cho mọi hệ thống. Khi nghiên cứu sinh trắc học, người ta thường báo cáo FAR, FRR và EER (điểm mà FAR và FRR bằng nhau) trên cùng một tập kiểm thử. Ví dụ <b>FAR 1%</b> có nghĩa trung bình khoảng 1 trên 100 lượt thử của người khác được chấp nhận, <b>không phải</b> tiêu chuẩn mặc định. Với xác thực có rủi ro cao, mục tiêu FAR thường phải rất thấp, nhưng cần tự xác định theo bối cảnh sử dụng và kiểm định độc lập.</p><p class="help">FAR/FRR ở đây là số liệu thử nghiệm dựa trên lời tự khai, không phải độ chính xác đã được kiểm định độc lập. Không có lượt thử thuộc một nhóm thì chưa tính được tỷ lệ cho nhóm đó.</p>
-</div></details><div class="actions"><button id="statsBtn">Xem FAR / FRR</button><button id="clearStatsBtn" class="light" hidden>Xóa lịch sử FAR / FRR</button></div>
-<p class="help">Xóa lịch sử kiểm thử sẽ đặt lại thống kê FAR/FRR của hồ sơ đang chọn, nhưng vẫn giữ nguyên mẫu gõ, hồ sơ và cấu hình mô hình. Chỉ chủ hồ sơ có quyền xóa.</p><div id="stats"></div></section></div>
-
-<div class="view" data-view="tune" hidden>
-<section class="card"><div class="step">PHÒNG THÍ NGHIỆM MACHINE LEARNING</div><h2>Tinh chỉnh &amp; kiểm định mô hình</h2>
-<p class="muted">Thử nhiều mức ngưỡng và phương án K láng giềng gần nhất. Mô phỏng không làm thay đổi hệ thống; chỉ nút <b>Lưu cấu hình</b> mới có hiệu lực. Chỉ chủ hồ sơ được kiểm định chi tiết.</p>
-<label for="tuneProfile">Hồ sơ của bạn</label><select id="tuneProfile"></select><div id="tuneStatus" class="example">Đang tải dữ liệu...</div><div class="example"><b>V3 theo dự án tham khảo:</b> Đo dwell time (thời gian giữ phím), down–down (khoảng nhấn liên tiếp), up–down (khoảng nhả phím đến nhấn tiếp). Bộ đặc trưng V3 là bộ duy nhất được sử dụng. Dùng thử kNN chuẩn hóa và Cosine; không giả định ngưỡng 70% mặc định sẽ có độ chính xác cao. Chỉ chuyển mô hình sau khi có kết quả FAR/FRR trên lượt thử riêng.</div>
-<div class="cols" style="margin-top:16px"><div><label for="tuneKind">Bộ đặc trưng</label><select id="tuneKind"><option value="timing_v3">V3 — 126 đặc trưng thời gian gõ</option></select></div><div><label for="tuneK">Số láng giềng</label><select id="tuneK"><option value="1">k = 1</option><option value="3">k = 3</option><option value="5">k = 5</option></select></div></div>
-<label for="tuneMetric">Cách tính khoảng cách</label><select id="tuneMetric"><option value="euclidean">Euclidean — căn trung bình bình phương</option><option value="manhattan">Manhattan — trung bình chênh lệch tuyệt đối</option><option value="cosine_knn">Cosine kNN — khoảng cách góc, lấy k mẫu gần nhất</option><option value="cosine_median">Cosine Median — trung vị độ tương đồng (theo app tham khảo)</option></select>
-<label for="tuneFactor">Hệ số ngưỡng: <b id="tuneFactorText">1,25</b></label><input id="tuneFactor" type="range" min="0.5" max="2" step="0.05" value="1.25">
-<div class="example"><b>Phương pháp mới từ dự án keystroke-dynamics:</b> Cosine Similarity so sánh hình dạng nhịp gõ; Cosine Median lấy trung vị của tất cả mẫu. Tôi đã bổ sung chuẩn hóa từng đặc trưng để tránh thời gian gõ tổng thể lấn át các thành phần còn lại, đồng thời học ngưỡng riêng từ mẫu chính chủ thay vì dùng cố định 70%. <b>Cosine Median không sử dụng tham số k</b>.</div>
-<p class="help">Giảm ngưỡng thường làm FAR giảm nhưng có thể khiến FRR tăng. Nên thu nhiều lượt kiểm định độc lập; nếu dữ liệu còn ít thì chưa thể kết luận phương pháp nào chính xác nhất.</p>
-<div class="actions"><button id="tunePreview">↻ Phân tích &amp; so sánh</button><button class="light" id="tuneSave">Lưu cấu hình cho hồ sơ</button></div>
-<p id="tuneMessage" class="help"></p></section>
-<section class="card"><h3>Đồ thị FAR / FRR theo ngưỡng</h3>
-<p class="muted">Mô phỏng hồi cứu bằng điểm đã ghi: nhân ngưỡng mỗi lượt với tỷ lệ trên trục ngang. Nếu các lượt dùng mô hình khác nhau, đường biểu diễn không phải dự báo khi đổi mô hình.</p>
-<canvas id="tuneChart" width="650" height="255" aria-label="Biểu đồ FAR và FRR theo hệ số ngưỡng"></canvas>
-<div class="tuneLegend"><span><i class="tuneDot" style="background:#D99B24"></i> FAR — nhận nhầm người khác</span><span><i class="tuneDot" style="background:#006B68"></i> FRR — từ chối chính chủ</span></div>
-<div id="tuneCounts" class="help"></div></section>
-<section class="card"><h3>So sánh kNN và Cosine Similarity</h3>
-<p class="muted">Các biến thể V3 được chấm lại bằng lượt thử <b>có lưu đầy đủ 126 đặc trưng</b>. Khi chưa đủ lượt thử của một nhóm, chỉ số FAR/FRR sẽ hiển thị “Chưa có dữ liệu”. Chọn “Dùng thử” chỉ điền cấu hình; chưa lưu.</p>
-<div class="tuneTableWrap"><table class="tuneTable"><thead><tr><th>Đặc trưng</th><th>k</th><th>Khoảng cách</th><th>Lượt thử</th><th>FAR</th><th>FRR</th><th></th></tr></thead><tbody id="tuneVariants"><tr><td colspan="7">Chọn Phân tích để xem kết quả.</td></tr></tbody></table></div>
-<div class="example" style="margin-top:14px"><b>Gợi ý:</b> Thu 20–30 mẫu ở nhiều buổi; kiểm tra thêm lượt chính chủ và người khác. Chọn phương án có FAR và FRR cùng chấp nhận được, không chỉ FAR thấp.</div>
-</section></div>
-<div class="view" data-view="academy" hidden>
-<section class="card"><div class="step">GIÁO TRÌNH TƯƠNG TÁC</div><h2>Hiểu Machine Learning từ cơ bản đến kiểm định</h2><p>Tài liệu học theo chương, có ví dụ, hình minh họa, công thức và bài kiểm tra. <b>Mặc định: One-Class k-Nearest Neighbors (One-Class kNN) — K láng giềng gần nhất cho một lớp.</b> Ngoài ra, tab Tinh chỉnh hỗ trợ thử <b>Cosine Similarity — độ tương đồng Cosine</b>, lấy k láng giềng gần nhất hoặc trung vị tất cả mẫu.</p><div class="actions"><button id="expandLessons">Mở tất cả</button><button id="collapseLessons" class="light">Thu gọn</button></div></section>
-<details class="lesson" open><summary>01 · Bài toán sinh trắc học hành vi</summary><div><p>Nếu hai người cùng gõ “hom nay ...”, nội dung giống nhau nhưng thói quen gõ có thể khác. Ứng dụng không đoán danh tính từ câu chữ; nó tìm xem nhịp gõ mới có quen thuộc với một hồ sơ hay không.</p><p class="example">Ví dụ: A giữ phím hơi lâu và dừng ở khoảng giữa câu; B gõ nhanh, khá đều. Đây là hai hành vi có thể phân biệt bằng các phép đo thời gian.</p><p><b>Hạn chế:</b> Mệt mỏi, đổi bàn phím, cách đặt tay và kích thước thiết bị có thể làm nhịp gõ của cùng một người thay đổi.</p></div></details>
-<details class="lesson"><summary>02 · Máy thu thập những thông tin gì?</summary><div><p>Mỗi phím có thời điểm nhấn xuống (keydown) và nhả ra (keyup). Từ đó đo:</p><ul><li><b>Dwell time:</b> giữ phím trong bao lâu.</li><li><b>Press-to-press:</b> khoảng cách giữa hai lần nhấn.</li><li><b>Flight time:</b> thời gian từ nhả phím trước đến nhấn phím tiếp theo; có thể âm khi nhấn chồng phím.</li><li><b>Tổng thời gian:</b> từ phím đầu đến phím cuối.</li></ul><p>V3 thu toàn bộ 40 thời gian giữ phím, 39 khoảng nhấn–nhấn, 39 khoảng nhả–nhấn và 8 đặc trưng tổng hợp: <b>126 đặc trưng</b>. Tệp sao lưu JSON lưu các vector thời gian này để tái sử dụng mẫu V3.</p></div></details>
-<details class="lesson"><summary>03 · Thuật toán One-Class k-Nearest Neighbors (One-Class kNN)</summary><div>
-<p><b>Tên tiếng Việt:</b> Thuật toán <b>K láng giềng gần nhất cho một lớp</b> (cũng có thể hiểu là tìm các mẫu gần nhất thuộc một hồ sơ).</p>
-<p><b>kNN (k-Nearest Neighbors — K láng giềng gần nhất)</b> là một phương pháp Machine Learning dễ hình dung: khi cần đánh giá một đối tượng mới, hãy tìm những đối tượng đã biết giống nó nhất, rồi dựa vào các đối tượng đó để đưa ra kết luận.</p>
-<p><b>One-Class kNN khác gì kNN phân loại thông thường?</b> kNN phân loại có thể lấy ý kiến của các láng giềng thuộc nhiều nhóm để dự đoán nhóm mới. Còn <b>One-Class kNN trong KeyDNA chỉ học mẫu của một người</b>: nó đo lượt gõ mới gần hay xa mẫu của người đó, rồi so với một ngưỡng. <b>Không có bước bỏ phiếu giữa nhiều người.</b></p>
-<p>Trong V3, mỗi lần gõ là một điểm trong không gian <b>126 đặc trưng</b>. Với cấu hình mặc định k = 3, chương trình tìm <b>3 mẫu có khoảng cách nhỏ nhất</b> và lấy trung bình. Đây là kỹ thuật so khớp theo khoảng cách, không phải xác suất người dùng là chính chủ.</p>
-<div class="example"><b>Ví dụ:</b> Một lượt gõ mới có khoảng cách chuẩn hóa với 3 mẫu gần nhất lần lượt là <b>0,3; 0,4; 0,5</b>. Điểm chung = (0,3 + 0,4 + 0,5)/3 = <b>0,4</b>. Nếu ngưỡng của hồ sơ là <b>0,6</b>, kết quả là <b>Phù hợp</b>. Nếu điểm là <b>0,9</b>, kết quả là <b>Không phù hợp</b>.</div>
-<figure class="knn-figure">
-<svg viewBox="0 0 660 330" role="img" aria-label="Minh họa khái niệm: điểm gõ mới ở giữa, ba mẫu gõ chính chủ gần nhất được nối nét đứt; những mẫu xa hơn không được dùng để tính điểm.">
-<rect x="0" y="0" width="660" height="330" rx="16" fill="#f3faf7"/>
-<text x="20" y="28" font-size="16" font-weight="750" fill="#075e59">Minh họa: tìm 3 mẫu nhịp gõ gần nhất</text>
-<text x="20" y="49" font-size="12" fill="#50756e">Hình 2 chiều đơn giản hóa — mô hình thực dùng 126 đặc trưng</text>
-<g stroke="#dcece6" stroke-width="1"><path d="M50 90 H625 M50 140 H625 M50 190 H625 M50 240 H625 M110 65 V285 M210 65 V285 M310 65 V285 M410 65 V285 M510 65 V285 M610 65 V285"/></g>
-<circle cx="328" cy="177" r="99" fill="#d5f1e9" stroke="#69b2a3" stroke-width="1.5" stroke-dasharray="6 5"/>
-<g stroke="#bb8b16" stroke-dasharray="6 5" stroke-width="2.5"><line x1="328" y1="177" x2="285" y2="115"/><line x1="328" y1="177" x2="397" y2="160"/><line x1="328" y1="177" x2="315" y2="245"/></g>
-<g fill="#00796f" stroke="#ffffff" stroke-width="3"><circle cx="285" cy="115" r="11"/><circle cx="397" cy="160" r="11"/><circle cx="315" cy="245" r="11"/><circle cx="132" cy="210" r="9"/><circle cx="490" cy="105" r="9"/><circle cx="550" cy="244" r="9"/></g>
-<circle cx="328" cy="177" r="14" fill="#ffc62f" stroke="#9a7100" stroke-width="3"/>
-<g font-size="12" fill="#075e59" font-weight="700"><text x="264" y="94">Mẫu 1</text><text x="405" y="151">Mẫu 2</text><text x="278" y="272">Mẫu 3</text><text x="347" y="197" fill="#7a5700">Lượt mới</text></g>
-<g font-size="12" fill="#4d7169"><text x="20" y="309">● Xanh: mẫu của chính chủ</text><text x="245" y="309" fill="#7a5700">● Vàng: lượt thử</text><text x="405" y="309">--- 3 láng giềng gần nhất</text></g>
-</svg>
-<figcaption>Khoảng cách chỉ mang tính minh họa; vị trí trên hình không phải khoảng cách ML thật.</figcaption>
-</figure>
-<p><b>Vì sao gọi là “một lớp”?</b> Vì dữ liệu huấn luyện chỉ cần các ví dụ của người đăng ký. V3 yêu cầu ít nhất 5 mẫu; nên lấy khoảng 20–30 mẫu ở nhiều buổi rồi kiểm định với các lượt gõ chưa dùng để huấn luyện.</p>
-</div></details>
-<details class="lesson"><summary>03b · Cosine Similarity: phương pháp so khớp nhịp gõ</summary><div>
-<p><b>Cosine Similarity (độ tương đồng Cosine)</b> so sánh hướng của hai vector, giúp đánh giá <b>hình dạng tương đối của nhịp gõ</b> thay vì chỉ độ chênh lệch thời gian tuyệt đối. Hai vector cùng hướng có độ tương đồng gần 1; khác hướng sẽ thấp hơn.</p>
-<div class="math">cos(A,B) = (A · B) / (||A|| × ||B||)</div>
-<p><b>Cosine kNN:</b> tìm k mẫu có khoảng cách Cosine nhỏ nhất và lấy trung bình. <b>Cosine Median:</b> tính tương đồng với tất cả mẫu đã học rồi lấy trung vị; đây là cách dự án GitHub tham khảo sử dụng.</p>
-<p>Ví dụ: độ tương đồng của lượt gõ mới với 5 mẫu là <b>0,65; 0,72; 0,81; 0,86; 0,91</b> thì trung vị là <b>0,81</b>. Ứng dụng tham khảo dùng ngưỡng mặc định <b>0,70</b> để chấp nhận. <b>KeyDNA không sao chép ngưỡng cố định đó</b>, mà học ngưỡng theo từng hồ sơ từ phép kiểm tra chéo trên mẫu đã thu.</p>
-<p><b>Lưu ý:</b> Cosine không đương nhiên chính xác hơn Euclidean, và điểm tương đồng không phải xác suất xác thực danh tính. Với ít mẫu và ít lượt thử của người khác, các tỷ lệ FAR/FRR còn nhiều bất định.</p></div></details>
-<details class="lesson"><summary>04 · Chuẩn hóa và công thức khoảng cách</summary><div><p>Không thể cộng trực tiếp một khoảng dừng 500 ms với một dấu hiệu chỉ dao động 10 ms: thang đo khác nhau. V3 dùng trung vị và độ lệch tuyệt đối trung vị (MAD) để chuẩn hóa từng đặc trưng, với mức sàn khác nhau tùy nhóm thời gian. Khoảng cách Euclidean và Manhattan sử dụng trọng số để giảm tác động của một số đặc trưng tổng hợp.</p><div class="math">scaleⱼ = max(mức sàn của đặc trưng j; 1,4826 × MADⱼ)</div><div class="math">distance = √[Σⱼ wⱼ × min(6; |xⱼ−sⱼ| / scaleⱼ)² / Σⱼ wⱼ]</div><p>Mỗi chênh lệch được chia cho độ biến thiên của đặc trưng đó; thành phần quá lớn được giới hạn ở 6. Sau đó lấy trung bình bình phương và căn bậc hai.</p><p class="example">Bạn không cần tính tay 126 phép đo. Chỉ cần nhớ: <b>điểm càng thấp → nhịp gõ càng gần với hồ sơ.</b></p></div></details>
-<details class="lesson"><summary>05 · Hệ thống tự đặt ngưỡng thế nào?</summary><div><p>Để đặt giới hạn “đủ giống”, máy lần lượt bỏ một mẫu đã học ra, đem mẫu đó so với các mẫu còn lại (leave-one-out). Tập các điểm khác biệt cho thấy nhịp gõ của chính chủ thường thay đổi thế nào.</p><p>V3 sử dụng phân vị 85% của các điểm leave-one-out, nhân hệ số mặc định 1,25. Với khoảng cách Euclidean/Manhattan, ngưỡng có mức sàn 0,16; khoảng cách Cosine sử dụng sàn 0,001. Đây là quy tắc thử nghiệm, chưa phải ngưỡng tối ưu được kiểm định. Đây là <b>heuristic của POC</b>, chưa được tối ưu trên bộ kiểm định độc lập.</p><div class="math">Ngưỡng V3 = max(mức sàn; P85(điểm leave-one-out) × hệ số)</div><p>Nếu điểm của lượt thử nhỏ hơn hoặc bằng ngưỡng, hệ thống báo “Phù hợp”. Nếu vượt ngưỡng, báo “Không phù hợp”.</p></div></details>
-<details class="lesson"><summary>06 · Thực hành: thay đổi điểm và ngưỡng</summary><div><p>Di chuyển hai thanh để xem một quyết định có thể thay đổi ra sao. Đây là minh họa, không thay đổi ngưỡng backend Supabase.</p><label>Điểm khác biệt: <b id="scoreSimValue">0.70</b></label><input type="range" min="0" max="3" step="0.05" value="0.7" id="scoreSim"><label>Ngưỡng chấp nhận: <b id="cutSimValue">1.00</b></label><input type="range" min="0.1" max="3" step="0.05" value="1" id="cutSim"><div id="simResult" class="example"></div><p>Ngưỡng cao hơn sẽ chấp nhận nhiều lượt gõ hơn, nhưng có nguy cơ nhận nhầm người lạ. Ngưỡng thấp hơn chặt chẽ hơn, nhưng có thể từ chối nhầm chính chủ.</p></div></details>
-<details class="lesson"><summary>07 · Đánh giá FAR, FRR và độ tin cậy</summary><div><p><b>FAR (False Acceptance Rate):</b> số lần người khác được chấp nhận / tổng số lượt người khác thử.</p><p><b>FRR (False Rejection Rate):</b> số lần chính chủ bị từ chối / tổng số lượt chính chủ thử.</p><p class="example">Nếu có 20 lượt người khác thử và 2 lượt được chấp nhận, FAR = 10%. Nếu chính chủ thử 20 lượt và 3 lần bị từ chối, FRR = 15%.</p><p>Để đánh giá công bằng, dùng nhiều người và nhiều buổi khác nhau; tách các lượt kiểm thử khỏi dữ liệu học. Nhãn “chính chủ” do người dùng tự khai nên không phải bằng chứng danh tính đã xác minh.</p></div></details>
-<details class="lesson"><summary>08 · Câu hỏi tự kiểm tra</summary><div><p><b>1.</b> Điểm kNN thấp nghĩa là gì?</p><select class="quiz" data-answer="a"><option value="">Chọn đáp án</option><option value="a">Giống hồ sơ hơn</option><option value="b">Khác hồ sơ hơn</option></select><p><b>2.</b> Dùng 5 mẫu có bảo đảm nhận đúng người không?</p><select class="quiz" data-answer="b"><option value="">Chọn đáp án</option><option value="a">Có, luôn đúng</option><option value="b">Không, chỉ là bước thử nghiệm</option></select><p><b>3.</b> Nếu tăng ngưỡng rất cao, điều gì dễ xảy ra?</p><select class="quiz" data-answer="a"><option value="">Chọn đáp án</option><option value="a">Dễ nhận nhầm người khác hơn</option><option value="b">Không có ảnh hưởng</option></select><button id="quizCheck">Chấm bài</button><div id="quizResult"></div></div></details>
-<details class="lesson"><summary>09 · Tổng kết và hướng nâng cấp</summary><div><p><b>Luồng đầy đủ:</b> gõ mẫu → đo thời gian → trích xuất 126 đặc trưng V3 → lưu bộ mẫu V3 → so khớp bằng phương pháp đang chọn → so ngưỡng → đánh giá FAR/FRR.</p><p>Để nâng cấp POC: (1) thu mẫu qua nhiều ngày, (2) tách mô hình cho từng loại bàn phím, (3) thêm đặc trưng sửa lỗi, (4) so sánh kNN với Isolation Forest hoặc mô hình khác trên cùng dữ liệu kiểm định.</p><p class="example"><b>Phạm vi ứng dụng:</b> KeyDNA Lab sử dụng duy nhất bộ đặc trưng V3. Trong phần Tinh chỉnh, người dùng có thể đối chiếu các thước đo khoảng cách Euclidean, Manhattan, Cosine kNN và Cosine Median trên cùng bộ mẫu V3.</p></div></details>
-</div>
-</main>
-<script type="module">
-import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.57.0';
-const url='https://rmbsxccrwrktbjlnezpu.supabase.co',key='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJtYnN4Y2N'+'yd3JrdGJqbG5lenB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg2MjczNjQsImV4cCI6MjA2NDIwMzM2NH0.ydCqificftdtn1niRciFCifeuo8aX6SDGti-hCY5Z_Y',sb=createClient(url,key);
-const P='hom nay toi muon hoc them nhieu dieu moi',E=id=>document.getElementById(id);E('phrase').textContent=P;E('verifyPhrase').textContent=P;
-const isMobileKeyboard=(()=>{const ua=navigator.userAgent||'';return /Android|iPhone|iPad|iPod/i.test(ua)||(navigator.maxTouchPoints>0&&window.matchMedia?.('(pointer:coarse)').matches)})();
-const captureMode=isMobileKeyboard?'mobile':'physical';
-// Mobile browsers do not report real key-hold duration reliably. The constant
-// below is a compatibility placeholder, NOT a measured mobile dwell time.
-// The backend gives all mobile dwell components zero ML weight.
-const MOBILE_HOLD_ESTIMATE=75;
-
-let mode='enroll',me=null,profiles=[],keys=[],active=new Map(),invalid=false,start=null,editCount=0,timingOffset=0,resumeAnchor=null;
-function say(s){E('msg').textContent=s}
-function reset(){keys=[];active.clear();invalid=false;start=null;editCount=0;timingOffset=0;resumeAnchor=null;E('typing').value='';E('duration').textContent='0.0';E('result').textContent='';draw();E('typing').focus()}
-const avg=a=>a.length?a.reduce((s,x)=>s+x,0)/a.length:0,sd=a=>Math.sqrt(avg(a.map(x=>(x-avg(a))**2)));
-function featsV3(){
- const d=keys.map(x=>x.up-x.down);
- const pp=keys.slice(1).map((x,i)=>x.down-keys[i].down);
- const ud=keys.slice(1).map((x,i)=>x.down-keys[i].up);
- const total=keys.at(-1).up-keys[0].down;
- return [avg(d),sd(d),avg(pp),sd(pp),avg(ud),sd(ud),total,pp.filter(x=>x>350).length,...d,...pp,...ud].map(x=>Math.round(x*100)/100);
+<aside>
+<section class="card"><h2>Trạng thái hồ sơ</h2><div id="profileState" class="pill">Chưa có hồ sơ</div><p id="profileInfo" class="muted"></p><div class="info">Phiên bản mới không đọc hoặc ghi dữ liệu Supabase V3. Mẫu trước đây được giữ nguyên trên Supabase và ứng dụng cũ vẫn còn trong lịch sử Git.</div></section>
+<section class="card"><h2>Giải thích thuật toán</h2><p><b>Isolation Forest:</b> phát hiện cửa sổ có mẫu nhịp gõ dễ bị cô lập.</p><p><b>Mahalanobis:</b> kiểm tra khoảng cách từng đặc trưng đến hành vi đã học; dùng phương sai điều chuẩn để tránh chia cho 0.</p><p><b>Fusion:</b> quy đổi điểm vào phân vị tương ứng của tập huấn luyện, rồi gộp thành điểm bất thường.</p><p><b>Hysteresis:</b> tránh báo động do một lần gõ bất thường đơn lẻ.</p><small>Gõ trên bàn phím mềm iOS có thể thiếu sự kiện KeyUp hoặc timestamp đáng tin cậy. Khi thiếu dữ liệu, ứng dụng từ chối huấn luyện/nhận diện thay vì tạo kết quả giả.</small></section>
+</aside>
+</div></main><footer>KeyDNA Continuous · Research POC · Inspired by TrueStroke (MIT) · Không dùng làm xác thực thực tế</footer>
+<script>
+"use strict";
+const $=id=>document.getElementById(id), K="keydna_continuous_profile_v1", W=30, STRIDE=15;
+let profile=null, enroll=[], monitor=[], down=new Map(), epoch=0, nDone=0, badStreak=0;
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const mean=a=>a.reduce((x,y)=>x+y,0)/Math.max(1,a.length);
+const sd=a=>Math.sqrt(mean(a.map(v=>(v-mean(a))**2)));
+const quant=(a,p)=>{if(!a.length)return 0;let z=[...a].sort((x,y)=>x-y),k=(z.length-1)*p,i=Math.floor(k);return z[i]+(z[Math.min(z.length-1,i+1)]-z[i])*(k-i)};
+const hash=(s,n)=>{let h=2166136261;for(let c of s){h=Math.imul(h^c.charCodeAt(0),16777619)}return(h>>>0)%n};
+const setInfo=t=>$("trainMsg").textContent=t;
+function keyCollector(area,target,notify){
+ const started=new Map();
+ area.addEventListener("keydown",e=>{
+  if(e.repeat||e.isComposing||e.key==="Dead"||e.ctrlKey||e.metaKey||e.altKey)return;
+  if(e.key.length!==1&&e.key!=="Backspace"&&e.key!=="Enter")return;
+  if(!started.has(e.code||e.key))started.set(e.code||e.key,{key:e.key,t:performance.now()});
+ });
+ area.addEventListener("keyup",e=>{
+  const k=e.code||e.key,s=started.get(k);if(!s)return;started.delete(k);
+  const t=performance.now(),d=t-s.t;
+  if(d<4||d>1000)return;
+  // Backspace and Enter may occur naturally; only printable keys enter biometric windows.
+  if(s.key.length!==1)return;
+  const prev=target[target.length-1];if(prev&&s.t-prev.down>10000)target.length=0;
+  target.push({key:s.key,down:s.t,up:t,dwell:d});
+  if(target.length>1000)target.splice(0,target.length-1000);
+  notify();
+ });
+ area.addEventListener("blur",()=>started.clear());
+ area.addEventListener("paste",e=>{e.preventDefault();setInfo("Không sử dụng paste: hãy gõ tự nhiên.");});
 }
-function draw(){const c=E('plot'),ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);const a=keys.map((x,i)=>isMobileKeyboard?(i?Math.max(0,x.down-keys[i-1].down):0):(x.up==null?0:Math.max(0,x.up-x.down))),max=Math.max(150,...a);a.forEach((v,i)=>{ctx.fillStyle='#008e86';ctx.fillRect(15+i*470/Math.max(1,P.length),185-v/max*170,Math.max(2,460/P.length-2),v/max*170)})}
-const typing=E('typing');
-const modeLabel=isMobileKeyboard?'BÀN PHÍM ẢO · V3-mobile':'BÀN PHÍM VẬT LÝ · V3';
-E('captureHint').textContent=isMobileKeyboard
- ?'📱 '+modeLabel+': ứng dụng đo khoảng cách thời gian giữa các lần chạm ký tự. Trình duyệt không cung cấp thời gian giữ phím thật; V3-mobile dùng giá trị giữ phím thay thế và không đưa giá trị đó vào phép so khớp. Nên tắt tự sửa từ trên bàn phím.'
- :'⌨ '+modeLabel+': đo trực tiếp thời gian nhấn, nhả và chuyển phím.';
-E('verifyCaptureHint').textContent=isMobileKeyboard?'Đang dùng bộ mẫu V3-mobile (không so với mẫu bàn phím vật lý).':'Đang dùng bộ mẫu V3 bàn phím vật lý.';
-
-typing.onpaste=e=>{e.preventDefault();say('Vui lòng tự gõ, không dán văn bản')};
-typing.ondrop=e=>e.preventDefault();
-// V3 enrollment: an incorrect character invalidates the timing sequence.
-// Restart the whole in-progress attempt; previously stored training samples stay intact.
-// V3 enrollment: reject ONLY the incorrect keystroke, never remove correct text.
-// Preserve 126 timing features and compress the time spent recovering from mistakes.
-function keepCorrectPrefix(message){
- const expected=keys.map(k=>k.char).join('');
- typing.value=expected;
- typing.setSelectionRange(expected.length,expected.length);
- invalid=false;
- say(message);
- typing.focus();
+function features(a){
+ const dw=a.map(x=>x.dwell), pp=a.slice(1).map((x,i)=>clamp(x.down-a[i].down,0,1600));
+ const rp=a.slice(1).map((x,i)=>clamp(x.down-a[i].up,-300,1600));
+ const total=Math.max(1,(a[a.length-1].up-a[0].down)/1000);
+ const v=[mean(dw),sd(dw),mean(pp),sd(pp),mean(rp),sd(rp),60*a.length/(5*total)];
+ // hashed timing bins avoid dependence on the exact sentence.
+ const dBuckets=Array.from({length:20},()=>[]),tBuckets=Array.from({length:10},()=>[]);
+ for(let i=1;i<a.length;i++)dBuckets[hash(a[i-1].key+a[i].key,20)].push(pp[i-1]);
+ for(let i=2;i<a.length;i++)tBuckets[hash(a[i-2].key+a[i-1].key+a[i].key,10)].push(a[i].down-a[i-2].down);
+ v.push(...dBuckets.map(x=>x.length?mean(x):0),...tBuckets.map(x=>x.length?mean(x):0));
+ const sorted=[...pp].sort((x,y)=>x-y);
+ v.push(quant(pp,.1),quant(pp,.5),quant(pp,.9),pp.filter(x=>x>400).length/Math.max(1,pp.length),sd(pp)/(mean(pp)+1));
+ return v.map(x=>Number.isFinite(x)?x:0);
 }
-function markMistake(key){
- // The wrong key must not be recorded. On the next correct key press, time
- // compression prevents the correction pause inflating the timing features.
- if(resumeAnchor===null)resumeAnchor=performance.now()-timingOffset;
- const display=key===' '?'dấu cách':key;
- keepCorrectPrefix('⚠ Ký tự “'+display+'” không đúng. Đã bỏ riêng ký tự sai; hãy gõ tiếp tại vị trí hiện tại.');
+function windows(events){const a=[];for(let i=0;i+W<=events.length;i+=STRIDE)a.push(features(events.slice(i,i+W)));return a}
+const depth=n=>n<=1?0:2*(Math.log(n-1)+.5772156649)-2*(n-1)/n;
+function tree(points,height=0,max=10){
+ if(points.length<=1||height>=max)return {n:points.length};
+ const d=points[0].length,j=Math.floor(Math.random()*d),values=points.map(p=>p[j]),lo=Math.min(...values),hi=Math.max(...values);
+ if(!(hi>lo))return {n:points.length};
+ const cut=lo+Math.random()*(hi-lo),left=points.filter(p=>p[j]<cut),right=points.filter(p=>p[j]>=cut);
+ if(!left.length||!right.length)return {n:points.length};
+ return {j,cut,l:tree(left,height+1,max),r:tree(right,height+1,max)};
 }
-typing.onkeydown=e=>{
- if(isMobileKeyboard)return; // Virtual keyboard timings are derived from input events.
- if(['Tab','Shift','Control','Alt','Meta'].includes(e.key))return;
- if(['ArrowLeft','ArrowRight','Home','End','ArrowUp','ArrowDown'].includes(e.key)){
-  e.preventDefault();typing.setSelectionRange(typing.value.length,typing.value.length);return;
- }
- if(e.ctrlKey||e.altKey||e.metaKey||e.repeat){
-  if(e.key.length===1)e.preventDefault();return;
- }
- if(e.isComposing||e.key==='Process'||e.key==='Dead'){
-  e.preventDefault();markMistake('ký tự đang ghép');return;
- }
- const pos=typing.selectionStart??typing.value.length,end=typing.selectionEnd??pos;
- if(e.key==='Backspace'||e.key==='Delete'){
-  e.preventDefault();
-  // Explicit user correction deletes one character, not an entire word.
-  const removed=keys.pop();
-  if(!removed)return;
-  for(const [code,entry] of active){if(entry===removed)active.delete(code)}
-  const prefix=keys.map(k=>k.char).join('');
-  typing.value=prefix;typing.setSelectionRange(prefix.length,prefix.length);
-  if(!keys.length){start=null;timingOffset=0;resumeAnchor=null}
-  else{resumeAnchor=removed.down}
-  editCount++;invalid=false;
-  E('duration').textContent=!keys.length?'0.0':(Math.max(0,(keys.at(-1).up??keys.at(-1).down)-start)/1000).toFixed(1);
-  draw();say('Đã xóa 1 ký tự. Các ký tự đúng khác được giữ nguyên.');return;
- }
- if(e.key.length!==1)return;
- if(pos!==typing.value.length||end!==pos){
-  e.preventDefault();keepCorrectPrefix('Hãy gõ tiếp ở cuối đoạn đúng; không thay đổi các ký tự đã gõ.');return;
- }
- if(e.key!==P[keys.length]){
-  e.preventDefault();markMistake(e.key);return;
- }
- const raw=performance.now();
- if(resumeAnchor!==null){timingOffset=raw-resumeAnchor;resumeAnchor=null}
- const t=raw-timingOffset;
- if(start===null)start=t;
- const entry={down:t,up:null,char:e.key,offset:timingOffset};
- keys.push(entry);active.set(e.code||e.key,entry);
-};
-typing.onkeyup=e=>{
- if(isMobileKeyboard)return;
- const code=e.code||e.key,entry=active.get(code);
- if(entry){
-  // Use the offset from keydown, even if another key was rejected meanwhile.
-  entry.up=performance.now()-entry.offset;
-  active.delete(code);draw();
- }
-};
-typing.oninput=()=>{
- if(isMobileKeyboard){
-  const prefix=keys.map(k=>k.char).join(''),nowValue=typing.value;
-  if(nowValue===prefix)return;
-  if(prefix.length&&nowValue===prefix.slice(0,-1)){
-   const removed=keys.pop();resumeAnchor=removed.down;
-   if(!keys.length){start=null;resumeAnchor=null;timingOffset=0}
-   typing.setSelectionRange(nowValue.length,nowValue.length);editCount++;draw();say('Đã xóa một ký tự; các ký tự trước được giữ nguyên.');return;
-  }
-  if(nowValue.length===prefix.length+1&&nowValue.startsWith(prefix)&&P.startsWith(nowValue)){
-   const raw=performance.now();if(resumeAnchor!==null){timingOffset=raw-resumeAnchor;resumeAnchor=null}
-   const down=raw-timingOffset;
-   if(start===null)start=down;
-   keys.push({down,up:down+MOBILE_HOLD_ESTIMATE,char:nowValue.slice(-1),estimated:true});
-   draw();E('duration').textContent=((down+MOBILE_HOLD_ESTIMATE-start)/1000).toFixed(1);return;
-  }
-  if(resumeAnchor===null)resumeAnchor=performance.now()-timingOffset;
-  keepCorrectPrefix('⚠ Ký tự không đúng hoặc bàn phím đã tự thay chữ. Đã bỏ phần nhập sai, giữ nguyên các ký tự đúng.');return;
- }
- const prefix=keys.map(k=>k.char).join('');
- if(typing.value!==prefix||!P.startsWith(typing.value)){
-  if(resumeAnchor===null)resumeAnchor=performance.now()-timingOffset;
-  keepCorrectPrefix('⚠ Đã bỏ ký tự tự động nhập sai. Các ký tự gõ đúng vẫn được giữ nguyên.');
-  return;
- }
- if(start!==null)E('duration').textContent=(Math.max(0,performance.now()-timingOffset-start)/1000).toFixed(1);
-};
-
-// Mobile navigation: separate enrollment, verification, and course.
-function showView(name){
- document.querySelectorAll('[data-view]').forEach(el=>el.hidden=el.dataset.view!==name);
- document.querySelectorAll('[data-tab]').forEach(el=>{el.classList.toggle('active',el.dataset.tab===name);el.setAttribute('aria-current',el.dataset.tab===name?'page':'false')});
- if(name==='learn')switchTo('enroll');if(name==='verify'){switchTo('verify');syncPicker()}if(name==='tune')syncTune();window.scrollTo({top:0,behavior:'smooth'});
+function path(x,t,h=0){if(t.n!==undefined)return h+depth(t.n);return path(x[xIndex(t)]<t.cut?t.l:t.r,h+1)}
+function xIndex(t){return t.j}
+function ifScore(x,forest,n){const p=mean(forest.map(t=>path(x,t)));return 2**(-p/Math.max(.001,depth(n)))}
+function mahScore(x,m,s){return Math.sqrt(mean(x.map((v,i)=>((v-m[i])/(s[i]||1))**2)))}
+function normalizer(a){
+ const m=a[0].map((_,i)=>mean(a.map(r=>r[i])));
+ const s=m.map((v,i)=>Math.sqrt(mean(a.map(r=>(r[i]-v)**2))+Math.max(25,Math.abs(v)*.08)**2));
+ return {m,s};
 }
-document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>showView(b.dataset.tab));
-function advice(){const n=Number(E('sampleTarget').value);let text=n<=5?'5 mẫu: chỉ phù hợp xem ứng dụng hoạt động; mô hình cực thiếu dữ liệu và điểm dễ biến động.':n<=10?'6–10 mẫu: thử chức năng và quan sát khoảng cách, chưa phù hợp kết luận ai là chính chủ.':n<=19?'11–19 mẫu: phù hợp POC demo ban đầu, vẫn cần thử với nhiều người khác nhau.':n<=30?'20–30 mẫu: mức nên chọn để đánh giá thử tốt hơn, nên thu ở nhiều buổi và kiểm định riêng.':'31–40 mẫu: nhiều ví dụ hơn nhưng không tự bảo đảm độ chính xác; cần kiểm định FAR/FRR.';E('sampleAdvice').textContent=text;}
-E('sampleTarget').onchange=async()=>{advice();if(!me){E('progress').textContent='0/'+E('sampleTarget').value;return;}try{await api('set_target',{target_samples:Number(E('sampleTarget').value)});await refresh();say('Đã lưu cấu hình số mẫu của hồ sơ')}catch(e){say('⚠ '+e.message)}};
-function syncPicker(){const picker=E('verifyPicker'),old=picker.value||E('profiles').value;picker.replaceChildren();
- for(const p of profiles){const o=document.createElement('option');o.value=p.id;o.textContent=p.name+' — '+p.count+'/'+p.required_samples+' mẫu V3'+(p.ready?'':' (chưa đủ)');picker.append(o)}
- if(profiles.some(p=>p.id===old))picker.value=old;E('profiles').value=picker.value;selected();
- const p=profiles.find(x=>x.id===picker.value);E('clearStatsBtn').hidden=!(p&&p.owner);syncTune();E('verifySummary').textContent=p?'Hồ sơ '+p.name+' · '+p.count+'/'+p.required_samples+' mẫu V3. '+(p.ready?'Sẵn sàng thử.':'Cần thu thêm mẫu V3 để nhận diện.'):'Chưa có hồ sơ nào';
+function trainModel(rows){
+ const {m,s}=normalizer(rows),z=rows.map(r=>r.map((v,i)=>(v-m[i])/s[i]));
+ const n=Math.min(256,z.length),forest=Array.from({length:100},()=>tree(Array.from({length:n},()=>z[Math.floor(Math.random()*z.length)]),0,Math.ceil(Math.log2(n))+1));
+ const mm=z[0].map((_,i)=>mean(z.map(r=>r[i])));
+ const ss=mm.map((v,i)=>Math.sqrt(mean(z.map(r=>(r[i]-v)**2))+.15**2));
+ const ifTrain=z.map(r=>ifScore(r,forest,n)),mahTrain=z.map(r=>mahScore(r,mm,ss));
+ return {m,s,forest,mm,ss,n,ifTrain,mahTrain};
 }
-E('verifyPicker').onchange=()=>{E('stats').textContent='';E('verifyOutcome').textContent='';E('verifyMessage').textContent='Hãy gõ câu mẫu để kiểm tra hồ sơ đã chọn.';E('profiles').value=E('verifyPicker').value;syncPicker();manage().catch(e=>say(e.message))};
-E('verifyReset').onclick=()=>{E('verifyTyping').value='';E('verifyOutcome').textContent='';E('verifyMessage').textContent='Hãy gõ lại câu mẫu'};
-E('verifyTyping').onpaste=e=>{e.preventDefault();E('verifyMessage').textContent='Không dùng copy/paste'};
-E('verifyTyping').ondrop=e=>e.preventDefault();
-let vKeys=[],vActive=new Map(),vInvalid=false,vTimingOffset=0,vResumeAnchor=null;
-const verifyInput=E('verifyTyping');
-function resetVerifyKeys(){
- vKeys=[];vActive.clear();vInvalid=false;vTimingOffset=0;vResumeAnchor=null;
- verifyInput.value='';E('verifyOutcome').textContent='';E('verifyMessage').textContent='Có thể nhập lại';
+function percentile(a,value){return a.filter(x=>x<=value).length/Math.max(1,a.length)}
+function evaluate(f){
+ let z=f.map((v,i)=>(v-profile.m[i])/profile.s[i]);
+ let iso=ifScore(z,profile.forest,profile.n),mah=mahScore(z,profile.mm,profile.ss);
+ const pif=percentile(profile.ifTrain,iso),pm=percentile(profile.mahTrain,mah);
+ const anomaly=(pif+pm)/2;
+ return {iso,mah,anomaly,confidence:1-anomaly,flag:anomaly>=.9};
 }
-verifyInput.onkeydown=e=>{
- if(isMobileKeyboard)return; // Mobile uses per-character input timestamps, not keyup.
- if(e.key==='Tab'||e.key==='Shift'||['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;
- if(e.ctrlKey||e.altKey||e.metaKey||e.repeat){if(e.key.length===1)e.preventDefault();return}
- if(e.isComposing||e.key==='Dead'||e.key==='Process'){vInvalid=true;return}
- const p=verifyInput.selectionStart??verifyInput.value.length,q=verifyInput.selectionEnd??p;
- if(e.key==='Backspace'||e.key==='Delete'){
-  const a=p===q?(e.key==='Backspace'?Math.max(0,p-1):p):p;
-  const b=p===q?(e.key==='Delete'?Math.min(vKeys.length,p+1):p):q;
-  vKeys.splice(a,b-a);return;
- }
- if(e.key.length!==1)return;
- if(q>p)vKeys.splice(p,q-p);
- const obj={down:performance.now(),up:null,char:e.key};
- vKeys.splice(p,0,obj);vActive.set(e.code||e.key,obj);
-};
-verifyInput.onkeyup=e=>{
- if(isMobileKeyboard)return;
- const a=vActive.get(e.code||e.key);if(a){a.up=performance.now();vActive.delete(e.code||e.key)}
-};
-verifyInput.oninput=()=>{
- if(isMobileKeyboard){
-  const prefix=vKeys.map(x=>x.char).join(''),value=verifyInput.value;
-  if(prefix===value)return;
-  if(prefix.length&&value===prefix.slice(0,-1)){
-   const removed=vKeys.pop();vResumeAnchor=removed.down;
-   if(!vKeys.length){vTimingOffset=0;vResumeAnchor=null}
-   verifyInput.setSelectionRange(value.length,value.length);
-   E('verifyMessage').textContent='Đã xóa một ký tự';return;
-  }
-  if(value.length===prefix.length+1&&value.startsWith(prefix)&&P.startsWith(value)){
-   const now=performance.now();if(vResumeAnchor!==null){vTimingOffset=now-vResumeAnchor;vResumeAnchor=null}
-   const down=now-vTimingOffset;
-   vKeys.push({down,up:down+MOBILE_HOLD_ESTIMATE,char:value.slice(-1),estimated:true});
-   return;
-  }
-  if(vResumeAnchor===null)vResumeAnchor=performance.now()-vTimingOffset;
-  verifyInput.value=prefix;verifyInput.setSelectionRange(prefix.length,prefix.length);
-  E('verifyMessage').textContent='⚠ Đã bỏ ký tự sai, giữ lại phần gõ đúng. Hãy tiếp tục.';return;
- }
- if(vKeys.map(x=>x.char).join('')!==verifyInput.value)vInvalid=true;
-};
-E('verifyReset').onclick=resetVerifyKeys;
-E('verifySend').onclick=async()=>{const btn=E('verifySend');E('verifyOutcome').textContent='';E('verifyMessage').textContent='Đang kiểm tra nhịp gõ mới...';btn.disabled=true;try{
- const p=profiles.find(x=>x.id===E('verifyPicker').value);if(!p)throw Error('Chưa chọn hồ sơ');if(!p.ready)throw Error('Hồ sơ chưa đủ '+p.target_samples+' mẫu');
- if(vInvalid||E('verifyTyping').value!==P||vKeys.length!==P.length||vKeys.some(x=>x.up===null)||vActive.size)throw Error('Hãy gõ đúng đủ câu, nhả hết phím và không dùng copy/paste');
- const saved=keys;keys=vKeys;let features_v3;try{features_v3=featsV3()}finally{keys=saved}
- const d=await api('verify',{profile_id:p.id,claimed_owner:E('verifyOwner').checked,features_v3});
- E('verifyOutcome').textContent=(d.uncertain?'⚠ GẦN NGƯỠNG — NÊN GÕ THÊM':d.accepted?'✓ PHÙ HỢP':'✕ KHÔNG PHÙ HỢP')+' · Điểm '+d.score.toFixed(3)+' / ngưỡng '+d.threshold.toFixed(3);
- E('verifyMessage').textContent=d.uncertain?'Điểm nằm trong vùng gần ngưỡng ±10%. Nên gõ thêm một lần; lượt vừa rồi vẫn được tính theo ngưỡng hiện tại.':'Điểm thấp hơn ngưỡng là gần giống mẫu gõ của '+p.name+'. Đây là nhận định ML, không phải xác minh danh tính chắc chắn.';
- resetVerifyKeys();
- }catch(e){E('verifyMessage').textContent='⚠ '+e.message}finally{btn.disabled=false}};
-function sim(){const x=+E('scoreSim').value,y=+E('cutSim').value;E('scoreSimValue').textContent=x.toFixed(2);E('cutSimValue').textContent=y.toFixed(2);
- E('simResult').textContent=x<=y?'✓ Phù hợp: điểm khác biệt không vượt ngưỡng.':'✕ Không phù hợp: điểm khác biệt lớn hơn ngưỡng.'}
-E('scoreSim').oninput=sim;E('cutSim').oninput=sim;sim();
-E('quizCheck').onclick=()=>{const xs=[...document.querySelectorAll('select.quiz')],correct=xs.filter(x=>x.value===x.dataset.answer).length;E('quizResult').textContent='Đúng '+correct+'/'+xs.length+' câu. '+(correct===xs.length?'Bạn đã nắm được ý chính!':'Hãy xem lại các chương rồi thử lại.')};
-E('expandLessons').onclick=()=>document.querySelectorAll('details.lesson').forEach(x=>x.open=true);
-E('collapseLessons').onclick=()=>document.querySelectorAll('details.lesson').forEach(x=>x.open=false);
-
-async function api(action,more={}){let {data:{session}}=await sb.auth.getSession();if(!session)throw Error('Chưa đăng nhập');let r=await fetch(url+'/functions/v1/kd-api',{method:'POST',headers:{'Content-Type':'application/json',apikey:key,Authorization:'Bearer '+session.access_token},body:JSON.stringify({action,capture_mode:captureMode,...more})});let d=await r.json();if(!r.ok||d.error)throw Error(d.error||'Lỗi API '+r.status);return d}
-async function refresh(){
- const d=await api('list');profiles=d.profiles;me=profiles.find(x=>x.owner);
- E('progress').textContent=(me?.count??0)+'/'+(me?.required_samples??Number(E('sampleTarget').value));
- if(me){E('name').value=me.name;E('sampleTarget').value=String(Math.max(5,me.target_samples))}
- advice();
- const prev=E('profiles').value;E('profiles').replaceChildren();
- for(const p of profiles){const o=document.createElement('option');o.value=p.id;o.textContent=p.name+' — '+p.count+'/'+p.required_samples+' mẫu V3'+(p.ready?' · Sẵn sàng':' · Chưa đủ')+(p.owner?' (của tôi)':'');E('profiles').append(o)}
- if(profiles.some(p=>p.id===prev))E('profiles').value=prev;selected();syncPicker();
- say(me?.ready?'Hồ sơ V3 đã sẵn sàng nhận diện.':'Hãy thu đủ mẫu V3 để nhận diện; khuyến nghị 20–30 mẫu ở nhiều buổi.');
+function showProfile(){
+ $("profileState").textContent=profile?"Đã có hồ sơ":"Chưa có hồ sơ";
+ $("profileState").className="pill"+(profile?" good":"");
+ $("profileInfo").textContent=profile?profile.name+" · "+profile.count+" phím · "+profile.rows+" cửa sổ · "+new Date(profile.created).toLocaleString("vi-VN"):"Hãy đăng ký để bắt đầu.";
 }
-function switchTo(m){mode=m;E('enrollArea').hidden=m!=='enroll';E('verifyArea').hidden=m!=='verify';E('send').textContent=m==='enroll'?'Lưu mẫu V3':'Chấm điểm nhận diện';reset()}
-E('enrollTab').onclick=()=>switchTo('enroll');E('verifyTab').onclick=()=>switchTo('verify');
-E('clear').onclick=reset;E('refresh').onclick=()=>refresh().catch(e=>say(e.message));E('profiles').onchange=()=>{syncPicker();manage().catch(e=>say(e.message))};
-E('send').onclick=async()=>{
- E('send').disabled=true;
- try{
-  if(mode!=='enroll')throw Error('Hãy sử dụng tab Thử nhận diện để kiểm thử.');
-  if(invalid||E('typing').value!==P||keys.length!==P.length||keys.some(k=>k.up===null)||active.size)throw Error('Hãy gõ đúng toàn bộ câu và nhả hết các phím trước khi lưu.');
-  const result=await api('enroll_v3',{name:E('name').value.trim(),target_samples:Number(E('sampleTarget').value),features_v3:featsV3()});
-  say('Đã lưu '+result.count+'/'+result.required+' mẫu V3. Nên lấy mẫu ở nhiều buổi để tăng tính đa dạng.');
-  keys=[];active.clear();invalid=false;start=null;editCount=0;timingOffset=0;resumeAnchor=null;E('typing').value='';await refresh();
- }catch(e){say('⚠ '+e.message)}finally{E('send').disabled=false}
-};
-function selected(){
- const p=profiles.find(x=>x.id===E('profiles').value);
- E('selectedDetails').textContent=p?p.name+' · '+p.count+'/'+p.required_samples+' mẫu V3 · '+(p.ready?'Sẵn sàng':'Chưa đủ')+(p.owner?' · Của bạn':' · Người khác'):'Chưa có hồ sơ';
- return p;
+function updateEnroll(){const n=enroll.length,$bar=$("enrollBar");$bar.style.width=100*Math.min(1,n/200)+"%";$("enrollCount").textContent=n+" / 200 phím";$("enrollWindows").textContent=windows(enroll).length+" cửa sổ";$("train").disabled=n<200;}
+function updateMonitor(){
+ let count=windows(monitor).length;
+ if(!profile){$("liveState").textContent="Chưa có hồ sơ";return}
+ if(count<=nDone)return;
+ let f=windows(monitor).at(-1),r=evaluate(f);nDone=count;
+ badStreak=r.flag?badStreak+1:0;
+ const locked=badStreak>=3;
+ $("nWindows").textContent=count;$("confidence").textContent=Math.round(r.confidence*100)+"%";$("streak").textContent=badStreak+"/3";
+ $("liveState").textContent=locked?"Cảnh báo: hành vi khác biệt":r.flag?"Đang nghi vấn":"Đang theo dõi";
+ $("liveState").className="pill "+(locked?"bad":r.flag?"":"good");
+ const line=document.createElement("div");
+ line.textContent="Window "+count+" | IF "+r.iso.toFixed(3)+" | Mah "+r.mah.toFixed(3)+" | anomaly "+r.anomaly.toFixed(2)+" | "+(locked?"ALERT":r.flag?"SUSPECT":"OK");
+ $("log").prepend(line);
 }
-async function manage(){
- const p=selected(),list=E('sampleList');list.replaceChildren();
- if(!p){E('deleteV3Btn').hidden=true;E('exportBtn').disabled=true;E('deleteProfileBtn').disabled=true;return {profile:null,owner:false,samples:[]}}
- const d=await api('manage',{profile_id:p.id});E('deleteV3Btn').hidden=!(d.owner&&d.count);E('exportBtn').disabled=!d.owner;E('deleteProfileBtn').disabled=!d.owner;
- if(!d.owner){list.textContent='Chỉ chủ hồ sơ được quản lý mẫu V3. Bạn vẫn có thể thử nhận diện.';return d}
- const details=document.createElement('details'),summary=document.createElement('summary');summary.textContent='Xem và xóa '+d.count+' mẫu V3';details.append(summary);
- for(const sample of d.samples){
-  const line=document.createElement('p'),info=document.createElement('small'),btn=document.createElement('button');info.textContent='#'+sample.id+' · '+new Date(sample.created_at).toLocaleString('vi-VN')+' ';btn.textContent='Xóa';
-  btn.onclick=async()=>{if(!confirm('Xóa mẫu V3 #'+sample.id+'?'))return;try{await api('delete_sample',{sample_id:sample.id});await refresh();await manage()}catch(e){say('⚠ '+e.message)}};
-  line.append(info,btn);details.append(line);
- }
- list.append(details);return d;
-}
-E('exportBtn').onclick=async()=>{
- try{
- const d=await manage();if(!d.profile||!d.owner)throw Error('Chỉ chủ hồ sơ được xuất dữ liệu');
- const payload={format:'keydna-v3-profile',version:3,name:d.profile.display_name,phrase:d.profile.phrase,target_samples:d.profile.target_samples,knn_k:d.profile.knn_k,distance_metric:d.profile.distance_metric,threshold_factor:d.profile.threshold_factor,exported_at:new Date().toISOString(),capture_mode:captureMode,samples:d.samples.map(x=>x.features)};
- const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='keydna-v3-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000);say('Đã xuất '+payload.samples.length+' mẫu V3');
- }catch(e){say('⚠ '+e.message)}
+keyCollector($("enrollText"),enroll,updateEnroll);
+keyCollector($("monitorText"),monitor,updateMonitor);
+$("train").onclick=()=>{
+ const rows=windows(enroll);if(rows.length<10){setInfo("Chưa đủ cửa sổ để huấn luyện.");return}
+ try{profile={name:$("person").value.trim()||"Người dùng",count:enroll.length,rows:rows.length,created:new Date().toISOString(),...trainModel(rows)};
+ localStorage.setItem(K,JSON.stringify(profile));showProfile();setInfo("Đã huấn luyện và lưu cục bộ. Sang bước Xác thực liên tục để thử.");}
+ catch(e){setInfo("Không huấn luyện được: "+e.message)}
 };
-E('importBtn').onclick=()=>E('importFile').click();
-E('importFile').onchange=async e=>{
- try{
- const file=e.target.files[0];if(!file)return;if(file.size>1000000)throw Error('Tệp vượt 1 MB');
- const d=JSON.parse(await file.text());if(d.format!=='keydna-v3-profile'||d.version!==3||!Array.isArray(d.samples))throw Error('Chỉ chấp nhận tệp sao lưu V3');
- if((d.capture_mode||'physical')!==captureMode)throw Error('Tệp mẫu '+(d.capture_mode||'physical')+' không khớp bàn phím '+captureMode+'. Chỉ nhập bằng cùng loại thiết bị để tránh sai lệch mô hình.');
- if(!confirm('Nhập '+d.samples.length+' mẫu V3 vào tài khoản chưa có hồ sơ?'))return;
- const result=await api('import',{name:d.name,phrase:d.phrase,target_samples:d.target_samples,samples:d.samples,knn_k:d.knn_k,distance_metric:d.distance_metric,threshold_factor:d.threshold_factor});
- await refresh();await manage();say('Đã nhập '+result.count+' mẫu V3 thành công');
- }catch(e){say('⚠ '+e.message)}finally{e.target.value=''}
-};
-E('deleteProfileBtn').onclick=async()=>{
- try{
- const d=await manage();if(!d.profile||!d.owner)throw Error('Chỉ chủ hồ sơ được xóa');
- if(!confirm('XÓA VĨNH VIỄN hồ sơ '+d.profile.display_name+', tất cả mẫu V3 và lịch sử kiểm thử?'))return;
- if(prompt('Nhập XOA để xác nhận')!=='XOA')return;
- await api('delete_profile');await refresh();await manage();say('Đã xóa hồ sơ và dữ liệu liên quan');
- }catch(e){say('⚠ '+e.message)}
-};
-function syncTune(){
- const picker=E('tuneProfile');if(!picker)return;
- const previous=picker.value;picker.replaceChildren();
- for(const p of profiles.filter(x=>x.owner)){const option=document.createElement('option');option.value=p.id;option.textContent=p.name+' ('+p.count+'/'+p.required_samples+' mẫu V3)';picker.append(option)}
- if([...picker.options].some(o=>o.value===previous))picker.value=previous;
- const p=profiles.find(x=>x.id===picker.value);
- if(!p){E('tuneStatus').textContent='Chưa có hồ sơ thuộc quyền sở hữu. Hãy tạo hồ sơ ở tab Lấy mẫu.';return}
- E('tuneKind').value='timing_v3';E('tuneK').value=String(p.knn_k||3);E('tuneMetric').value=p.distance_metric||'euclidean';E('tuneFactor').value=String(p.threshold_factor??1.25);displayFactor();displayMethod();
- E('tuneStatus').textContent='V3 · '+p.count+'/'+p.required_samples+' mẫu. Đang dùng k='+p.knn_k+', '+p.distance_metric+', hệ số ngưỡng '+p.threshold_factor+'. Nên thu 20–30 mẫu qua nhiều buổi để kiểm định.';
-}
-function displayFactor(){E('tuneFactorText').textContent=Number(E('tuneFactor').value).toLocaleString('vi-VN',{minimumFractionDigits:2,maximumFractionDigits:2})}
-function displayMethod(){
- const medianMode=E('tuneMetric').value==='cosine_median';
- E('tuneK').disabled=medianMode;
- E('tuneK').title=medianMode?'Trung vị dùng tất cả các mẫu, không sử dụng k.':'Chọn k mẫu có khoảng cách nhỏ nhất';
-}
-E('tuneMetric').onchange=displayMethod;
-E('tuneFactor').oninput=displayFactor;
-E('tuneProfile').onchange=()=>{syncTune();E('tuneVariants').replaceChildren();E('tuneMessage').textContent='Nhấn Phân tích & so sánh để xem hồ sơ đang chọn.'};
-function tuneConfig(){return {model_kind:E('tuneKind').value,knn_k:Number(E('tuneK').value),distance_metric:E('tuneMetric').value,threshold_factor:Number(E('tuneFactor').value)}}
-const pctText=v=>v===null||v===undefined?'Chưa có dữ liệu':Number(v).toLocaleString('vi-VN',{maximumFractionDigits:1})+'%';
-function tuneDraw(pts){
- const c=E('tuneChart'),ctx=c.getContext('2d'),w=c.width,h=c.height;ctx.clearRect(0,0,w,h);
- ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);ctx.font='14px system-ui';ctx.textAlign='right';
- for(let i=0;i<=4;i++){const pct=i*25,y=25+(h-65)*(1-pct/100);ctx.strokeStyle='#e2eeea';ctx.beginPath();ctx.moveTo(52,y);ctx.lineTo(w-18,y);ctx.stroke();ctx.fillStyle='#5d7e76';ctx.fillText(pct+'%',44,y+5)}
- const px=i=>60+i*(w-88)/Math.max(1,pts.length-1),py=v=>25+(h-65)*(1-v/100);
- for(const [field,color] of [['far','#D99B24'],['frr','#006B68']]){
- ctx.strokeStyle=color;ctx.lineWidth=3;ctx.beginPath();let active=false;
- for(let i=0;i<pts.length;i++){const v=pts[i][field];if(v===null||!Number.isFinite(v)){active=false;continue}
- const x=px(i),y=py(v);if(!active){ctx.moveTo(x,y);active=true}else ctx.lineTo(x,y)}ctx.stroke();
- for(let i=0;i<pts.length;i++){const v=pts[i][field];if(v!==null&&Number.isFinite(v)){ctx.fillStyle=color;ctx.beginPath();ctx.arc(px(i),py(v),4,0,Math.PI*2);ctx.fill()}}
- }
- ctx.fillStyle='#5b7b72';ctx.textAlign='center';ctx.font='12px system-ui';pts.forEach((p,i)=>ctx.fillText(Math.round(p.factor*100)+'%',px(i),h-15));
-}
-function tuneRender(d){
- E('tuneCounts').textContent='Mẫu huấn luyện V3: '+d.counts.timing_v3+'/'+d.counts.required_v3+' · Lượt thử V3 có vector: '+d.counts.recorded_features+' · Tổng lượt V3: '+d.counts.historical+'. Chỉ số vẫn dựa trên nhãn tự khai báo.';
- tuneDraw(d.sweep);const body=E('tuneVariants');body.replaceChildren();
- if(!d.candidates.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=7;td.textContent='Chưa đủ mẫu để so sánh các phương án.';tr.append(td);body.append(tr);return}
- for(const c of d.candidates){
- const tr=document.createElement('tr');
- const arr=['V3 · 126 đặc trưng',c.metric==='cosine_median'?'—':c.k,({euclidean:'Euclidean',manhattan:'Manhattan',cosine_knn:'Cosine kNN',cosine_median:'Cosine Median'})[c.metric]||c.metric,c.genuine+' chính chủ / '+c.impostor+' người khác',pctText(c.far),pctText(c.frr)];
- for(const v of arr){const td=document.createElement('td');td.textContent=String(v);tr.append(td)}
- const td=document.createElement('td'),b=document.createElement('button');b.textContent='Dùng thử';b.className='light';
- b.onclick=()=>{E('tuneKind').value='timing_v3';E('tuneK').value=String(c.k);E('tuneMetric').value=c.metric;displayMethod();E('tuneMessage').textContent='Đã điền cấu hình '+c.kind+' / k='+c.k+'. Chưa lưu lên hệ thống.';window.scrollTo({top:0,behavior:'smooth'})};
- td.append(b);tr.append(td);body.append(tr)
- }
-}
-E('tunePreview').onclick=async()=>{
- const id=E('tuneProfile').value;if(!id){E('tuneMessage').textContent='Chưa có hồ sơ';return}
- E('tuneMessage').textContent='Đang phân tích...';E('tunePreview').disabled=true;
- try{const d=await api('analyze',{profile_id:id,preview_factor:Number(E('tuneFactor').value)});tuneRender(d);E('tuneMessage').textContent='Đã chấm lại các phương án. Chưa thay đổi cấu hình trên Supabase.'}
- catch(e){E('tuneMessage').textContent='⚠ '+e.message}finally{E('tunePreview').disabled=false}
-};
-E('tuneSave').onclick=async()=>{
- const p=profiles.find(x=>x.id===E('tuneProfile').value);if(!p){E('tuneMessage').textContent='Chưa có hồ sơ';return}
- if(!confirm('Áp dụng mô hình đã chọn cho các lượt kiểm thử tiếp theo của '+p.name+'?'))return;
- E('tuneSave').disabled=true;
- try{await api('save_model',tuneConfig());await refresh();E('tuneMessage').textContent='Đã lưu cấu hình nhận diện. Lịch sử kiểm thử được giữ nguyên; hãy thu thêm lượt thử để so sánh FAR/FRR.'}
- catch(e){E('tuneMessage').textContent='⚠ '+e.message}finally{E('tuneSave').disabled=false}
-};
-
-E('clearStatsBtn').onclick=async()=>{
- const p=profiles.find(x=>x.id===E('verifyPicker').value);
- if(!p){E('stats').textContent='⚠ Hãy chọn hồ sơ trước.';return}
- if(!p.owner){E('stats').textContent='⚠ Chỉ chủ hồ sơ mới được xóa lịch sử FAR/FRR.';return}
- if(!confirm('XÓA TOÀN BỘ lịch sử kiểm thử FAR/FRR của hồ sơ "'+p.name+'"?\n\nThao tác này không thể hoàn tác. Mẫu gõ huấn luyện, hồ sơ và cấu hình mô hình sẽ được giữ nguyên.'))return;
- const button=E('clearStatsBtn');button.disabled=true;E('stats').textContent='Đang xóa lịch sử kiểm thử...';
- try{
- const result=await api('clear_stats',{profile_id:p.id});
- E('stats').textContent='Đã xóa '+result.deleted_count+' lượt kiểm thử của hồ sơ "'+p.name+'". FAR/FRR hiện chưa có dữ liệu.';
- E('tuneCounts').textContent='Lịch sử kiểm thử đã được xóa. Nhấn Phân tích & so sánh để cập nhật biểu đồ.';
- E('tuneVariants').replaceChildren();
- const chart=E('tuneChart');chart.getContext('2d').clearRect(0,0,chart.width,chart.height);
- E('statsBtn').click();
- }catch(e){E('stats').textContent='⚠ '+e.message}finally{button.disabled=false}
-};
-
-E('deleteV3Btn').onclick=async()=>{
- const p=profiles.find(x=>x.owner);if(!p)return;
- if(!confirm('Xóa toàn bộ mẫu V3 của '+p.name+'? Hồ sơ sẽ không thể nhận diện cho đến khi thu đủ mẫu mới. Lịch sử FAR/FRR vẫn giữ nguyên. Thao tác không thể hoàn tác.'))return;
- E('deleteV3Btn').disabled=true;
- try{const result=await api('delete_v3_samples');await refresh();await manage();say('Đã xóa '+result.deleted_count+' mẫu V3. Hãy thu đủ mẫu mới để sử dụng tiếp.')}
- catch(e){say('⚠ '+e.message)}finally{E('deleteV3Btn').disabled=false}
-};
-E('statsBtn').onclick=async()=>{
- const area=E('stats');area.replaceChildren();area.textContent='Đang tính thống kê...';
- try{
- const selectedProfile=profiles.find(p=>p.id===E('verifyPicker').value);
- if(!selectedProfile)throw Error('Hãy chọn một hồ sơ để xem thống kê.');
-
- const data=await api('stats',{profile_id:selectedProfile.id});
- const far=data.impostor>0?100*data.false_accept/data.impostor:null;
- const frr=data.genuine>0?100*data.false_reject/data.genuine:null;
- const pct=n=>n===null?'Chưa có dữ liệu':n.toLocaleString('vi-VN',{maximumFractionDigits:1,minimumFractionDigits:1})+'%';
- area.replaceChildren();
- const summary=document.createElement('div');summary.className='metricGrid';
- for(const [title,value,subtitle,kind] of [
- ['FAR',pct(far),data.false_accept+' / '+data.impostor+' lượt người khác được nhận nhầm','far'],
- ['FRR',pct(frr),data.false_reject+' / '+data.genuine+' lượt chính chủ bị từ chối nhầm','frr']
- ]){const card=document.createElement('div');card.className='metricCard '+kind;const label=document.createElement('small');label.textContent=title;const figure=document.createElement('strong');figure.textContent=value;const foot=document.createElement('span');foot.textContent=subtitle;card.append(label,figure,foot);summary.append(card)}
- const note=document.createElement('p');note.className='help';note.textContent='V3 · '+data.total+' lượt thử theo tham số hiện tại (k='+data.knn_k+', '+data.distance_metric+', hệ số '+data.threshold_factor+'). Tổng lượt V3 đã ghi '+data.historical_total+' (tối đa 500 lượt gần nhất). FAR/FRR dựa vào nhãn tự khai báo, chỉ mang tính thử nghiệm.';
- area.append(summary,note);
- }catch(e){area.textContent='⚠ '+e.message}
-};
-(async()=>{try{let {data:{session}}=await sb.auth.getSession();if(!session){let x=await sb.auth.signInAnonymously();if(x.error)throw x.error}await refresh();await manage();showView('verify')}catch(e){say('Lỗi kết nối: '+e.message+'. Kiểm tra Anonymous Sign-ins trên Supabase.') }})();
+$("enrollReset").onclick=()=>{enroll.length=0;$("enrollText").value="";updateEnroll()};
+$("monitorReset").onclick=()=>{monitor.length=0;$("monitorText").value="";nDone=0;badStreak=0;$("nWindows").textContent="0";$("confidence").textContent="—";$("streak").textContent="0/3";$("liveState").textContent="Chưa đủ dữ liệu";$("liveState").className="pill";$("log").innerHTML="<div>Đã đặt lại phiên.</div>"};
+document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{const tab=b.dataset.tab;document.querySelectorAll("[data-tab]").forEach(x=>{x.className=x===b?"active":"alt"});document.querySelectorAll("[data-page]").forEach(x=>x.hidden=x.dataset.page!==tab)});
+$("export").onclick=()=>{if(!profile){alert("Chưa có hồ sơ");return}const blob=new Blob([JSON.stringify(profile)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="keydna-continuous-profile.json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
+$("wipe").onclick=()=>{if(!confirm("Xóa hồ sơ cục bộ của KeyDNA Continuous? Dữ liệu Supabase cũ không bị ảnh hưởng."))return;localStorage.removeItem(K);profile=null;showProfile()};
+try{profile=JSON.parse(localStorage.getItem(K)||"null");if(profile&&!profile.forest)profile=null}catch(e){profile=null}
+showProfile();updateEnroll();
 </script></body></html>
