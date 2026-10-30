@@ -393,9 +393,9 @@ E('clearStatsBtn').onclick=async()=>{
 
 E('deleteV3Btn').onclick=async()=>{
  const p=profiles.find(x=>x.owner);if(!p)return;
- if(!confirm('Xóa toàn bộ mẫu V3 của '+p.name+'? V1/V2 và lịch sử FAR/FRR sẽ được giữ nguyên. Nếu đang dùng V3, hệ thống sẽ chuyển về V1. Không thể hoàn tác.'))return;
+ if(!confirm('Xóa toàn bộ mẫu V3 của '+p.name+'? Hồ sơ sẽ không thể nhận diện cho đến khi thu đủ mẫu mới. Lịch sử FAR/FRR vẫn giữ nguyên. Thao tác không thể hoàn tác.'))return;
  E('deleteV3Btn').disabled=true;
- try{const result=await api('delete_v3_samples');await refresh();await manage();say('Đã xóa '+result.deleted_count+' mẫu V3. Mẫu V1/V2 giữ nguyên.')}
+ try{const result=await api('delete_v3_samples');await refresh();await manage();say('Đã xóa '+result.deleted_count+' mẫu V3. Hãy thu đủ mẫu mới để sử dụng tiếp.')}
  catch(e){say('⚠ '+e.message)}finally{E('deleteV3Btn').disabled=false}
 };
 E('statsBtn').onclick=async()=>{
