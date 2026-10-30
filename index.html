@@ -99,9 +99,10 @@ button:not(.nav button){box-shadow:0 2px 4px rgba(0,89,85,.08)}button:focus-visi
 <p class="muted">Thử nhiều mức ngưỡng và phương án K láng giềng gần nhất. Mô phỏng không làm thay đổi hệ thống; chỉ nút <b>Lưu cấu hình</b> mới có hiệu lực. Chỉ chủ hồ sơ được kiểm định chi tiết.</p>
 <label for="tuneProfile">Hồ sơ của bạn</label><select id="tuneProfile"></select><div id="tuneStatus" class="example">Đang tải dữ liệu...</div>
 <div class="cols" style="margin-top:16px"><div><label for="tuneKind">Bộ đặc trưng</label><select id="tuneKind"><option value="legacy">V1 — mẫu cũ, tương thích</option><option value="improved">V2 — đặc trưng trải đều cả câu</option></select></div><div><label for="tuneK">Số láng giềng</label><select id="tuneK"><option value="1">k = 1</option><option value="3">k = 3</option><option value="5">k = 5</option></select></div></div>
-<label for="tuneMetric">Cách tính khoảng cách</label><select id="tuneMetric"><option value="euclidean">Euclidean — căn trung bình bình phương</option><option value="manhattan">Manhattan — trung bình chênh lệch tuyệt đối</option></select>
+<label for="tuneMetric">Cách tính khoảng cách</label><select id="tuneMetric"><option value="euclidean">Euclidean — căn trung bình bình phương</option><option value="manhattan">Manhattan — trung bình chênh lệch tuyệt đối</option><option value="cosine_knn">Cosine kNN — khoảng cách góc, lấy k mẫu gần nhất</option><option value="cosine_median">Cosine Median — trung vị độ tương đồng (theo app tham khảo)</option></select>
 <label for="tuneFactor">Hệ số ngưỡng: <b id="tuneFactorText">1,25</b></label><input id="tuneFactor" type="range" min="0.5" max="2" step="0.05" value="1.25">
-<p class="help">Giảm ngưỡng thường làm FAR giảm nhưng có thể khiến FRR tăng. Luôn kiểm định trên dữ liệu tách khỏi mẫu học.</p>
+<div class="example"><b>Phương pháp mới từ dự án keystroke-dynamics:</b> Cosine Similarity so sánh hình dạng nhịp gõ; Cosine Median lấy trung vị của tất cả mẫu. Tôi đã bổ sung chuẩn hóa từng đặc trưng để tránh thời gian gõ tổng thể lấn át các thành phần còn lại, đồng thời học ngưỡng riêng từ mẫu chính chủ thay vì dùng cố định 70%. <b>Cosine Median không sử dụng tham số k</b>.</div>
+<p class="help">Giảm ngưỡng thường làm FAR giảm nhưng có thể khiến FRR tăng. Nên thu nhiều lượt kiểm định độc lập; nếu dữ liệu còn ít thì chưa thể kết luận phương pháp nào chính xác nhất.</p>
 <div class="actions"><button id="tunePreview">↻ Phân tích &amp; so sánh</button><button class="light" id="tuneSave">Lưu cấu hình cho hồ sơ</button></div>
 <p id="tuneMessage" class="help"></p></section>
 <section class="card"><h3>Đồ thị FAR / FRR theo ngưỡng</h3>
@@ -109,13 +110,13 @@ button:not(.nav button){box-shadow:0 2px 4px rgba(0,89,85,.08)}button:focus-visi
 <canvas id="tuneChart" width="650" height="255" aria-label="Biểu đồ FAR và FRR theo hệ số ngưỡng"></canvas>
 <div class="tuneLegend"><span><i class="tuneDot" style="background:#D99B24"></i> FAR — nhận nhầm người khác</span><span><i class="tuneDot" style="background:#006B68"></i> FRR — từ chối chính chủ</span></div>
 <div id="tuneCounts" class="help"></div></section>
-<section class="card"><h3>So sánh các phương án kNN</h3>
+<section class="card"><h3>So sánh kNN và Cosine Similarity</h3>
 <p class="muted">Các biến thể được chấm lại bằng lượt thử <b>mới có lưu đặc trưng</b>. Khi chưa đủ lượt thử của một nhóm, chỉ số FAR/FRR sẽ hiển thị “Chưa có dữ liệu”. Chọn “Dùng thử” chỉ điền cấu hình; chưa lưu.</p>
 <div class="tuneTableWrap"><table class="tuneTable"><thead><tr><th>Đặc trưng</th><th>k</th><th>Khoảng cách</th><th>Lượt thử</th><th>FAR</th><th>FRR</th><th></th></tr></thead><tbody id="tuneVariants"><tr><td colspan="7">Chọn Phân tích để xem kết quả.</td></tr></tbody></table></div>
 <div class="example" style="margin-top:14px"><b>Gợi ý:</b> Thu 20–30 mẫu ở nhiều buổi; kiểm tra thêm lượt chính chủ và người khác. Chọn phương án có FAR và FRR cùng chấp nhận được, không chỉ FAR thấp.</div>
 </section></div>
 <div class="view" data-view="academy" hidden>
-<section class="card"><div class="step">GIÁO TRÌNH TƯƠNG TÁC</div><h2>Hiểu Machine Learning từ cơ bản đến kiểm định</h2><p>Tài liệu học theo chương, có ví dụ, hình minh họa, công thức, thực hành chỉnh tham số và câu hỏi tự kiểm tra. <b>Thuật toán đang dùng: One-Class k-Nearest Neighbors (One-Class kNN) — K láng giềng gần nhất cho một lớp.</b> Ứng dụng học các mẫu nhịp gõ của một người, rồi kiểm tra lần gõ mới có đủ giống các mẫu đó hay không.</p><div class="actions"><button id="expandLessons">Mở tất cả</button><button id="collapseLessons" class="light">Thu gọn</button></div></section>
+<section class="card"><div class="step">GIÁO TRÌNH TƯƠNG TÁC</div><h2>Hiểu Machine Learning từ cơ bản đến kiểm định</h2><p>Tài liệu học theo chương, có ví dụ, hình minh họa, công thức và bài kiểm tra. <b>Mặc định: One-Class k-Nearest Neighbors (One-Class kNN) — K láng giềng gần nhất cho một lớp.</b> Ngoài ra, tab Tinh chỉnh hỗ trợ thử <b>Cosine Similarity — độ tương đồng Cosine</b>, lấy k láng giềng gần nhất hoặc trung vị tất cả mẫu.</p><div class="actions"><button id="expandLessons">Mở tất cả</button><button id="collapseLessons" class="light">Thu gọn</button></div></section>
 <details class="lesson" open><summary>01 · Bài toán sinh trắc học hành vi</summary><div><p>Nếu hai người cùng gõ “hom nay ...”, nội dung giống nhau nhưng thói quen gõ có thể khác. Ứng dụng không đoán danh tính từ câu chữ; nó tìm xem nhịp gõ mới có quen thuộc với một hồ sơ hay không.</p><p class="example">Ví dụ: A giữ phím hơi lâu và dừng ở khoảng giữa câu; B gõ nhanh, khá đều. Đây là hai hành vi có thể phân biệt bằng các phép đo thời gian.</p><p><b>Hạn chế:</b> Mệt mỏi, đổi bàn phím, cách đặt tay và kích thước thiết bị có thể làm nhịp gõ của cùng một người thay đổi.</p></div></details>
 <details class="lesson"><summary>02 · Máy thu thập những thông tin gì?</summary><div><p>Mỗi phím có thời điểm nhấn xuống (keydown) và nhả ra (keyup). Từ đó đo:</p><ul><li><b>Dwell time:</b> giữ phím trong bao lâu.</li><li><b>Press-to-press:</b> khoảng cách giữa hai lần nhấn.</li><li><b>Flight time:</b> thời gian từ nhả phím trước đến nhấn phím tiếp theo; có thể âm khi nhấn chồng phím.</li><li><b>Tổng thời gian:</b> từ phím đầu đến phím cuối.</li></ul><p>Những thời gian này được tóm tắt và lấy một số vị trí, tạo vector 64 con số. Tệp JSON xuất hồ sơ lưu vector số, không chứa toàn bộ phím đã gõ từng thời điểm.</p></div></details>
 <details class="lesson"><summary>03 · Thuật toán One-Class k-Nearest Neighbors (One-Class kNN)</summary><div>
@@ -141,6 +142,12 @@ button:not(.nav button){box-shadow:0 2px 4px rgba(0,89,85,.08)}button:focus-visi
 </figure>
 <p><b>Vì sao gọi là “một lớp”?</b> Vì dữ liệu huấn luyện chỉ cần các ví dụ của người đăng ký. Với 3 mẫu, phép tính vẫn chạy được nhưng ngưỡng rất kém ổn định; tăng số mẫu và thu qua nhiều buổi giúp việc đánh giá có cơ sở hơn.</p>
 </div></details>
+<details class="lesson"><summary>03b · Cosine Similarity: phương pháp so khớp nhịp gõ</summary><div>
+<p><b>Cosine Similarity (độ tương đồng Cosine)</b> so sánh hướng của hai vector, giúp đánh giá <b>hình dạng tương đối của nhịp gõ</b> thay vì chỉ độ chênh lệch thời gian tuyệt đối. Hai vector cùng hướng có độ tương đồng gần 1; khác hướng sẽ thấp hơn.</p>
+<div class="math">cos(A,B) = (A · B) / (||A|| × ||B||)</div>
+<p><b>Cosine kNN:</b> tìm k mẫu có khoảng cách Cosine nhỏ nhất và lấy trung bình. <b>Cosine Median:</b> tính tương đồng với tất cả mẫu đã học rồi lấy trung vị; đây là cách dự án GitHub tham khảo sử dụng.</p>
+<p>Ví dụ: độ tương đồng của lượt gõ mới với 5 mẫu là <b>0,65; 0,72; 0,81; 0,86; 0,91</b> thì trung vị là <b>0,81</b>. Ứng dụng tham khảo dùng ngưỡng mặc định <b>0,70</b> để chấp nhận. <b>KeyDNA không sao chép ngưỡng cố định đó</b>, mà học ngưỡng theo từng hồ sơ từ phép kiểm tra chéo trên mẫu đã thu.</p>
+<p><b>Lưu ý:</b> Cosine không đương nhiên chính xác hơn Euclidean, và điểm tương đồng không phải xác suất xác thực danh tính. Với ít mẫu và ít lượt thử của người khác, các tỷ lệ FAR/FRR còn nhiều bất định.</p></div></details>
 <details class="lesson"><summary>04 · Chuẩn hóa và công thức khoảng cách</summary><div><p>Không thể cộng trực tiếp một khoảng dừng 500 ms với một dấu hiệu chỉ dao động 10 ms: thang đo khác nhau. Hệ thống dùng trung vị và độ lệch tuyệt đối trung vị (MAD) để xác định mức biến thiên điển hình, có mức sàn 24 ms.</p><div class="math">scaleⱼ = max(24, 1.4826 × MADⱼ)</div><div class="math">distance = √[mean(min(6, |xⱼ−sⱼ| / scaleⱼ)²)]</div><p>Mỗi chênh lệch được chia cho độ biến thiên của đặc trưng đó; thành phần quá lớn được giới hạn ở 6. Sau đó lấy trung bình bình phương và căn bậc hai.</p><p class="example">Bạn không cần tính tay 64 phép đo. Chỉ cần nhớ: <b>điểm càng thấp → nhịp gõ càng gần với hồ sơ.</b></p></div></details>
 <details class="lesson"><summary>05 · Hệ thống tự đặt ngưỡng thế nào?</summary><div><p>Để đặt giới hạn “đủ giống”, máy lần lượt bỏ một mẫu đã học ra, đem mẫu đó so với các mẫu còn lại (leave-one-out). Tập các điểm khác biệt cho thấy nhịp gõ của chính chủ thường thay đổi thế nào.</p><p>Ứng dụng chọn điểm ở gần phân vị 90%, nhân với 1,25 để nới biên độ và dùng giá trị sàn 0,18. Đây là <b>heuristic của POC</b>, chưa được tối ưu trên bộ kiểm định độc lập.</p><div class="math">Ngưỡng = max(0,18; P90(điểm leave-one-out) × 1,25)</div><p>Nếu điểm của lượt thử nhỏ hơn hoặc bằng ngưỡng, hệ thống báo “Phù hợp”. Nếu vượt ngưỡng, báo “Không phù hợp”.</p></div></details>
 <details class="lesson"><summary>06 · Thực hành: thay đổi điểm và ngưỡng</summary><div><p>Di chuyển hai thanh để xem một quyết định có thể thay đổi ra sao. Đây là minh họa, không thay đổi ngưỡng backend Supabase.</p><label>Điểm khác biệt: <b id="scoreSimValue">0.70</b></label><input type="range" min="0" max="3" step="0.05" value="0.7" id="scoreSim"><label>Ngưỡng chấp nhận: <b id="cutSimValue">1.00</b></label><input type="range" min="0.1" max="3" step="0.05" value="1" id="cutSim"><div id="simResult" class="example"></div><p>Ngưỡng cao hơn sẽ chấp nhận nhiều lượt gõ hơn, nhưng có nguy cơ nhận nhầm người lạ. Ngưỡng thấp hơn chặt chẽ hơn, nhưng có thể từ chối nhầm chính chủ.</p></div></details>
@@ -278,10 +285,16 @@ function syncTune(){
  if([...picker.options].some(o=>o.value===previous))picker.value=previous;
  const p=profiles.find(x=>x.id===picker.value);
  if(!p){E('tuneStatus').textContent='Chưa có hồ sơ thuộc quyền sở hữu. Hãy tạo hồ sơ ở tab Lấy mẫu.';return}
- E('tuneKind').value=p.model_kind||'legacy';E('tuneK').value=String(p.knn_k||3);E('tuneMetric').value=p.distance_metric||'euclidean';E('tuneFactor').value=String(p.threshold_factor??1.25);displayFactor();
+ E('tuneKind').value=p.model_kind||'legacy';E('tuneK').value=String(p.knn_k||3);E('tuneMetric').value=p.distance_metric||'euclidean';E('tuneFactor').value=String(p.threshold_factor??1.25);displayFactor();displayMethod();
  E('tuneStatus').textContent='Đang dùng: '+(p.model_kind==='improved'?'V2':'V1')+' · '+(p.v2_count??0)+' mẫu V2. Cần ít nhất '+Math.max(3,Math.min(10,p.target_samples))+' mẫu V2 trước khi chọn đặc trưng cải tiến.';
 }
 function displayFactor(){E('tuneFactorText').textContent=Number(E('tuneFactor').value).toLocaleString('vi-VN',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function displayMethod(){
+ const medianMode=E('tuneMetric').value==='cosine_median';
+ E('tuneK').disabled=medianMode;
+ E('tuneK').title=medianMode?'Trung vị dùng tất cả các mẫu, không sử dụng k.':'Chọn k mẫu có khoảng cách nhỏ nhất';
+}
+E('tuneMetric').onchange=displayMethod;
 E('tuneFactor').oninput=displayFactor;
 E('tuneProfile').onchange=()=>{syncTune();E('tuneVariants').replaceChildren();E('tuneMessage').textContent='Nhấn Phân tích & so sánh để xem hồ sơ đang chọn.'};
 function tuneConfig(){return {model_kind:E('tuneKind').value,knn_k:Number(E('tuneK').value),distance_metric:E('tuneMetric').value,threshold_factor:Number(E('tuneFactor').value)}}
@@ -305,10 +318,10 @@ function tuneRender(d){
  if(!d.candidates.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=7;td.textContent='Chưa đủ mẫu để so sánh các phương án.';tr.append(td);body.append(tr);return}
  for(const c of d.candidates){
  const tr=document.createElement('tr');
- const arr=[c.kind==='improved'?'V2 — toàn câu':'V1 — mẫu cũ',c.k,c.metric==='euclidean'?'Euclidean':'Manhattan',c.genuine+' chính chủ / '+c.impostor+' người khác',pctText(c.far),pctText(c.frr)];
+ const arr=[c.kind==='improved'?'V2 — toàn câu':'V1 — mẫu cũ',c.metric==='cosine_median'?'—':c.k,({euclidean:'Euclidean',manhattan:'Manhattan',cosine_knn:'Cosine kNN',cosine_median:'Cosine Median'})[c.metric]||c.metric,c.genuine+' chính chủ / '+c.impostor+' người khác',pctText(c.far),pctText(c.frr)];
  for(const v of arr){const td=document.createElement('td');td.textContent=String(v);tr.append(td)}
  const td=document.createElement('td'),b=document.createElement('button');b.textContent='Dùng thử';b.className='light';
- b.onclick=()=>{E('tuneKind').value=c.kind;E('tuneK').value=String(c.k);E('tuneMetric').value=c.metric;E('tuneMessage').textContent='Đã điền cấu hình '+c.kind+' / k='+c.k+'. Chưa lưu lên hệ thống.';window.scrollTo({top:0,behavior:'smooth'})};
+ b.onclick=()=>{E('tuneKind').value=c.kind;E('tuneK').value=String(c.k);E('tuneMetric').value=c.metric;displayMethod();E('tuneMessage').textContent='Đã điền cấu hình '+c.kind+' / k='+c.k+'. Chưa lưu lên hệ thống.';window.scrollTo({top:0,behavior:'smooth'})};
  td.append(b);tr.append(td);body.append(tr)
  }
 }
@@ -322,7 +335,7 @@ E('tuneSave').onclick=async()=>{
  const p=profiles.find(x=>x.id===E('tuneProfile').value);if(!p){E('tuneMessage').textContent='Chưa có hồ sơ';return}
  if(!confirm('Áp dụng mô hình đã chọn cho các lượt kiểm thử tiếp theo của '+p.name+'?'))return;
  E('tuneSave').disabled=true;
- try{await api('save_model',tuneConfig());await refresh();E('tuneMessage').textContent='Đã lưu mô hình cho hồ sơ. Lịch sử kiểm thử không thay đổi.'}
+ try{await api('save_model',tuneConfig());await refresh();E('tuneMessage').textContent='Đã lưu cấu hình nhận diện. Lịch sử kiểm thử được giữ nguyên; hãy thu thêm lượt thử để so sánh FAR/FRR.'}
  catch(e){E('tuneMessage').textContent='⚠ '+e.message}finally{E('tuneSave').disabled=false}
 };
 
