@@ -34,7 +34,7 @@ canvas{width:100%;height:155px;background:#f9fcfb;border:1px solid var(--line);b
 @media(max-width:620px){header{padding-bottom:30px}.nav button{font-size:12px;padding:9px 3px}h2{font-size:20px}.cols{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}section.card{padding:15px}button{font-size:13px}}
 </style></head><body>
 <header><div class="inner"><div class="step" style="color:#c5f3e8">KEYDNA · BEHAVIORAL BIOMETRICS POC</div><h1>⌨ KeyDNA Lab</h1><p>Học thói quen gõ phím · Thử nhận diện · Tìm hiểu Machine Learning</p></div></header>
-<main><nav class="nav"><button type="button" class="active" data-tab="learn">① Lấy mẫu</button><button type="button" data-tab="verify">② Thử nhận diện</button><button type="button" data-tab="academy">③ Giáo trình</button></nav>
+<main><button id="enrollTab" hidden type="button"></button><button id="verifyTab" hidden type="button"></button><nav class="nav"><button type="button" class="active" data-tab="learn">① Lấy mẫu</button><button type="button" data-tab="verify">② Thử nhận diện</button><button type="button" data-tab="academy">③ Giáo trình</button></nav>
 <div class="view" data-view="learn">
 <section class="card"><div class="step">BƯỚC 1 · ĐĂNG KÝ VÀ LẤY MẪU</div><h2>Tạo dấu vân tay gõ phím</h2><p class="muted">Chọn tên, đọc câu mẫu rồi gõ lại. Mỗi lượt đúng sẽ được lưu trên Supabase. Bắt đầu từ 15 mẫu; nên tăng lên 20–30 mẫu qua nhiều phiên.</p>
 <div id="enrollArea"><label for="name">Tên người tham gia</label><input id="name" maxlength="60" placeholder="Ví dụ: Nguyễn Văn A"></div>
@@ -46,7 +46,7 @@ canvas{width:100%;height:155px;background:#f9fcfb;border:1px solid var(--line);b
 </section>
 <section class="card"><h3>Nhịp gõ của lần hiện tại</h3><p class="muted">Các cột thể hiện thời gian giữ mỗi phím (mili giây), giúp bạn nhìn thấy nhịp gõ riêng của mình.</p><canvas id="plot" width="500" height="200"></canvas></section>
 <section class="card"><div class="step">BƯỚC 2 · QUẢN LÝ HỒ SƠ</div><h2>Quản lý cấu hình và mẫu</h2><p class="muted">Chọn hồ sơ tại mục “Thử nhận diện” để quản lý. Chỉ chính chủ được tải/xóa dữ liệu. Tệp JSON giúp mang bộ mẫu sang tài khoản khác.</p>
-<div id="selectedDetails"></div><div class="actions"><button id="exportBtn">↓ Xuất JSON</button><button class="light" id="importBtn">↑ Nhập JSON</button><input type="file" id="importFile" accept=".json,application/json" hidden></div>
+<div id="selectedDetails"></div><button id="refresh" class="light" type="button">↻ Làm mới danh sách</button><div class="actions"><button id="exportBtn">↓ Xuất JSON</button><button class="light" id="importBtn">↑ Nhập JSON</button><input type="file" id="importFile" accept=".json,application/json" hidden></div>
 <div id="sampleList"></div><button class="danger" id="deleteProfileBtn">Xóa toàn bộ hồ sơ</button>
 <p class="help">Xóa hồ sơ cũng xóa lịch sử kiểm thử. Nhập JSON chỉ thực hiện khi tài khoản chưa có hồ sơ.</p>
 </section>
