@@ -125,7 +125,7 @@ function tree(points,height=0,max=10){
  if(!left.length||!right.length)return {n:points.length};
  return {j,cut,l:tree(left,height+1,max),r:tree(right,height+1,max)};
 }
-function path(x,t,h=0){if(t.n!==undefined)return h+depth(t.n);return path(x[xIndex(t)]<t.cut?t.l:t.r,h+1)}
+function path(x,t,h=0){if(t.n!==undefined)return h+depth(t.n);return path(x,x[t.j]<t.cut?t.l:t.r,h+1)}
 function xIndex(t){return t.j}
 function ifScore(x,forest,n){const p=mean(forest.map(t=>path(x,t)));return 2**(-p/Math.max(.001,depth(n)))}
 function mahScore(x,m,s){return Math.sqrt(mean(x.map((v,i)=>((v-m[i])/(s[i]||1))**2)))}
