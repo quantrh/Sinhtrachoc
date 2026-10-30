@@ -122,12 +122,12 @@ textarea.typing-box.alert,textarea.typing-box.alert:focus{background:#ffe9ed;bor
 <label for="modelUpload">Nhập mô hình JSON từ máy</label><input type="file" id="modelUpload" accept=".json,application/json">
 <label for="importName">Tên mẫu nhập vào Supabase</label><input id="importName" maxlength="60" placeholder="Ví dụ: Mẫu nhập từ thiết bị khác">
 <button id="uploadModel">Kiểm tra và lưu mô hình</button>
-<p class="muted">Tệp được kiểm tra cấu trúc, kích thước và giá trị số trước khi lưu. Không thực thi mã trong tệp. Tệp được nhập thành mẫu mới, không ghi đè mẫu cũ.</p>
+<p class="muted">Tệp được kiểm tra cấu trúc, kích thước và giá trị số trước khi lưu. Không thực thi mã trong tệp. Tệp được nhập thành mẫu mới, không ghi đè mẫu cũ. Chỉ chia sẻ mô hình khi người tạo đồng ý.</p>
 <pre id="modelOutput" class="info" style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:380px;overflow:auto">Chưa chọn thao tác.</pre></details>
 </section>
 </div>
 <aside>
-<section class="card"><h2>Quản lý mẫu hành vi gõ phím</h2><select id="profileList" style="width:100%;padding:12px;margin:8px 0 12px"><option>Đang kết nối...</option></select><div class="row"><button id="refreshProfiles" class="alt">Làm mới</button><button id="exportProfile" class="alt">Xuất JSON</button><button id="removeProfile" class="warn">Xóa mẫu</button></div><small id="profileCount">0 mẫu</small><h3>Mẫu đang chọn</h3><div id="profileState" class="pill">Chưa có mẫu hành vi</div><p id="profileInfo" class="muted"></p><div class="info">Phiên bản mới lưu mẫu hành vi và cảnh báo trong Supabase theo từng tài khoản ẩn danh. Dữ liệu V3 cũ được giữ nguyên.</div></section>
+<section class="card"><h2>Quản lý mẫu hành vi gõ phím</h2><select id="profileList" style="width:100%;padding:12px;margin:8px 0 12px"><option>Đang kết nối...</option></select><div class="row"><button id="refreshProfiles" class="alt">Làm mới</button><button id="exportProfile" class="alt">Xuất JSON</button><button id="removeProfile" class="warn">Xóa mẫu</button></div><small id="profileCount">0 mẫu</small><label for="sharingToggle" style="display:block;margin:10px 0"><input type="checkbox" id="sharingToggle"> Chia sẻ mẫu này với cộng đồng</label><p id="shareHint" class="muted">Chỉ chủ mẫu có thể thay đổi quyền chia sẻ. Chia sẻ cho phép người khác xem mô hình hành vi và dùng để so khớp.</p><h3>Mẫu đang chọn</h3><div id="profileState" class="pill">Chưa có mẫu hành vi</div><p id="profileInfo" class="muted"></p><div class="info">Phiên bản mới lưu mẫu hành vi và cảnh báo trong Supabase theo từng tài khoản ẩn danh. Dữ liệu V3 cũ được giữ nguyên.</div></section>
 <section class="card"><h2>Giải thích thuật toán</h2><p><b>Isolation Forest:</b> phát hiện cửa sổ có mẫu nhịp gõ dễ bị cô lập.</p><p><b>Mahalanobis:</b> kiểm tra khoảng cách từng đặc trưng đến hành vi đã học; dùng phương sai điều chuẩn để tránh chia cho 0.</p><p><b>Fusion:</b> quy đổi điểm vào phân vị tương ứng của tập huấn luyện, rồi gộp thành điểm bất thường.</p><p><b>Hysteresis:</b> tránh báo động do một lần gõ bất thường đơn lẻ.</p><small>Gõ trên bàn phím mềm iOS có thể thiếu sự kiện KeyUp hoặc timestamp đáng tin cậy. Khi thiếu dữ liệu, ứng dụng từ chối huấn luyện/nhận diện thay vì tạo kết quả giả.</small></section>
 </aside>
 </div></main><footer>KeyDNA Continuous · Research POC · Inspired by TrueStroke (MIT) · Không dùng làm xác thực thực tế</footer>
@@ -140,15 +140,29 @@ let profile=null, enroll=[], monitor=[], down=new Map(), epoch=0, nDone=0, badSt
 const sb=window.supabase?.createClient("https://rmbsxccrwrktbjlnezpu.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJtYnN4Y2Nyd3JrdGJqbG5lenB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg2MjczNjQsImV4cCI6MjA2NDIwMzM2NH0.ydCqificftdtn1niRciFCifeuo8aX6SDGti-hCY5Z_Y");
 let currentUser=null, profiles=[], selectedProfileId=null;
 function renderProfiles(){
- for(const id of ["profileList","verifyProfile"]){const e=$(id);e.replaceChildren();if(!profiles.length)e.add(new Option("Chưa có mẫu hành vi",""));for(const p of profiles)e.add(new Option(p.name+" · "+new Date(p.updated_at).toLocaleDateString("vi-VN"),p.id));e.value=selectedProfileId||""}
- $("profileCount").textContent=profiles.length+" mẫu hành vi đã lưu";showProfile();
+ const own=profiles.filter(p=>p.user_id===currentUser),shared=profiles.filter(p=>p.user_id!==currentUser);
+ for(const id of ["profileList","verifyProfile"]){
+  const e=$(id);e.replaceChildren();e.add(new Option("— Chọn mẫu hành vi —",""));
+  for(const p of own)e.add(new Option("Của tôi · "+p.name+" · "+(p.is_shared?"Đã chia sẻ":"Riêng tư"),p.id));
+  for(const p of shared)e.add(new Option("Cộng đồng · "+p.name,p.id));
+  e.value=selectedProfileId||"";
+ }
+ const selected=profiles.find(p=>p.id===selectedProfileId),owner=selected?.user_id===currentUser;
+ $("profileCount").textContent=own.length+" mẫu của tôi · "+shared.length+" mẫu cộng đồng";
+ $("sharingToggle").disabled=!owner;$("sharingToggle").checked=!!(owner&&selected.is_shared);
+ $("shareHint").textContent=owner?"Bật để người dùng khác xem và thử so khớp với mẫu này. Có thể tắt lại bất kỳ lúc nào.":"Mẫu cộng đồng chỉ được dùng để xem/so khớp, không thể sửa hoặc xóa.";
+ $("removeProfile").disabled=!owner;
+ $("exportProfile").disabled=!selected;
+ showProfile();
 }
 function selectProfile(id){selectedProfileId=id||null;profile=profiles.find(p=>p.id===id)?.model||null;$("monitorReset").click();renderProfiles()}
 async function loadProfiles(preferred){
  if(!currentUser)return;
- const {data,error}=await sb.from("kd_continuous_profiles").select("id,name,model,created_at,updated_at").eq("user_id",currentUser).order("updated_at",{ascending:false});
+ const {data,error}=await sb.from("kd_continuous_profiles").select("id,user_id,name,model,is_shared,created_at,updated_at").order("updated_at",{ascending:false}).limit(250);
  if(error){setInfo("Lỗi tải mẫu hành vi: "+error.message);return}
- profiles=data||[];const id=preferred||selectedProfileId;selectedProfileId=profiles.some(p=>p.id===id)?id:profiles[0]?.id||null;
+ profiles=data||[];
+ const id=preferred||selectedProfileId;
+ selectedProfileId=profiles.some(p=>p.id===id)?id:(profiles.find(p=>p.user_id===currentUser)?.id||profiles[0]?.id||null);
  profile=profiles.find(p=>p.id===selectedProfileId)?.model||null;renderProfiles();
 }
 async function connect(){
@@ -163,7 +177,7 @@ async function persistProfile(model){
  if(!currentUser){setInfo("Chưa kết nối Supabase");return}
  const r=await sb.from("kd_continuous_profiles").insert({user_id:currentUser,name:model.name,model}).select("id").single();
  if(r.error){setInfo("Lỗi lưu: "+r.error.message);return}
- await loadProfiles(r.data.id);setInfo("Đã lưu mẫu hành vi "+model.name+".");
+ await loadProfiles(r.data.id);setInfo("Đã lưu mẫu hành vi "+model.name+". Mẫu mới mặc định riêng tư.");
 }
 function soundAlert(){
  if(!soundEnabled)return;
@@ -291,10 +305,21 @@ $("soundEnable").onclick=async()=>{try{audioCtx=audioCtx||new (window.AudioConte
 $("profileList").onchange=e=>selectProfile(e.target.value);
 $("verifyProfile").onchange=e=>selectProfile(e.target.value);
 $("refreshProfiles").onclick=()=>loadProfiles();
+$("sharingToggle").onchange=async e=>{
+ const p=profiles.find(x=>x.id===selectedProfileId);
+ if(!p||p.user_id!==currentUser){renderProfiles();return}
+ const enabled=e.target.checked;
+ if(enabled&&!confirm("Chia sẻ mẫu hành vi này cho những người truy cập KeyDNA? Họ có thể tải và phân tích mô hình đã lưu.")){renderProfiles();return}
+ e.target.disabled=true;
+ const {error}=await sb.from("kd_continuous_profiles").update({is_shared:enabled,updated_at:new Date().toISOString()}).eq("id",p.id).eq("user_id",currentUser);
+ if(error)alert("Không đổi được quyền chia sẻ: "+error.message);
+ await loadProfiles(p.id);
+};
 $("exportProfile").onclick=()=>$("export").click();
 $("removeProfile").onclick=async()=>{
  if(!selectedProfileId||!currentUser)return alert("Chưa chọn mẫu hành vi");
  const p=profiles.find(x=>x.id===selectedProfileId);
+ if(p?.user_id!==currentUser)return alert("Chỉ người tạo được xóa mẫu");
  if(!confirm('Xóa vĩnh viễn mẫu hành vi "'+p.name+'" khỏi Supabase?'))return;
  const {error}=await sb.from("kd_continuous_profiles").delete().eq("id",selectedProfileId).eq("user_id",currentUser);
  if(error)return alert("Xóa thất bại: "+error.message);
