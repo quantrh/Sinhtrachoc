@@ -42,11 +42,11 @@ footer{text-align:center;padding:30px;color:#66837b}
 <div class="row"><button id="train" disabled>Huấn luyện hồ sơ</button><button id="enrollReset" class="alt">Nhập lại</button></div>
 <div id="trainMsg" class="info">Bộ thu chỉ ghi thời gian phím khi vùng nhập đang được chọn. Hạn chế sửa bằng paste, autofill hoặc dictation.</div>
 </section>
-<section class="card page" data-page="monitor" hidden>
+<section class="card page" data-page="monitor" hidden><div id="dangerBanner" role="alert" hidden style="background:#ffd5da;border:3px solid #bd1837;color:#920b27;padding:20px;border-radius:12px;margin-bottom:16px;font-weight:800;font-size:20px">⚠️ PHÁT HIỆN HÀNH VI GÕ BẤT THƯỜNG<div id="dangerDetail"></div></div>
 <h2>Xác thực liên tục</h2>
 <p>Gõ nội dung tùy ý. Mỗi 15 phím mới sẽ kiểm tra một cửa sổ 30 phím, kết hợp Isolation Forest và Mahalanobis. Cần 3 cửa sổ bất thường liên tiếp để chuyển sang trạng thái cảnh báo.</p>
 <textarea id="monitorText" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Gõ ở đây để hệ thống theo dõi nhịp gõ..."></textarea>
-<div class="row"><button class="alt" id="monitorReset">Đặt lại phiên</button><span id="liveState" class="pill">Chưa đủ dữ liệu</span></div>
+<div class="row"><button class="alt" id="soundEnable">🔊 Bật âm thanh</button><button class="alt" id="monitorReset">Đặt lại phiên</button><span id="liveState" class="pill">Chưa đủ dữ liệu</span></div>
 <div class="stats"><div class="stat"><small>Cửa sổ đã xử lý</small><strong id="nWindows">0</strong></div><div class="stat"><small>Độ tin cậy (POC)</small><strong id="confidence">—</strong></div><div class="stat"><small>Bất thường liên tiếp</small><strong id="streak">0/3</strong></div></div>
 <h3>Nhật ký quyết định</h3><div class="log" id="log"><div>Chưa có dữ liệu phiên.</div></div>
 </section>
@@ -66,14 +66,46 @@ footer{text-align:center;padding:30px;color:#66837b}
 </section>
 </div>
 <aside>
-<section class="card"><h2>Trạng thái hồ sơ</h2><div id="profileState" class="pill">Chưa có hồ sơ</div><p id="profileInfo" class="muted"></p><div class="info">Phiên bản mới không đọc hoặc ghi dữ liệu Supabase V3. Mẫu trước đây được giữ nguyên trên Supabase và ứng dụng cũ vẫn còn trong lịch sử Git.</div></section>
+<section class="card"><h2>Trạng thái hồ sơ</h2><div id="profileState" class="pill">Chưa có hồ sơ</div><p id="profileInfo" class="muted"></p><div class="info">Phiên bản mới lưu hồ sơ và cảnh báo trong Supabase theo từng tài khoản ẩn danh. Dữ liệu V3 cũ được giữ nguyên.</div></section>
 <section class="card"><h2>Giải thích thuật toán</h2><p><b>Isolation Forest:</b> phát hiện cửa sổ có mẫu nhịp gõ dễ bị cô lập.</p><p><b>Mahalanobis:</b> kiểm tra khoảng cách từng đặc trưng đến hành vi đã học; dùng phương sai điều chuẩn để tránh chia cho 0.</p><p><b>Fusion:</b> quy đổi điểm vào phân vị tương ứng của tập huấn luyện, rồi gộp thành điểm bất thường.</p><p><b>Hysteresis:</b> tránh báo động do một lần gõ bất thường đơn lẻ.</p><small>Gõ trên bàn phím mềm iOS có thể thiếu sự kiện KeyUp hoặc timestamp đáng tin cậy. Khi thiếu dữ liệu, ứng dụng từ chối huấn luyện/nhận diện thay vì tạo kết quả giả.</small></section>
 </aside>
 </div></main><footer>KeyDNA Continuous · Research POC · Inspired by TrueStroke (MIT) · Không dùng làm xác thực thực tế</footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.10/dist/umd/supabase.min.js"></script>
 <script>
 "use strict";
 const $=id=>document.getElementById(id), K="keydna_continuous_profile_v1", W=30, STRIDE=15;
-let profile=null, enroll=[], monitor=[], down=new Map(), epoch=0, nDone=0, badStreak=0;
+let profile=null, enroll=[], monitor=[], down=new Map(), epoch=0, nDone=0, badStreak=0, alertLogged=false, soundEnabled=false, audioCtx=null;
+
+const sb=window.supabase?.createClient("https://rmbsxccrwrktbjlnezpu.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYWJhc2UiLCJyZWYiOiJybWJzeGNjcndya3RiamxuZXpwdSIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzQ4NjIzNzY0LCJleHAiOjIwNjQyMDMzNjR9.ydCqificftdtn1niRciFCifeuo8aX6SDGti-hCY5Z_Y");
+let currentUser=null;
+async function connect(){
+ if(!sb){setInfo("Chưa tải được Supabase SDK");return}
+ try{let {data:{session}}=await sb.auth.getSession();if(!session){const r=await sb.auth.signInAnonymously();if(r.error)throw r.error;session=r.data.session}
+ currentUser=session?.user?.id;
+ if(!currentUser)throw Error("Không có phiên đăng nhập");
+ const r=await sb.from("kd_continuous_profiles").select("model").eq("user_id",currentUser).maybeSingle();
+ if(r.error)throw r.error;if(r.data?.model){profile=r.data.model;showProfile()}
+ setInfo("Supabase đã kết nối. Hồ sơ được lưu theo tài khoản ẩn danh.");
+ }catch(e){setInfo("Lỗi Supabase: "+e.message)}
+}
+async function persistProfile(){
+ if(!currentUser){setInfo("Chưa kết nối Supabase, chưa thể lưu");return}
+ const r=await sb.from("kd_continuous_profiles").upsert({user_id:currentUser,name:profile.name,model:profile,updated_at:new Date().toISOString()},{onConflict:"user_id"});
+ setInfo(r.error?"Lưu Supabase thất bại: "+r.error.message:"Đã lưu hồ sơ lên Supabase.");
+}
+function soundAlert(){
+ if(!soundEnabled)return;
+ try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();
+ audioCtx.resume();const t=audioCtx.currentTime;
+ for(const offset of [0,.2,.4]){const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.frequency.value=880;o.type="square";g.gain.setValueAtTime(.1,t+offset);g.gain.exponentialRampToValueAtTime(.001,t+offset+.14);o.connect(g);g.connect(audioCtx.destination);o.start(t+offset);o.stop(t+offset+.15)}}catch(e){console.warn(e)}
+}
+function alertNow(score,count){
+ const pct=Math.round(score*100);
+ $("dangerBanner").hidden=false;$("dangerDetail").textContent="Điểm nghi vấn: "+pct+"%";
+ if(!alertLogged){alertLogged=true;soundAlert();
+ if(currentUser)sb.from("kd_continuous_alerts").insert({user_id:currentUser,suspicion:pct,anomaly_score:score,windows_count:count}).then(({error})=>{if(error)console.warn(error.message)})}
+}
+
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const mean=a=>a.reduce((x,y)=>x+y,0)/Math.max(1,a.length);
 const sd=a=>Math.sqrt(mean(a.map(v=>(v-mean(a))**2)));
@@ -163,6 +195,7 @@ function updateMonitor(){
  let f=windows(monitor).at(-1),r=evaluate(f);nDone=count;
  badStreak=r.flag?badStreak+1:0;
  const locked=badStreak>=3;
+ if(r.flag)alertNow(r.anomaly,count);else{$("dangerBanner").hidden=true;alertLogged=false}
  $("nWindows").textContent=count;$("confidence").textContent=Math.round(r.confidence*100)+"%";$("streak").textContent=badStreak+"/3";
  $("liveState").textContent=locked?"Cảnh báo: hành vi khác biệt":r.flag?"Đang nghi vấn":"Đang theo dõi";
  $("liveState").className="pill "+(locked?"bad":r.flag?"":"good");
@@ -175,14 +208,15 @@ keyCollector($("monitorText"),monitor,updateMonitor);
 $("train").onclick=()=>{
  const rows=windows(enroll);if(rows.length<10){setInfo("Chưa đủ cửa sổ để huấn luyện.");return}
  try{profile={name:$("person").value.trim()||"Người dùng",count:enroll.length,rows:rows.length,created:new Date().toISOString(),...trainModel(rows)};
- localStorage.setItem(K,JSON.stringify(profile));showProfile();setInfo("Đã huấn luyện và lưu cục bộ. Sang bước Xác thực liên tục để thử.");}
+ showProfile();persistProfile();}
  catch(e){setInfo("Không huấn luyện được: "+e.message)}
 };
 $("enrollReset").onclick=()=>{enroll.length=0;$("enrollText").value="";updateEnroll()};
-$("monitorReset").onclick=()=>{monitor.length=0;$("monitorText").value="";nDone=0;badStreak=0;$("nWindows").textContent="0";$("confidence").textContent="—";$("streak").textContent="0/3";$("liveState").textContent="Chưa đủ dữ liệu";$("liveState").className="pill";$("log").innerHTML="<div>Đã đặt lại phiên.</div>"};
+$("monitorReset").onclick=()=>{monitor.length=0;$("monitorText").value="";nDone=0;badStreak=0;alertLogged=false;$("dangerBanner").hidden=true;$("nWindows").textContent="0";$("confidence").textContent="—";$("streak").textContent="0/3";$("liveState").textContent="Chưa đủ dữ liệu";$("liveState").className="pill";$("log").innerHTML="<div>Đã đặt lại phiên.</div>"};
+$("soundEnable").onclick=async()=>{try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();await audioCtx.resume();soundEnabled=true;$("soundEnable").textContent="🔊 Đã bật âm thanh"}catch(e){alert("Không bật được âm thanh: "+e.message)}};
 document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{const tab=b.dataset.tab;document.querySelectorAll("[data-tab]").forEach(x=>{x.className=x===b?"active":"alt"});document.querySelectorAll("[data-page]").forEach(x=>x.hidden=x.dataset.page!==tab)});
 $("export").onclick=()=>{if(!profile){alert("Chưa có hồ sơ");return}const blob=new Blob([JSON.stringify(profile)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="keydna-continuous-profile.json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
-$("wipe").onclick=()=>{if(!confirm("Xóa hồ sơ cục bộ của KeyDNA Continuous? Dữ liệu Supabase cũ không bị ảnh hưởng."))return;localStorage.removeItem(K);profile=null;showProfile()};
+$("wipe").onclick=()=>alert("Để tránh xóa dữ liệu từ xa ngoài ý muốn, xóa hồ sơ đang tạm khóa.");
 try{profile=JSON.parse(localStorage.getItem(K)||"null");if(profile&&!profile.forest)profile=null}catch(e){profile=null}
-showProfile();updateEnroll();
+showProfile();updateEnroll();connect();
 </script></body></html>
