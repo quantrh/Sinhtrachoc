@@ -50,9 +50,19 @@ button:not(.nav button){box-shadow:0 2px 4px rgba(0,89,85,.08)}button:focus-visi
 .metricCard{display:flex;flex-direction:column;gap:6px;background:#f1f8f6;border:1px solid #d7e8e3;border-radius:15px;padding:17px}
 .metricCard small{font-size:13px;font-weight:850;color:#346c62}.metricCard strong{font-size:clamp(23px,4vw,34px);line-height:1.2;overflow-wrap:anywhere;color:#006B68}.metricCard span{font-size:12px;color:#5b7770}.metricCard.far{border-top:4px solid #e19f2d}.metricCard.frr{border-top:4px solid #208d7c}
 @media(max-width:430px){.metricGrid{grid-template-columns:1fr}.nav{gap:3px}.nav button{font-size:11px}.phrase{padding:14px}}
-</style><style>.knn-figure{margin:17px 0;border:1px solid #d6eae2;border-radius:14px;padding:10px;background:#fff}.knn-figure svg{display:block;width:100%;height:auto}.knn-figure figcaption{text-align:center;font-size:12px;color:#658077;margin:7px 0 3px}@media(max-width:500px){.knn-figure{padding:4px}.knn-figure figcaption{font-size:11px}}</style></head><body>
+</style><style>.knn-figure{margin:17px 0;border:1px solid #d6eae2;border-radius:14px;padding:10px;background:#fff}.knn-figure svg{display:block;width:100%;height:auto}.knn-figure figcaption{text-align:center;font-size:12px;color:#658077;margin:7px 0 3px}@media(max-width:500px){.knn-figure{padding:4px}.knn-figure figcaption{font-size:11px}}</style><style>
+.nav{grid-template-columns:repeat(4,minmax(0,1fr))}
+.tuneLegend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:#4e7770;margin:8px 0}
+.tuneLegend span{display:inline-flex;align-items:center;gap:6px}
+.tuneDot{width:11px;height:11px;border-radius:50%;display:inline-block}
+.tuneTableWrap{width:100%;overflow-x:auto}.tuneTable{width:100%;border-collapse:collapse;font-size:12px;min-width:590px}
+.tuneTable th{background:#e5f3ef;color:#075d56;text-align:left}.tuneTable td,.tuneTable th{padding:11px 9px;border-bottom:1px solid #e3ece8}
+.tuneTable td button{padding:7px 9px;min-height:31px;font-size:11px;margin:0}
+#tuneChart{height:auto;max-height:255px}
+@media(max-width:510px){.nav button{font-size:10px;letter-spacing:-.03em;padding:10px 1px}}
+</style></head><body>
 <header><div class="inner"><div class="step" style="color:#c5f3e8">KEYDNA · BEHAVIORAL BIOMETRICS POC</div><h1>⌨ KeyDNA Lab</h1><p>Học thói quen gõ phím · Thử nhận diện · Tìm hiểu Machine Learning</p></div></header>
-<main><button id="enrollTab" hidden type="button"></button><button id="verifyTab" hidden type="button"></button><nav class="nav"><button type="button" data-tab="learn">① Lấy mẫu</button><button type="button" class="active" data-tab="verify">② Thử nhận diện</button><button type="button" data-tab="academy">③ Giáo trình</button></nav>
+<main><button id="enrollTab" hidden type="button"></button><button id="verifyTab" hidden type="button"></button><nav class="nav"><button type="button" data-tab="learn">① Lấy mẫu</button><button type="button" class="active" data-tab="verify">② Thử nhận diện</button><button type="button" data-tab="academy">③ Giáo trình</button><button type="button" data-tab="tune">④ Tinh chỉnh</button></nav>
 <div class="view" data-view="learn" hidden>
 <section class="card"><div class="step">BƯỚC 1 · ĐĂNG KÝ VÀ LẤY MẪU</div><h2>Tạo dấu vân tay gõ phím</h2><p class="muted">Chọn tên, đọc câu mẫu rồi gõ lại. Mỗi lượt đúng sẽ được lưu trên Supabase. Chọn từ 3–40 mẫu theo mục đích thử nghiệm. Nhiều mẫu qua nhiều phiên thường cho dữ liệu đa dạng hơn.</p>
 <div id="enrollArea"><label for="name">Tên người tham gia</label><input id="name" maxlength="60" placeholder="Ví dụ: Nguyễn Văn A"><label for="sampleTarget">Số mẫu yêu cầu (3–40)</label><select id="sampleTarget"><option value="3">3 mẫu — thử cực nhanh</option><option value="5">5 mẫu — thử nhanh</option><option value="10">10 mẫu — demo ban đầu</option><option value="15" selected>15 mẫu — khuyến nghị demo</option><option value="20">20 mẫu — nhiều dữ liệu hơn</option><option value="30">30 mẫu — kiểm thử mở rộng</option><option value="40">40 mẫu — tối đa POC</option></select><div id="sampleAdvice" class="example"></div><p class="help">Có thể đổi cấu hình sau khi đăng ký. Không cần xóa các mẫu đã lấy.</p></div>
@@ -82,6 +92,27 @@ button:not(.nav button){box-shadow:0 2px 4px rgba(0,89,85,.08)}button:focus-visi
 <p><b>Vì sao cần checkbox?</b> Máy chỉ biết nhịp gõ và kết quả của nó. Checkbox cho biết thực tế người thử tự nhận là chính chủ hay người khác, để máy thống kê hai loại sai nói trên. Đánh dấu sai khiến FAR/FRR không đáng tin cậy.</p>
 <p><b>Có mức phần trăm nào là chuẩn?</b> Không có một mức FAR/FRR chung được coi là đạt cho mọi hệ thống. Khi nghiên cứu sinh trắc học, người ta thường báo cáo FAR, FRR và EER (điểm mà FAR và FRR bằng nhau) trên cùng một tập kiểm thử. Ví dụ <b>FAR 1%</b> có nghĩa trung bình khoảng 1 trên 100 lượt thử của người khác được chấp nhận, <b>không phải</b> tiêu chuẩn mặc định. Với xác thực có rủi ro cao, mục tiêu FAR thường phải rất thấp, nhưng cần tự xác định theo bối cảnh sử dụng và kiểm định độc lập.</p><p class="help">FAR/FRR ở đây là số liệu thử nghiệm dựa trên lời tự khai, không phải độ chính xác đã được kiểm định độc lập. Không có lượt thử thuộc một nhóm thì chưa tính được tỷ lệ cho nhóm đó.</p>
 </div></details><button id="statsBtn">Xem FAR / FRR</button><div id="stats"></div></section></div>
+
+<div class="view" data-view="tune" hidden>
+<section class="card"><div class="step">PHÒNG THÍ NGHIỆM MACHINE LEARNING</div><h2>Tinh chỉnh &amp; kiểm định mô hình</h2>
+<p class="muted">Thử nhiều mức ngưỡng và phương án K láng giềng gần nhất. Mô phỏng không làm thay đổi hệ thống; chỉ nút <b>Lưu cấu hình</b> mới có hiệu lực. Chỉ chủ hồ sơ được kiểm định chi tiết.</p>
+<label for="tuneProfile">Hồ sơ của bạn</label><select id="tuneProfile"></select><div id="tuneStatus" class="example">Đang tải dữ liệu...</div>
+<div class="cols" style="margin-top:16px"><div><label for="tuneKind">Bộ đặc trưng</label><select id="tuneKind"><option value="legacy">V1 — mẫu cũ, tương thích</option><option value="improved">V2 — đặc trưng trải đều cả câu</option></select></div><div><label for="tuneK">Số láng giềng</label><select id="tuneK"><option value="1">k = 1</option><option value="3">k = 3</option><option value="5">k = 5</option></select></div></div>
+<label for="tuneMetric">Cách tính khoảng cách</label><select id="tuneMetric"><option value="euclidean">Euclidean — căn trung bình bình phương</option><option value="manhattan">Manhattan — trung bình chênh lệch tuyệt đối</option></select>
+<label for="tuneFactor">Hệ số ngưỡng: <b id="tuneFactorText">1,25</b></label><input id="tuneFactor" type="range" min="0.5" max="2" step="0.05" value="1.25">
+<p class="help">Giảm ngưỡng thường làm FAR giảm nhưng có thể khiến FRR tăng. Luôn kiểm định trên dữ liệu tách khỏi mẫu học.</p>
+<div class="actions"><button id="tunePreview">↻ Phân tích &amp; so sánh</button><button class="light" id="tuneSave">Lưu cấu hình cho hồ sơ</button></div>
+<p id="tuneMessage" class="help"></p></section>
+<section class="card"><h3>Đồ thị FAR / FRR theo ngưỡng</h3>
+<p class="muted">Mô phỏng hồi cứu bằng điểm đã ghi: nhân ngưỡng mỗi lượt với tỷ lệ trên trục ngang. Nếu các lượt dùng mô hình khác nhau, đường biểu diễn không phải dự báo khi đổi mô hình.</p>
+<canvas id="tuneChart" width="650" height="255" aria-label="Biểu đồ FAR và FRR theo hệ số ngưỡng"></canvas>
+<div class="tuneLegend"><span><i class="tuneDot" style="background:#D99B24"></i> FAR — nhận nhầm người khác</span><span><i class="tuneDot" style="background:#006B68"></i> FRR — từ chối chính chủ</span></div>
+<div id="tuneCounts" class="help"></div></section>
+<section class="card"><h3>So sánh các phương án kNN</h3>
+<p class="muted">Các biến thể được chấm lại bằng lượt thử <b>mới có lưu đặc trưng</b>. Khi chưa đủ lượt thử của một nhóm, chỉ số FAR/FRR sẽ hiển thị “Chưa có dữ liệu”. Chọn “Dùng thử” chỉ điền cấu hình; chưa lưu.</p>
+<div class="tuneTableWrap"><table class="tuneTable"><thead><tr><th>Đặc trưng</th><th>k</th><th>Khoảng cách</th><th>Lượt thử</th><th>FAR</th><th>FRR</th><th></th></tr></thead><tbody id="tuneVariants"><tr><td colspan="7">Chọn Phân tích để xem kết quả.</td></tr></tbody></table></div>
+<div class="example" style="margin-top:14px"><b>Gợi ý:</b> Thu 20–30 mẫu ở nhiều buổi; kiểm tra thêm lượt chính chủ và người khác. Chọn phương án có FAR và FRR cùng chấp nhận được, không chỉ FAR thấp.</div>
+</section></div>
 <div class="view" data-view="academy" hidden>
 <section class="card"><div class="step">GIÁO TRÌNH TƯƠNG TÁC</div><h2>Hiểu Machine Learning từ cơ bản đến kiểm định</h2><p>Tài liệu học theo chương, có ví dụ, hình minh họa, công thức, thực hành chỉnh tham số và câu hỏi tự kiểm tra. <b>Thuật toán đang dùng: One-Class k-Nearest Neighbors (One-Class kNN) — K láng giềng gần nhất cho một lớp.</b> Ứng dụng học các mẫu nhịp gõ của một người, rồi kiểm tra lần gõ mới có đủ giống các mẫu đó hay không.</p><div class="actions"><button id="expandLessons">Mở tất cả</button><button id="collapseLessons" class="light">Thu gọn</button></div></section>
 <details class="lesson" open><summary>01 · Bài toán sinh trắc học hành vi</summary><div><p>Nếu hai người cùng gõ “hom nay ...”, nội dung giống nhau nhưng thói quen gõ có thể khác. Ứng dụng không đoán danh tính từ câu chữ; nó tìm xem nhịp gõ mới có quen thuộc với một hồ sơ hay không.</p><p class="example">Ví dụ: A giữ phím hơi lâu và dừng ở khoảng giữa câu; B gõ nhanh, khá đều. Đây là hai hành vi có thể phân biệt bằng các phép đo thời gian.</p><p><b>Hạn chế:</b> Mệt mỏi, đổi bàn phím, cách đặt tay và kích thước thiết bị có thể làm nhịp gõ của cùng một người thay đổi.</p></div></details>
