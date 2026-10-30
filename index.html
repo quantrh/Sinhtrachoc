@@ -32,10 +32,28 @@ canvas{width:100%;height:155px;background:#f9fcfb;border:1px solid var(--line);b
 #progress{font-weight:800}#sampleList:empty{display:none}
 .cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 @media(max-width:620px){header{padding-bottom:30px}.nav button{font-size:12px;padding:9px 3px}h2{font-size:20px}.cols{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}section.card{padding:15px}button{font-size:13px}}
+</style><style>
+/* KeyDNA BIDV-inspired identity: no logo. */
+:root{--brand:#006B68;--gold:#FFC62F;--line:#d5e8e3;--ink:#123e3b;--muted:#648580}
+body{background:radial-gradient(circle at top right,#e0f5ef 0,#f3f8f6 45%,#edf5f2 100%);color:var(--ink)}
+header{background:linear-gradient(125deg,#004e50 0%,#006B68 60%,#009183 100%);border-bottom:5px solid var(--gold);padding-top:30px;padding-bottom:41px}
+header h1{font-size:clamp(28px,4vw,39px);font-weight:850;letter-spacing:-.04em}
+header .step{color:#fff4b3!important}
+section.card{border-radius:20px;border-color:#d8eae5;box-shadow:0 8px 24px rgba(0,78,74,.07)}
+.nav{border:1px solid #dceee8;border-radius:16px;box-shadow:0 5px 18px rgba(0,78,74,.09)}
+.nav button{font-weight:750}.nav button.active{background:var(--brand);box-shadow:inset 0 -3px 0 var(--gold)}
+button:not(.nav button){box-shadow:0 2px 4px rgba(0,89,85,.08)}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid rgba(255,198,47,.7);outline-offset:2px}
+.phrase{background:linear-gradient(120deg,#fff2ba,#ffdf91);border:2px solid #efbc47;border-left:6px solid #dba014;box-shadow:0 5px 14px rgba(209,147,39,.15);color:#5a400e;font-weight:800;font-size:clamp(17px,3vw,22px);letter-spacing:.012em;padding:19px;border-radius:15px}
+.kpi{background:#e7f5ef}.kpi b{color:#006B68}
+.example{background:#eef8f4;border-left-color:#006B68}
+.metricGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:15px 0}
+.metricCard{display:flex;flex-direction:column;gap:6px;background:#f1f8f6;border:1px solid #d7e8e3;border-radius:15px;padding:17px}
+.metricCard small{font-size:13px;font-weight:850;color:#346c62}.metricCard strong{font-size:clamp(23px,4vw,34px);line-height:1.2;overflow-wrap:anywhere;color:#006B68}.metricCard span{font-size:12px;color:#5b7770}.metricCard.far{border-top:4px solid #e19f2d}.metricCard.frr{border-top:4px solid #208d7c}
+@media(max-width:430px){.metricGrid{grid-template-columns:1fr}.nav{gap:3px}.nav button{font-size:11px}.phrase{padding:14px}}
 </style></head><body>
 <header><div class="inner"><div class="step" style="color:#c5f3e8">KEYDNA · BEHAVIORAL BIOMETRICS POC</div><h1>⌨ KeyDNA Lab</h1><p>Học thói quen gõ phím · Thử nhận diện · Tìm hiểu Machine Learning</p></div></header>
-<main><button id="enrollTab" hidden type="button"></button><button id="verifyTab" hidden type="button"></button><nav class="nav"><button type="button" class="active" data-tab="learn">① Lấy mẫu</button><button type="button" data-tab="verify">② Thử nhận diện</button><button type="button" data-tab="academy">③ Giáo trình</button></nav>
-<div class="view" data-view="learn">
+<main><button id="enrollTab" hidden type="button"></button><button id="verifyTab" hidden type="button"></button><nav class="nav"><button type="button" data-tab="learn">① Lấy mẫu</button><button type="button" class="active" data-tab="verify">② Thử nhận diện</button><button type="button" data-tab="academy">③ Giáo trình</button></nav>
+<div class="view" data-view="learn" hidden>
 <section class="card"><div class="step">BƯỚC 1 · ĐĂNG KÝ VÀ LẤY MẪU</div><h2>Tạo dấu vân tay gõ phím</h2><p class="muted">Chọn tên, đọc câu mẫu rồi gõ lại. Mỗi lượt đúng sẽ được lưu trên Supabase. Chọn từ 3–40 mẫu theo mục đích thử nghiệm. Nhiều mẫu qua nhiều phiên thường cho dữ liệu đa dạng hơn.</p>
 <div id="enrollArea"><label for="name">Tên người tham gia</label><input id="name" maxlength="60" placeholder="Ví dụ: Nguyễn Văn A"><label for="sampleTarget">Số mẫu yêu cầu (3–40)</label><select id="sampleTarget"><option value="3">3 mẫu — thử cực nhanh</option><option value="5">5 mẫu — thử nhanh</option><option value="10">10 mẫu — demo ban đầu</option><option value="15" selected>15 mẫu — khuyến nghị demo</option><option value="20">20 mẫu — nhiều dữ liệu hơn</option><option value="30">30 mẫu — kiểm thử mở rộng</option><option value="40">40 mẫu — tối đa POC</option></select><div id="sampleAdvice" class="example"></div><p class="help">Có thể đổi cấu hình sau khi đăng ký. Không cần xóa các mẫu đã lấy.</p></div>
 <div id="verifyArea" hidden><label for="profiles">Hồ sơ muốn thử</label><select id="profiles"></select><label><input type="checkbox" id="ownerCheck"> Tôi là chính chủ hồ sơ đã chọn</label></div>
@@ -51,7 +69,7 @@ canvas{width:100%;height:155px;background:#f9fcfb;border:1px solid var(--line);b
 <p class="help">Xóa hồ sơ cũng xóa lịch sử kiểm thử. Nhập JSON chỉ thực hiện khi tài khoản chưa có hồ sơ.</p>
 </section>
 </div>
-<div class="view" data-view="verify" hidden>
+<div class="view" data-view="verify">
 <section class="card"><div class="step">BƯỚC 3 · KIỂM TRA</div><h2>Bạn có phải người đã đăng ký?</h2><p>Chọn hồ sơ cần thử. Người khác cũng có thể gõ câu giống hệt để kiểm tra khả năng phân biệt của Machine Learning.</p>
 <div id="verifyTarget"><label for="verifyPicker">Hồ sơ muốn thử</label><select id="verifyPicker"></select><div id="verifySummary" class="example"></div><label><input type="checkbox" id="verifyOwner"> Tôi thực sự là người đã đăng ký hồ sơ này</label>
 <p class="help" style="margin-top:5px"><b>Đánh dấu nếu bạn chính là chủ hồ sơ được chọn.</b> Nếu bạn đang thử giả làm người đó, hãy bỏ chọn. Thông tin này chỉ để đối chiếu kết quả, tính tỷ lệ nhận nhầm hoặc từ chối nhầm; <b>không ảnh hưởng đến thuật toán nhận diện.</b> Hãy khai báo đúng để thống kê có ý nghĩa.</p></div>
@@ -62,7 +80,7 @@ canvas{width:100%;height:155px;background:#f9fcfb;border:1px solid var(--line);b
 <p><b>FAR — Tỷ lệ chấp nhận nhầm:</b> Người khác gõ thử nhưng máy lại nhận là chính chủ. Ví dụ, 20 lượt người khác thử và có 2 lượt được chấp nhận → FAR = 10%. <b>Càng thấp càng tốt</b>, vì giảm nguy cơ nhận nhầm người lạ.</p>
 <p><b>FRR — Tỷ lệ từ chối nhầm:</b> Chính chủ gõ thử nhưng máy báo không phù hợp. Ví dụ, chính chủ thử 20 lần và bị từ chối 3 lần → FRR = 15%. <b>Càng thấp càng tốt</b>, vì giảm phiền hà cho người dùng thật.</p>
 <p><b>Vì sao cần checkbox?</b> Máy chỉ biết nhịp gõ và kết quả của nó. Checkbox cho biết thực tế người thử tự nhận là chính chủ hay người khác, để máy thống kê hai loại sai nói trên. Đánh dấu sai khiến FAR/FRR không đáng tin cậy.</p>
-<p class="help">FAR/FRR ở đây là số liệu thử nghiệm dựa trên lời tự khai, không phải độ chính xác đã được kiểm định độc lập. Không có lượt thử thuộc một nhóm thì chưa tính được tỷ lệ cho nhóm đó.</p>
+<p><b>Có mức phần trăm nào là chuẩn?</b> Không có một mức FAR/FRR chung được coi là đạt cho mọi hệ thống. Khi nghiên cứu sinh trắc học, người ta thường báo cáo FAR, FRR và EER (điểm mà FAR và FRR bằng nhau) trên cùng một tập kiểm thử. Ví dụ <b>FAR 1%</b> có nghĩa trung bình khoảng 1 trên 100 lượt thử của người khác được chấp nhận, <b>không phải</b> tiêu chuẩn mặc định. Với xác thực có rủi ro cao, mục tiêu FAR thường phải rất thấp, nhưng cần tự xác định theo bối cảnh sử dụng và kiểm định độc lập.</p><p class="help">FAR/FRR ở đây là số liệu thử nghiệm dựa trên lời tự khai, không phải độ chính xác đã được kiểm định độc lập. Không có lượt thử thuộc một nhóm thì chưa tính được tỷ lệ cho nhóm đó.</p>
 </div></details><button id="statsBtn">Xem FAR / FRR</button><div id="stats"></div></section></div>
 <div class="view" data-view="academy" hidden>
 <section class="card"><div class="step">GIÁO TRÌNH TƯƠNG TÁC</div><h2>Hiểu Machine Learning từ cơ bản đến kiểm định</h2><p>Tài liệu học theo chương, có ví dụ, công thức, thực hành chỉnh tham số và câu hỏi tự kiểm tra. Phong cách học tập dựa trên giáo trình Isolation Forest mà bạn cung cấp; nội dung dưới đây dành riêng cho mô hình <b>one-class kNN</b> thực sự đang chạy trong KeyDNA.</p><div class="actions"><button id="expandLessons">Mở tất cả</button><button id="collapseLessons" class="light">Thu gọn</button></div></section>
@@ -191,6 +209,25 @@ E('deleteProfileBtn').onclick=async()=>{try{const d=await manage();if(!d.profile
  const typed=prompt('Nhập XOA để xác nhận xóa toàn bộ');if(typed!=='XOA')return;
  await api('delete_profile');await refresh();await manage();say('Đã xóa hồ sơ, các mẫu và lịch sử kiểm thử')}catch(e){say('⚠ '+e.message)}};
 
-E('statsBtn').onclick=async()=>{try{if(!me)throw Error('Bạn chưa đăng ký');let s=await api('stats',{profile_id:me.id});E('stats').textContent='Tổng '+s.total+' lượt; chính chủ '+s.genuine+', từ chối nhầm '+s.false_reject+'; người khác '+s.impostor+', chấp nhận nhầm '+s.false_accept+'. Nhãn do người thử tự khai báo.'}catch(e){E('stats').textContent=e.message}};
-(async()=>{try{let {data:{session}}=await sb.auth.getSession();if(!session){let x=await sb.auth.signInAnonymously();if(x.error)throw x.error}await refresh();await manage()}catch(e){say('Lỗi kết nối: '+e.message+'. Kiểm tra Anonymous Sign-ins trên Supabase.') }})();
+E('statsBtn').onclick=async()=>{
+ const area=E('stats');area.replaceChildren();area.textContent='Đang tính thống kê...';
+ try{
+ const selectedProfile=profiles.find(p=>p.id===E('verifyPicker').value);
+ if(!selectedProfile)throw Error('Hãy chọn một hồ sơ để xem thống kê.');
+ if(!selectedProfile.owner)throw Error('Chỉ chủ hồ sơ đang chọn có thể xem thống kê của hồ sơ này.');
+ const data=await api('stats',{profile_id:selectedProfile.id});
+ const far=data.impostor>0?100*data.false_accept/data.impostor:null;
+ const frr=data.genuine>0?100*data.false_reject/data.genuine:null;
+ const pct=n=>n===null?'Chưa có dữ liệu':n.toLocaleString('vi-VN',{maximumFractionDigits:1,minimumFractionDigits:1})+'%';
+ area.replaceChildren();
+ const summary=document.createElement('div');summary.className='metricGrid';
+ for(const [title,value,subtitle,kind] of [
+ ['FAR',pct(far),data.false_accept+' / '+data.impostor+' lượt người khác được nhận nhầm','far'],
+ ['FRR',pct(frr),data.false_reject+' / '+data.genuine+' lượt chính chủ bị từ chối nhầm','frr']
+ ]){const card=document.createElement('div');card.className='metricCard '+kind;const label=document.createElement('small');label.textContent=title;const figure=document.createElement('strong');figure.textContent=value;const foot=document.createElement('span');foot.textContent=subtitle;card.append(label,figure,foot);summary.append(card)}
+ const note=document.createElement('p');note.className='help';note.textContent='Tổng '+data.total+' lượt thử đã được tính (tối đa 500 lượt gần nhất). Các tỷ lệ dựa vào lựa chọn tự khai báo “Tôi thực sự là người đã đăng ký hồ sơ này”; chỉ mang tính POC. Cần nhiều lượt thử thuộc cả hai nhóm để có ý nghĩa.';
+ area.append(summary,note);
+ }catch(e){area.textContent='⚠ '+e.message}
+};
+(async()=>{try{let {data:{session}}=await sb.auth.getSession();if(!session){let x=await sb.auth.signInAnonymously();if(x.error)throw x.error}await refresh();await manage();showView('verify')}catch(e){say('Lỗi kết nối: '+e.message+'. Kiểm tra Anonymous Sign-ins trên Supabase.') }})();
 </script></body></html>
