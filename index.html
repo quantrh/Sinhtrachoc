@@ -176,18 +176,6 @@ function featsV3(){
  const total=keys.at(-1).up-keys[0].down;
  return [avg(d),sd(d),avg(pp),sd(pp),avg(ud),sd(ud),total,pp.filter(x=>x>350).length,...d,...pp,...ud].map(x=>Math.round(x*100)/100);
 }
-function featsV2(){
- const d=keys.map(x=>x.up-x.down),p=keys.slice(1).map((x,i)=>x.down-keys[i].down);
- const f=p.map((v,i)=>v-d[i]),total=keys.at(-1).up-keys[0].down;
- // Uniform sampling uses the whole phrase, unlike legacy first-28 metrics.
- const spread=a=>Array.from({length:28},(_,i)=>a[Math.round(i*(a.length-1)/27)]??avg(a));
- return [avg(d),sd(d),avg(p),sd(p),total,avg(f),sd(f),p.filter(v=>v>350).length,...spread(d),...spread(p)].map(x=>Math.round(x*100)/100);
-}
-function feats(){
- const d=keys.map(x=>x.up-x.down),p=keys.slice(1).map((x,i)=>x.down-keys[i].down);
- const f=p.map((v,i)=>v-d[i]),total=keys.at(-1).up-keys[0].down;
- return [avg(d),sd(d),avg(p),sd(p),total,avg(f),sd(f),p.filter(v=>v>350).length,...Array.from({length:28},(_,i)=>d[i]??avg(d)),...Array.from({length:28},(_,i)=>p[i]??avg(p))].map(x=>Math.round(x*100)/100)
-}
 function draw(){const c=E('plot'),ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);let a=keys.map(x=>x.up==null?0:x.up-x.down),max=Math.max(150,...a);a.forEach((v,i)=>{ctx.fillStyle='#008e86';ctx.fillRect(15+i*470/Math.max(1,P.length),185-v/max*170,Math.max(2,460/P.length-2),v/max*170)})}
 const typing=E('typing');
 typing.onpaste=e=>{e.preventDefault();say('Vui lòng tự gõ, không dán văn bản')};
@@ -249,8 +237,8 @@ E('verifyReset').onclick=()=>{vKeys=[];vActive.clear();vInvalid=false;E('verifyT
 E('verifySend').onclick=async()=>{const btn=E('verifySend');E('verifyOutcome').textContent='';E('verifyMessage').textContent='Đang kiểm tra nhịp gõ mới...';btn.disabled=true;try{
  const p=profiles.find(x=>x.id===E('verifyPicker').value);if(!p)throw Error('Chưa chọn hồ sơ');if(!p.ready)throw Error('Hồ sơ chưa đủ '+p.target_samples+' mẫu');
  if(vInvalid||E('verifyTyping').value!==P||vKeys.length!==P.length||vKeys.some(x=>x.up===null)||vActive.size)throw Error('Hãy gõ đúng đủ câu, nhả hết phím và không dùng copy/paste');
- const saved=keys;keys=vKeys;let features,features_v2,features_v3;try{features=feats();features_v2=featsV2();features_v3=featsV3()}finally{keys=saved}
- const d=await api('verify',{profile_id:p.id,claimed_owner:E('verifyOwner').checked,features,features_v2,features_v3});
+ const saved=keys;keys=vKeys;let features_v3;try{features_v3=featsV3()}finally{keys=saved}
+ const d=await api('verify',{profile_id:p.id,claimed_owner:E('verifyOwner').checked,features_v3});
  E('verifyOutcome').textContent=(d.uncertain?'⚠ GẦN NGƯỠNG — NÊN GÕ THÊM':d.accepted?'✓ PHÙ HỢP':'✕ KHÔNG PHÙ HỢP')+' · Điểm '+d.score.toFixed(3)+' / ngưỡng '+d.threshold.toFixed(3);
  E('verifyMessage').textContent=d.uncertain?'Điểm nằm trong vùng gần ngưỡng ±10%. Nên gõ thêm một lần; lượt vừa rồi vẫn được tính theo ngưỡng hiện tại.':'Điểm thấp hơn ngưỡng là gần giống mẫu gõ của '+p.name+'. Đây là nhận định ML, không phải xác minh danh tính chắc chắn.';
  vKeys=[];vActive.clear();vInvalid=false;E('verifyTyping').value='';
@@ -263,38 +251,72 @@ E('expandLessons').onclick=()=>document.querySelectorAll('details.lesson').forEa
 E('collapseLessons').onclick=()=>document.querySelectorAll('details.lesson').forEach(x=>x.open=false);
 
 async function api(action,more={}){let {data:{session}}=await sb.auth.getSession();if(!session)throw Error('Chưa đăng nhập');let r=await fetch(url+'/functions/v1/kd-api',{method:'POST',headers:{'Content-Type':'application/json',apikey:key,Authorization:'Bearer '+session.access_token},body:JSON.stringify({action,...more})});let d=await r.json();if(!r.ok||d.error)throw Error(d.error||'Lỗi API '+r.status);return d}
-async function refresh(){let d=await api('list');profiles=d.profiles;me=profiles.find(x=>x.owner);E('progress').textContent=(E('enrollMethod').value==='timing_v3'?(me?.v3_count??0):(me?.count??0))+'/'+Math.max(E('enrollMethod').value==='timing_v3'?5:3,(me?.target_samples??+E('sampleTarget').value));if(me){E('name').value=me.name;E('sampleTarget').value=String(me.target_samples??15)}advice();const selectedId=E('profiles').value;E('profiles').replaceChildren();profiles.forEach(p=>{let o=document.createElement('option');o.value=p.id;o.textContent=p.name+' — '+(p.model_kind==='timing_v3'?(p.v3_count??0)+' mẫu V3':p.count+'/'+p.target_samples+' mẫu V1')+' — '+(p.ready?'Sẵn sàng':'Chưa đủ mẫu')+(p.owner?' (của tôi)':'');E('profiles').append(o)});if(profiles.some(p=>p.id===selectedId))E('profiles').value=selectedId;selected();syncPicker();say(me?.ready?'Hồ sơ đã sẵn sàng nhận diện.':'Có thể tiếp tục thu mẫu. V3 dùng bộ mẫu độc lập; hãy đạt tối thiểu 15 mẫu nếu cấu hình 15.')}
-E('enrollMethod').onchange=()=>{E('progress').textContent=(E('enrollMethod').value==='timing_v3'?(me?.v3_count??0):(me?.count??0))+'/'+Math.max(E('enrollMethod').value==='timing_v3'?5:3,Number(E('sampleTarget').value))};
-function switchTo(m){mode=m;E('enrollArea').hidden=m!=='enroll';E('verifyArea').hidden=m!=='verify';E('send').textContent=m==='enroll'?'Lưu mẫu gõ':'Chấm điểm nhận diện';reset()}
-E('enrollTab').onclick=()=>switchTo('enroll');E('verifyTab').onclick=()=>switchTo('verify');E('clear').onclick=reset;E('refresh').onclick=()=>refresh().catch(e=>say(e.message));E('profiles').onchange=()=>{syncPicker();manage().catch(e=>say(e.message))};
-E('send').onclick=async()=>{E('send').disabled=true;try{if(invalid||E('typing').value!==P||keys.length!==P.length||keys.some(k=>k.up===null)||active.size)throw Error('Hãy gõ đúng toàn bộ câu và nhả hết các phím trước khi lưu');let features=feats(),features_v2=featsV2(),features_v3=featsV3();if(mode==='enroll'){
- const v3=E('enrollMethod').value==='timing_v3';
- const d=v3?await api('enroll_v3',{name:E('name').value.trim(),target_samples:Number(E('sampleTarget').value),features_v3}):await api('enroll',{name:E('name').value.trim(),target_samples:Number(E('sampleTarget').value),features,features_v2});
- say(v3?'Đã lưu mẫu V3 '+d.count+' / tối thiểu '+d.required+'. Hãy thu thêm đến 20–30 mẫu qua nhiều buổi.':'Đã lưu mẫu V1/V2 '+d.count+'/'+d.target_samples);await refresh();
- }else{if(!E('profiles').value)throw Error('Chưa có hồ sơ');let r=await api('verify',{profile_id:E('profiles').value,claimed_owner:E('ownerCheck').checked,features,features_v2,features_v3});E('result').textContent=(r.accepted?'✓ PHÙ HỢP':'✕ KHÔNG PHÙ HỢP')+' — điểm '+r.score.toFixed(3)+' / ngưỡng '+r.threshold.toFixed(3);say('Kết quả được lưu vào Supabase')}keys=[];active.clear();invalid=false;start=null;editCount=0;E('typing').value=''}catch(e){say('⚠ '+e.message)}finally{E('send').disabled=false}};
-function selected(){const p=profiles.find(x=>x.id===E('profiles').value);E('selectedDetails').textContent=p?p.name+' · V1/V2: '+p.count+' mẫu · V3: '+(p.v3_count??0)+' mẫu · '+(p.ready?'Sẵn sàng':'Chưa đủ mẫu')+(p.owner?' · Của bạn':' · Người khác'):'Chưa có hồ sơ';return p}
+async function refresh(){
+ const d=await api('list');profiles=d.profiles;me=profiles.find(x=>x.owner);
+ E('progress').textContent=(me?.count??0)+'/'+(me?.required_samples??Number(E('sampleTarget').value));
+ if(me){E('name').value=me.name;E('sampleTarget').value=String(Math.max(5,me.target_samples))}
+ advice();
+ const prev=E('profiles').value;E('profiles').replaceChildren();
+ for(const p of profiles){const o=document.createElement('option');o.value=p.id;o.textContent=p.name+' — '+p.count+'/'+p.required_samples+' mẫu V3'+(p.ready?' · Sẵn sàng':' · Chưa đủ')+(p.owner?' (của tôi)':'');E('profiles').append(o)}
+ if(profiles.some(p=>p.id===prev))E('profiles').value=prev;selected();syncPicker();
+ say(me?.ready?'Hồ sơ V3 đã sẵn sàng nhận diện.':'Hãy thu đủ mẫu V3 để nhận diện; khuyến nghị 20–30 mẫu ở nhiều buổi.');
+}
+function switchTo(m){mode=m;E('enrollArea').hidden=m!=='enroll';E('verifyArea').hidden=m!=='verify';E('send').textContent=m==='enroll'?'Lưu mẫu V3':'Chấm điểm nhận diện';reset()}
+E('enrollTab').onclick=()=>switchTo('enroll');E('verifyTab').onclick=()=>switchTo('verify');
+E('clear').onclick=reset;E('refresh').onclick=()=>refresh().catch(e=>say(e.message));E('profiles').onchange=()=>{syncPicker();manage().catch(e=>say(e.message))};
+E('send').onclick=async()=>{
+ E('send').disabled=true;
+ try{
+  if(mode!=='enroll')throw Error('Hãy sử dụng tab Thử nhận diện để kiểm thử.');
+  if(invalid||E('typing').value!==P||keys.length!==P.length||keys.some(k=>k.up===null)||active.size)throw Error('Hãy gõ đúng toàn bộ câu và nhả hết các phím trước khi lưu.');
+  const result=await api('enroll_v3',{name:E('name').value.trim(),target_samples:Number(E('sampleTarget').value),features_v3:featsV3()});
+  say('Đã lưu '+result.count+'/'+result.required+' mẫu V3. Nên lấy mẫu ở nhiều buổi để tăng tính đa dạng.');
+  keys=[];active.clear();invalid=false;start=null;editCount=0;E('typing').value='';await refresh();
+ }catch(e){say('⚠ '+e.message)}finally{E('send').disabled=false}
+};
+function selected(){
+ const p=profiles.find(x=>x.id===E('profiles').value);
+ E('selectedDetails').textContent=p?p.name+' · '+p.count+'/'+p.required_samples+' mẫu V3 · '+(p.ready?'Sẵn sàng':'Chưa đủ')+(p.owner?' · Của bạn':' · Người khác'):'Chưa có hồ sơ';
+ return p;
+}
 async function manage(){
  const p=selected(),list=E('sampleList');list.replaceChildren();
  if(!p){E('deleteV3Btn').hidden=true;E('exportBtn').disabled=true;E('deleteProfileBtn').disabled=true;return {profile:null,owner:false,samples:[]}}
- const d=await api('manage',{profile_id:p.id});E('deleteV3Btn').hidden=!(d.owner&&d.v3_count);E('exportBtn').disabled=!d.owner;E('deleteProfileBtn').disabled=!d.owner;
- if(!d.owner){list.textContent='Bạn có thể thử nhận diện hồ sơ này. Chỉ chủ hồ sơ có thể xem và xóa từng mẫu, xuất JSON hoặc xóa hồ sơ.';return d}
- const detail=document.createElement('details'),summary=document.createElement('summary');summary.textContent='Xem và xóa '+d.count+' mẫu';detail.append(summary);
- for(const sample of d.samples){const line=document.createElement('p'),txt=document.createElement('small'),btn=document.createElement('button');txt.textContent='#'+sample.id+' · '+new Date(sample.created_at).toLocaleString('vi-VN')+' ';btn.textContent='Xóa';btn.onclick=async()=>{if(!confirm('Xóa mẫu #'+sample.id+'?'))return;try{await api('delete_sample',{sample_id:sample.id});await refresh();await manage()}catch(e){say(e.message)}};line.append(txt,btn);detail.append(line)}list.append(detail);return d
+ const d=await api('manage',{profile_id:p.id});E('deleteV3Btn').hidden=!(d.owner&&d.count);E('exportBtn').disabled=!d.owner;E('deleteProfileBtn').disabled=!d.owner;
+ if(!d.owner){list.textContent='Chỉ chủ hồ sơ được quản lý mẫu V3. Bạn vẫn có thể thử nhận diện.';return d}
+ const details=document.createElement('details'),summary=document.createElement('summary');summary.textContent='Xem và xóa '+d.count+' mẫu V3';details.append(summary);
+ for(const sample of d.samples){
+  const line=document.createElement('p'),info=document.createElement('small'),btn=document.createElement('button');info.textContent='#'+sample.id+' · '+new Date(sample.created_at).toLocaleString('vi-VN')+' ';btn.textContent='Xóa';
+  btn.onclick=async()=>{if(!confirm('Xóa mẫu V3 #'+sample.id+'?'))return;try{await api('delete_sample',{sample_id:sample.id});await refresh();await manage()}catch(e){say('⚠ '+e.message)}};
+  line.append(info,btn);details.append(line);
+ }
+ list.append(details);return d;
 }
-E('exportBtn').onclick=async()=>{try{let d=await manage();if(!d.profile||!d.owner)throw Error('Chỉ chủ hồ sơ được xuất dữ liệu');
- let payload={format:'keydna-profile',version:1,target_samples:d.profile.target_samples,exported_at:new Date().toISOString(),name:d.profile.display_name,phrase:d.profile.phrase,samples:d.samples.map(x=>x.features),feature_vectors_v2:d.samples.map(x=>x.features_v2??null),v3_samples:(d.v3_samples??[]).map(x=>x.features)};
- const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='keydna-profile-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000);say('Đã xuất '+payload.samples.length+' mẫu V1/V2 và '+payload.v3_samples.length+' mẫu V3 thành JSON')}catch(e){say(e.message)}};
+E('exportBtn').onclick=async()=>{
+ try{
+ const d=await manage();if(!d.profile||!d.owner)throw Error('Chỉ chủ hồ sơ được xuất dữ liệu');
+ const payload={format:'keydna-v3-profile',version:3,name:d.profile.display_name,phrase:d.profile.phrase,target_samples:d.profile.target_samples,knn_k:d.profile.knn_k,distance_metric:d.profile.distance_metric,threshold_factor:d.profile.threshold_factor,exported_at:new Date().toISOString(),samples:d.samples.map(x=>x.features)};
+ const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='keydna-v3-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000);say('Đã xuất '+payload.samples.length+' mẫu V3');
+ }catch(e){say('⚠ '+e.message)}
+};
 E('importBtn').onclick=()=>E('importFile').click();
-E('importFile').onchange=async e=>{try{const file=e.target.files[0];if(!file)return;if(file.size>1000000)throw Error('Tệp vượt 1 MB');
- const d=JSON.parse(await file.text());if(d.format!=='keydna-profile'||d.version!==1||!Array.isArray(d.samples))throw Error('Không đúng định dạng KeyDNA JSON');
- if(!confirm('Nhập '+d.samples.length+' mẫu vào tài khoản này? Chỉ nhập khi chưa có hồ sơ.'))return;
- const r=await api('import',{name:d.name,phrase:d.phrase,target_samples:d.target_samples??15,samples:d.samples,feature_vectors_v2:d.feature_vectors_v2,v3_samples:d.v3_samples??[]});await refresh();await manage();say('Đã nhập '+r.count+' mẫu V1/V2 và '+(r.v3_count??0)+' mẫu V3 thành công')}catch(e){say('⚠ '+e.message)}finally{e.target.value=''}};
-E('deleteProfileBtn').onclick=async()=>{try{const d=await manage();if(!d.profile||!d.owner)throw Error('Chỉ chủ hồ sơ được xóa dữ liệu');
- if(!confirm('XÓA VĨNH VIỄN hồ sơ '+d.profile.display_name+', toàn bộ mẫu và các lượt kiểm thử?'))return;
- const typed=prompt('Nhập XOA để xác nhận xóa toàn bộ');if(typed!=='XOA')return;
- await api('delete_profile');await refresh();await manage();say('Đã xóa hồ sơ, các mẫu và lịch sử kiểm thử')}catch(e){say('⚠ '+e.message)}};
-
-
+E('importFile').onchange=async e=>{
+ try{
+ const file=e.target.files[0];if(!file)return;if(file.size>1000000)throw Error('Tệp vượt 1 MB');
+ const d=JSON.parse(await file.text());if(d.format!=='keydna-v3-profile'||d.version!==3||!Array.isArray(d.samples))throw Error('Chỉ chấp nhận tệp sao lưu V3');
+ if(!confirm('Nhập '+d.samples.length+' mẫu V3 vào tài khoản chưa có hồ sơ?'))return;
+ const result=await api('import',{name:d.name,phrase:d.phrase,target_samples:d.target_samples,samples:d.samples,knn_k:d.knn_k,distance_metric:d.distance_metric,threshold_factor:d.threshold_factor});
+ await refresh();await manage();say('Đã nhập '+result.count+' mẫu V3 thành công');
+ }catch(e){say('⚠ '+e.message)}finally{e.target.value=''}
+};
+E('deleteProfileBtn').onclick=async()=>{
+ try{
+ const d=await manage();if(!d.profile||!d.owner)throw Error('Chỉ chủ hồ sơ được xóa');
+ if(!confirm('XÓA VĨNH VIỄN hồ sơ '+d.profile.display_name+', tất cả mẫu V3 và lịch sử kiểm thử?'))return;
+ if(prompt('Nhập XOA để xác nhận')!=='XOA')return;
+ await api('delete_profile');await refresh();await manage();say('Đã xóa hồ sơ và dữ liệu liên quan');
+ }catch(e){say('⚠ '+e.message)}
+};
 function syncTune(){
  const picker=E('tuneProfile');if(!picker)return;
  const previous=picker.value;picker.replaceChildren();
