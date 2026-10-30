@@ -65,6 +65,7 @@ textarea.typing-box.alert,textarea.typing-box.alert:focus{background:#ffe9ed;bor
 </section>
 <section class="card page" data-page="monitor" hidden>
 <h2>Kiểm tra người đang gõ</h2><label for="verifyProfile">Mẫu hành vi tham chiếu</label><select id="verifyProfile" style="width:100%;padding:12px;margin-bottom:12px"><option>Chưa có mẫu hành vi</option></select>
+<div class="info" style="margin:12px 0 14px"><label for="trialIdentity" style="display:block;margin-bottom:8px">👤 Người đang thực hiện lượt thử</label><select id="trialIdentity" style="width:100%;padding:13px;border-radius:10px;font-size:16px"><option value="owner">Chính chủ mẫu hành vi</option><option value="other">Người khác (thử phát hiện người lạ)</option></select><small>Chọn đúng trước khi gõ để ghi kết quả FAR/FRR.</small></div>
 <p>Gõ nội dung tùy ý. Mỗi 15 phím mới sẽ kiểm tra một cửa sổ 30 phím, kết hợp Isolation Forest và Mahalanobis. Cửa sổ nghi vấn đơn lẻ chưa báo đỏ; chỉ cảnh báo mạnh khi đủ số cửa sổ liên tiếp đã cài đặt.</p>
 <div class="monitor-wrap"><div id="dangerBanner" role="alert" aria-live="polite" class="danger-inline" hidden><b>⚠️ Phát hiện hành vi gõ bất thường</b><div id="dangerDetail"></div></div><textarea id="monitorText" class="typing-box" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Người cần kiểm tra gõ ở đây..."></textarea></div>
 <div class="row"><button class="alt" id="soundEnable">🔊 Bật âm thanh</button><button class="alt" id="monitorReset">Đặt lại phiên</button><span id="liveState" class="pill">Chưa đủ dữ liệu</span></div>
@@ -79,12 +80,13 @@ textarea.typing-box.alert,textarea.typing-box.alert:focus{background:#ffe9ed;bor
 <label>Cửa sổ liên tiếp để cảnh báo mạnh</label><select id="alertWindows" style="width:100%;padding:10px"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select>
 <p id="tuningSummary" class="info"></p><button id="resetTuning" class="alt">Khôi phục mặc định</button></details><p class="muted"><b>Chế độ chống báo nhầm:</b> quyết định dựa trên 12 đặc trưng thời gian, giảm ảnh hưởng của nội dung gõ và bỏ qua hai độ lệch lớn nhất có thể do lỗi phím. Isolation Forest và Mahalanobis vẫn được hiển thị trong nhật ký phục vụ nghiên cứu nhưng không trực tiếp kích hoạt cảnh báo. Điểm hiển thị là mức khác biệt tương đối, không phải xác suất người lạ.</p><section class="info" style="margin-top:16px"><h3>📊 Đánh giá FAR / FRR bằng lượt thử thực tế</h3>
 <p>Trước khi gõ, chọn đúng người đang thử. Gõ đủ ít nhất <b>3 cửa sổ</b> và bấm <b>Ghi nhận lượt thử</b>. Mỗi lần gõ là 1 lượt thử, không tính mỗi cửa sổ chồng lấn thành một lượt.</p>
-<label for="trialIdentity">Người đang gõ là ai?</label><select id="trialIdentity" style="width:100%;padding:10px"><option value="owner">Chính chủ của mẫu tham chiếu</option><option value="other">Người khác (không phải chính chủ)</option></select>
+
 <div class="row" style="margin-top:12px"><button id="recordTrial">Ghi nhận lượt thử</button><button id="refreshMetrics" class="alt">Cập nhật thống kê</button></div>
 <p id="trialMessage" class="muted">Chưa ghi nhận lượt thử nào ở phiên hiện tại.</p>
 <div class="stats"><div class="stat"><small>FAR · Chấp nhận nhầm người khác</small><strong id="farValue">—</strong><small id="farCount">0 / 0 lượt người khác</small></div><div class="stat"><small>FRR · Từ chối nhầm chính chủ</small><strong id="frrValue">—</strong><small id="frrCount">0 / 0 lượt chính chủ</small></div></div>
 <p class="muted"><b>FAR</b> = số lượt người khác được chấp nhận / tổng lượt thử người khác. <b>FRR</b> = số lượt chính chủ bị từ chối / tổng lượt thử chính chủ. Chưa có lượt thử tương ứng thì hiển thị “—”, không phải 0%. Số liệu chỉ gồm lượt kiểm thử do tài khoản trình duyệt hiện tại ghi nhận với mẫu đang chọn; chưa phải đánh giá toàn cộng đồng.</p>
-</section><h3>Nhật ký quyết định</h3><div class="log" id="log"><div>Chưa có dữ liệu phiên.</div></div>
+</section>
+<h3>Nhật ký quyết định</h3><div class="log" id="log"><div>Chưa có dữ liệu phiên.</div></div>
 </section>
 <section class="card page" data-page="guide" hidden>
 <h2>Hướng dẫn sử dụng KeyDNA Continuous</h2>
