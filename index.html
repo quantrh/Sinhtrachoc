@@ -234,7 +234,7 @@ $("removeProfile").onclick=async()=>{
 };
 document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{const tab=b.dataset.tab;document.querySelectorAll("[data-tab]").forEach(x=>{x.className=x===b?"active":"alt"});document.querySelectorAll("[data-page]").forEach(x=>x.hidden=x.dataset.page!==tab)});
 $("exportProfile").onclick=()=>{if(!profile){alert("Chưa có hồ sơ");return}const blob=new Blob([JSON.stringify(profile)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="keydna-continuous-profile.json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
-$("removeProfile").onclick=()=>alert("Để tránh xóa dữ liệu từ xa ngoài ý muốn, xóa hồ sơ đang tạm khóa.");
+
 
 showProfile();updateEnroll();connect();
 </script></body></html>
