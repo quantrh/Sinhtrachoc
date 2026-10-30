@@ -74,7 +74,7 @@ button:not(.nav button){box-shadow:0 2px 4px rgba(0,89,85,.08)}button:focus-visi
 <div class="kpis"><div class="kpi"><b id="progress">0/15</b><small>Mẫu đã học</small></div><div class="kpi"><b id="duration">0.0</b><small>Giây đã gõ</small></div><div class="kpi"><b>126</b><small>Đặc trưng V3</small></div></div>
 <button id="send">Lưu mẫu gõ</button><button class="light" id="clear">Gõ lại</button><div id="msg">Đang kết nối...</div><p id="result"></p>
 </section>
-<section class="card"><h3>Nhịp gõ của lần hiện tại</h3><p class="muted">Các cột thể hiện thời gian giữ mỗi phím (mili giây), giúp bạn nhìn thấy nhịp gõ riêng của mình.</p><canvas id="plot" width="500" height="200"></canvas></section>
+<section class="card"><h3>Nhịp gõ của lần hiện tại</h3><p class="muted">Trên bàn phím vật lý: biểu đồ thời gian giữ phím. Trên điện thoại: biểu đồ khoảng thời gian giữa hai lần chạm liên tiếp (ms).</p><canvas id="plot" width="500" height="200"></canvas></section>
 <section class="card"><div class="step">BƯỚC 2 · QUẢN LÝ HỒ SƠ</div><h2>Quản lý cấu hình và mẫu</h2><p class="muted">Cấu hình số mẫu nằm trong phần lấy mẫu. Chọn hồ sơ tại mục “Thử nhận diện” để quản lý. Chỉ chính chủ được tải/xóa dữ liệu. Tệp JSON giúp mang bộ mẫu sang tài khoản khác.</p>
 <div id="selectedDetails"></div><div class="actions"><button id="deleteV3Btn" class="light" type="button" hidden>Xóa toàn bộ mẫu V3</button></div><button id="refresh" class="light" type="button">↻ Làm mới danh sách</button><div class="actions"><button id="exportBtn">↓ Xuất JSON</button><button class="light" id="importBtn">↑ Nhập JSON</button><input type="file" id="importFile" accept=".json,application/json" hidden></div>
 <div id="sampleList"></div><button class="danger" id="deleteProfileBtn">Xóa toàn bộ hồ sơ</button>
@@ -180,7 +180,7 @@ function featsV3(){
  const total=keys.at(-1).up-keys[0].down;
  return [avg(d),sd(d),avg(pp),sd(pp),avg(ud),sd(ud),total,pp.filter(x=>x>350).length,...d,...pp,...ud].map(x=>Math.round(x*100)/100);
 }
-function draw(){const c=E('plot'),ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);let a=keys.map(x=>x.up==null?0:x.up-x.down),max=Math.max(150,...a);a.forEach((v,i)=>{ctx.fillStyle='#008e86';ctx.fillRect(15+i*470/Math.max(1,P.length),185-v/max*170,Math.max(2,460/P.length-2),v/max*170)})}
+function draw(){const c=E('plot'),ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);const a=keys.map((x,i)=>isMobileKeyboard?(i?Math.max(0,x.down-keys[i-1].down):0):(x.up==null?0:Math.max(0,x.up-x.down))),max=Math.max(150,...a);a.forEach((v,i)=>{ctx.fillStyle='#008e86';ctx.fillRect(15+i*470/Math.max(1,P.length),185-v/max*170,Math.max(2,460/P.length-2),v/max*170)})}
 const typing=E('typing');
 const modeLabel=isMobileKeyboard?'BÀN PHÍM ẢO · V3-mobile':'BÀN PHÍM VẬT LÝ · V3';
 E('captureHint').textContent=isMobileKeyboard
@@ -415,7 +415,7 @@ async function manage(){
 E('exportBtn').onclick=async()=>{
  try{
  const d=await manage();if(!d.profile||!d.owner)throw Error('Chỉ chủ hồ sơ được xuất dữ liệu');
- const payload={format:'keydna-v3-profile',version:3,name:d.profile.display_name,phrase:d.profile.phrase,target_samples:d.profile.target_samples,knn_k:d.profile.knn_k,distance_metric:d.profile.distance_metric,threshold_factor:d.profile.threshold_factor,exported_at:new Date().toISOString(),samples:d.samples.map(x=>x.features)};
+ const payload={format:'keydna-v3-profile',version:3,name:d.profile.display_name,phrase:d.profile.phrase,target_samples:d.profile.target_samples,knn_k:d.profile.knn_k,distance_metric:d.profile.distance_metric,threshold_factor:d.profile.threshold_factor,exported_at:new Date().toISOString(),capture_mode:captureMode,samples:d.samples.map(x=>x.features)};
  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='keydna-v3-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000);say('Đã xuất '+payload.samples.length+' mẫu V3');
  }catch(e){say('⚠ '+e.message)}
 };
@@ -424,6 +424,7 @@ E('importFile').onchange=async e=>{
  try{
  const file=e.target.files[0];if(!file)return;if(file.size>1000000)throw Error('Tệp vượt 1 MB');
  const d=JSON.parse(await file.text());if(d.format!=='keydna-v3-profile'||d.version!==3||!Array.isArray(d.samples))throw Error('Chỉ chấp nhận tệp sao lưu V3');
+ if((d.capture_mode||'physical')!==captureMode)throw Error('Tệp mẫu '+(d.capture_mode||'physical')+' không khớp bàn phím '+captureMode+'. Chỉ nhập bằng cùng loại thiết bị để tránh sai lệch mô hình.');
  if(!confirm('Nhập '+d.samples.length+' mẫu V3 vào tài khoản chưa có hồ sơ?'))return;
  const result=await api('import',{name:d.name,phrase:d.phrase,target_samples:d.target_samples,samples:d.samples,knn_k:d.knn_k,distance_metric:d.distance_metric,threshold_factor:d.threshold_factor});
  await refresh();await manage();say('Đã nhập '+result.count+' mẫu V3 thành công');
