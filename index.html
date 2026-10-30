@@ -395,7 +395,7 @@ E('statsBtn').onclick=async()=>{
  ['FAR',pct(far),data.false_accept+' / '+data.impostor+' lượt người khác được nhận nhầm','far'],
  ['FRR',pct(frr),data.false_reject+' / '+data.genuine+' lượt chính chủ bị từ chối nhầm','frr']
  ]){const card=document.createElement('div');card.className='metricCard '+kind;const label=document.createElement('small');label.textContent=title;const figure=document.createElement('strong');figure.textContent=value;const foot=document.createElement('span');foot.textContent=subtitle;card.append(label,figure,foot);summary.append(card)}
- const note=document.createElement('p');note.className='help';note.textContent='Tổng '+data.total+' lượt thử đã được tính (tối đa 500 lượt gần nhất). Các tỷ lệ dựa vào lựa chọn tự khai báo “Tôi thực sự là người đã đăng ký hồ sơ này”; chỉ mang tính POC. Cần nhiều lượt thử thuộc cả hai nhóm để có ý nghĩa.';
+ const note=document.createElement('p');note.className='help';note.textContent='Tổng '+data.total+' lượt thử theo cấu hình hiện tại ('+(data.model_kind==='timing_v3'?'V3':data.model_kind==='improved'?'V2':'V1')+', k='+data.knn_k+', '+data.distance_metric+', hệ số '+data.threshold_factor+'); đã lưu '+data.historical_total+' lượt kiểm thử mọi phiên bản (tối đa 500 lượt gần nhất). FAR/FRR chỉ tính đúng phiên bản và tham số đang dùng, dựa vào nhãn tự khai báo, mang tính POC.';
  area.append(summary,note);
  }catch(e){area.textContent='⚠ '+e.message}
 };
