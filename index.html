@@ -61,25 +61,22 @@ button:not(.nav button){box-shadow:0 2px 4px rgba(0,89,85,.08)}button:focus-visi
 #tuneChart{height:auto;max-height:255px}
 @media(max-width:510px){.nav button{font-size:10px;letter-spacing:-.03em;padding:10px 1px}}
 </style><style>
-#enrollMethod{border:2px solid #f1cc63;background:#fffaf0;font-weight:700;color:#006B68}
 #v3Advice{background:#e5f5ef;border-left:4px solid #006B68}
 </style></head><body>
 <header><div class="inner"><div class="step" style="color:#c5f3e8">KEYDNA · BEHAVIORAL BIOMETRICS POC</div><h1>⌨ KeyDNA Lab</h1><p>Học thói quen gõ phím · Thử nhận diện · Tìm hiểu Machine Learning</p></div></header>
 <main><button id="enrollTab" hidden type="button"></button><button id="verifyTab" hidden type="button"></button><nav class="nav"><button type="button" data-tab="learn">① Lấy mẫu</button><button type="button" class="active" data-tab="verify">② Thử nhận diện</button><button type="button" data-tab="academy">③ Giáo trình</button><button type="button" data-tab="tune">④ Tinh chỉnh</button></nav>
 <div class="view" data-view="learn" hidden>
-<section class="card"><div class="step">BƯỚC 1 · ĐĂNG KÝ VÀ LẤY MẪU</div><h2>Tạo dấu vân tay gõ phím</h2><p class="muted">Chọn tên, đọc câu mẫu rồi gõ lại. Mỗi lượt đúng sẽ được lưu trên Supabase. Chọn từ 3–40 mẫu theo mục đích thử nghiệm. Nhiều mẫu qua nhiều phiên thường cho dữ liệu đa dạng hơn.</p>
-<div id="enrollArea"><label for="name">Tên người tham gia</label><input id="name" maxlength="60" placeholder="Ví dụ: Nguyễn Văn A"><label for="sampleTarget">Số mẫu yêu cầu (3–40)</label><select id="sampleTarget"><option value="3">3 mẫu — thử cực nhanh</option><option value="5">5 mẫu — thử nhanh</option><option value="10">10 mẫu — demo ban đầu</option><option value="15" selected>15 mẫu — khuyến nghị demo</option><option value="20">20 mẫu — nhiều dữ liệu hơn</option><option value="30">30 mẫu — kiểm thử mở rộng</option><option value="40">40 mẫu — tối đa POC</option></select><label for="enrollMethod">Phương pháp lấy mẫu</label>
-<select id="enrollMethod"><option value="timing_v3" selected>V3 — Độ chính xác thử nghiệm (thu mẫu mới)</option><option value="legacy">V1/V2 — Tiếp tục dùng bộ mẫu cũ</option></select>
-<div class="example" id="v3Advice"><b>V3:</b> Đo thời gian giữ phím, nhấn–nhấn và nhả–nhấn trên toàn bộ câu. Mẫu V3 lưu riêng, không xóa bộ mẫu V1/V2. Khuyến nghị lấy 20–30 mẫu ở nhiều buổi và kiểm thử với người khác.</div><div id="sampleAdvice" class="example"></div><p class="help">Có thể đổi cấu hình sau khi đăng ký. Không cần xóa các mẫu đã lấy.</p></div>
+<section class="card"><div class="step">BƯỚC 1 · ĐĂNG KÝ VÀ LẤY MẪU</div><h2>Tạo dấu vân tay gõ phím</h2><p class="muted">Chọn tên, đọc câu mẫu rồi gõ lại. Mỗi lượt đúng sẽ được lưu trên Supabase. Chọn từ 5–40 mẫu V3 theo mục đích thử nghiệm. Nhiều mẫu qua nhiều phiên thường cho dữ liệu đa dạng hơn.</p>
+<div id="enrollArea"><label for="name">Tên người tham gia</label><input id="name" maxlength="60" placeholder="Ví dụ: Nguyễn Văn A"><label for="sampleTarget">Số mẫu V3 yêu cầu (5–40)</label><select id="sampleTarget"><option value="5">5 mẫu — thử nhanh</option><option value="10">10 mẫu — demo ban đầu</option><option value="15" selected>15 mẫu — khuyến nghị demo</option><option value="20">20 mẫu — nhiều dữ liệu hơn</option><option value="30">30 mẫu — kiểm thử mở rộng</option><option value="40">40 mẫu — tối đa POC</option></select><div class="example" id="v3Advice"><b>V3:</b> Đo thời gian giữ phím, nhấn–nhấn và nhả–nhấn trên toàn bộ câu. Mẫu V3 được lưu thành một bộ dữ liệu riêng. Khuyến nghị lấy 20–30 mẫu ở nhiều buổi và kiểm thử với người khác.</div><div id="sampleAdvice" class="example"></div><p class="help">Có thể đổi cấu hình sau khi đăng ký. Không cần xóa các mẫu đã lấy.</p></div>
 <div id="verifyArea" hidden><label for="profiles">Hồ sơ muốn thử</label><select id="profiles"></select><label><input type="checkbox" id="ownerCheck"> Tôi là chính chủ hồ sơ đã chọn</label></div>
 <div class="phrase" id="phrase"></div><p class="help">Dùng bàn phím vật lý; được sửa bằng Backspace/Delete, không copy/paste. Chỉ lưu khi nội dung khớp hoàn toàn.</p>
 <label for="typing">Gõ câu ở đây</label><input id="typing" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Bắt đầu gõ...">
-<div class="kpis"><div class="kpi"><b id="progress">0/15</b><small>Mẫu đã học</small></div><div class="kpi"><b id="duration">0.0</b><small>Giây đã gõ</small></div><div class="kpi"><b>64</b><small>Đặc trưng ML</small></div></div>
+<div class="kpis"><div class="kpi"><b id="progress">0/15</b><small>Mẫu đã học</small></div><div class="kpi"><b id="duration">0.0</b><small>Giây đã gõ</small></div><div class="kpi"><b>126</b><small>Đặc trưng V3</small></div></div>
 <button id="send">Lưu mẫu gõ</button><button class="light" id="clear">Gõ lại</button><div id="msg">Đang kết nối...</div><p id="result"></p>
 </section>
 <section class="card"><h3>Nhịp gõ của lần hiện tại</h3><p class="muted">Các cột thể hiện thời gian giữ mỗi phím (mili giây), giúp bạn nhìn thấy nhịp gõ riêng của mình.</p><canvas id="plot" width="500" height="200"></canvas></section>
 <section class="card"><div class="step">BƯỚC 2 · QUẢN LÝ HỒ SƠ</div><h2>Quản lý cấu hình và mẫu</h2><p class="muted">Cấu hình số mẫu nằm trong phần lấy mẫu. Chọn hồ sơ tại mục “Thử nhận diện” để quản lý. Chỉ chính chủ được tải/xóa dữ liệu. Tệp JSON giúp mang bộ mẫu sang tài khoản khác.</p>
-<div id="selectedDetails"></div><div class="actions"><button id="deleteV3Btn" class="light" type="button" hidden>Xóa toàn bộ mẫu V3 (giữ V1/V2)</button></div><button id="refresh" class="light" type="button">↻ Làm mới danh sách</button><div class="actions"><button id="exportBtn">↓ Xuất JSON</button><button class="light" id="importBtn">↑ Nhập JSON</button><input type="file" id="importFile" accept=".json,application/json" hidden></div>
+<div id="selectedDetails"></div><div class="actions"><button id="deleteV3Btn" class="light" type="button" hidden>Xóa toàn bộ mẫu V3</button></div><button id="refresh" class="light" type="button">↻ Làm mới danh sách</button><div class="actions"><button id="exportBtn">↓ Xuất JSON</button><button class="light" id="importBtn">↑ Nhập JSON</button><input type="file" id="importFile" accept=".json,application/json" hidden></div>
 <div id="sampleList"></div><button class="danger" id="deleteProfileBtn">Xóa toàn bộ hồ sơ</button>
 <p class="help">Xóa hồ sơ cũng xóa lịch sử kiểm thử. Nhập JSON chỉ thực hiện khi tài khoản chưa có hồ sơ.</p>
 </section>
@@ -91,7 +88,7 @@ button:not(.nav button){box-shadow:0 2px 4px rgba(0,89,85,.08)}button:focus-visi
 <div class="phrase" id="verifyPhrase"></div><label for="verifyTyping">Gõ lại câu mẫu</label><input id="verifyTyping" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Gõ đúng câu trên..."><p class="help">Không copy/paste; chỉ dùng bàn phím vật lý.</p>
 <button id="verifySend">Kiểm tra nhịp gõ</button><button id="verifyReset" class="light">Gõ lại</button><div id="verifyMessage" class="example">Chọn hồ sơ đã đủ số mẫu cấu hình để bắt đầu.</div><div id="verifyOutcome"></div>
 </section>
-<section class="card"><h3>Thống kê kiểm thử</h3><p class="muted">Chủ hồ sơ có thể xem kết quả các lượt test trước đó.</p><details class="lesson" open><summary>FAR và FRR có ý nghĩa gì?</summary><div>
+<section class="card"><h3>Thống kê kiểm thử</h3><p class="muted">Mọi người có thể xem FAR/FRR của mô hình V3 theo cấu hình hiện tại.</p><details class="lesson" open><summary>FAR và FRR có ý nghĩa gì?</summary><div>
 <p><b>FAR — Tỷ lệ chấp nhận nhầm:</b> Người khác gõ thử nhưng máy lại nhận là chính chủ. Ví dụ, 20 lượt người khác thử và có 2 lượt được chấp nhận → FAR = 10%. <b>Càng thấp càng tốt</b>, vì giảm nguy cơ nhận nhầm người lạ.</p>
 <p><b>FRR — Tỷ lệ từ chối nhầm:</b> Chính chủ gõ thử nhưng máy báo không phù hợp. Ví dụ, chính chủ thử 20 lần và bị từ chối 3 lần → FRR = 15%. <b>Càng thấp càng tốt</b>, vì giảm phiền hà cho người dùng thật.</p>
 <p><b>Vì sao cần checkbox?</b> Máy chỉ biết nhịp gõ và kết quả của nó. Checkbox cho biết thực tế người thử tự nhận là chính chủ hay người khác, để máy thống kê hai loại sai nói trên. Đánh dấu sai khiến FAR/FRR không đáng tin cậy.</p>
@@ -102,8 +99,8 @@ button:not(.nav button){box-shadow:0 2px 4px rgba(0,89,85,.08)}button:focus-visi
 <div class="view" data-view="tune" hidden>
 <section class="card"><div class="step">PHÒNG THÍ NGHIỆM MACHINE LEARNING</div><h2>Tinh chỉnh &amp; kiểm định mô hình</h2>
 <p class="muted">Thử nhiều mức ngưỡng và phương án K láng giềng gần nhất. Mô phỏng không làm thay đổi hệ thống; chỉ nút <b>Lưu cấu hình</b> mới có hiệu lực. Chỉ chủ hồ sơ được kiểm định chi tiết.</p>
-<label for="tuneProfile">Hồ sơ của bạn</label><select id="tuneProfile"></select><div id="tuneStatus" class="example">Đang tải dữ liệu...</div><div class="example"><b>V3 theo dự án tham khảo:</b> Đo dwell time (thời gian giữ phím), down–down (khoảng nhấn liên tiếp), up–down (khoảng nhả phím đến nhấn tiếp). Dữ liệu V3 độc lập với V1/V2. Dùng thử kNN chuẩn hóa và Cosine; không giả định ngưỡng 70% mặc định sẽ có độ chính xác cao. Chỉ chuyển mô hình sau khi có kết quả FAR/FRR trên lượt thử riêng.</div>
-<div class="cols" style="margin-top:16px"><div><label for="tuneKind">Bộ đặc trưng</label><select id="tuneKind"><option value="legacy">V1 — mẫu cũ, tương thích</option><option value="improved">V2 — đặc trưng trải đều cả câu</option><option value="timing_v3">V3 — Toàn bộ thời gian nhấn/nhả phím</option></select></div><div><label for="tuneK">Số láng giềng</label><select id="tuneK"><option value="1">k = 1</option><option value="3">k = 3</option><option value="5">k = 5</option></select></div></div>
+<label for="tuneProfile">Hồ sơ của bạn</label><select id="tuneProfile"></select><div id="tuneStatus" class="example">Đang tải dữ liệu...</div><div class="example"><b>V3 theo dự án tham khảo:</b> Đo dwell time (thời gian giữ phím), down–down (khoảng nhấn liên tiếp), up–down (khoảng nhả phím đến nhấn tiếp). Bộ đặc trưng V3 là bộ duy nhất được sử dụng. Dùng thử kNN chuẩn hóa và Cosine; không giả định ngưỡng 70% mặc định sẽ có độ chính xác cao. Chỉ chuyển mô hình sau khi có kết quả FAR/FRR trên lượt thử riêng.</div>
+<div class="cols" style="margin-top:16px"><div><label for="tuneKind">Bộ đặc trưng</label><select id="tuneKind"><option value="timing_v3">V3 — 126 đặc trưng thời gian gõ</option></select></div><div><label for="tuneK">Số láng giềng</label><select id="tuneK"><option value="1">k = 1</option><option value="3">k = 3</option><option value="5">k = 5</option></select></div></div>
 <label for="tuneMetric">Cách tính khoảng cách</label><select id="tuneMetric"><option value="euclidean">Euclidean — căn trung bình bình phương</option><option value="manhattan">Manhattan — trung bình chênh lệch tuyệt đối</option><option value="cosine_knn">Cosine kNN — khoảng cách góc, lấy k mẫu gần nhất</option><option value="cosine_median">Cosine Median — trung vị độ tương đồng (theo app tham khảo)</option></select>
 <label for="tuneFactor">Hệ số ngưỡng: <b id="tuneFactorText">1,25</b></label><input id="tuneFactor" type="range" min="0.5" max="2" step="0.05" value="1.25">
 <div class="example"><b>Phương pháp mới từ dự án keystroke-dynamics:</b> Cosine Similarity so sánh hình dạng nhịp gõ; Cosine Median lấy trung vị của tất cả mẫu. Tôi đã bổ sung chuẩn hóa từng đặc trưng để tránh thời gian gõ tổng thể lấn át các thành phần còn lại, đồng thời học ngưỡng riêng từ mẫu chính chủ thay vì dùng cố định 70%. <b>Cosine Median không sử dụng tham số k</b>.</div>
@@ -116,7 +113,7 @@ button:not(.nav button){box-shadow:0 2px 4px rgba(0,89,85,.08)}button:focus-visi
 <div class="tuneLegend"><span><i class="tuneDot" style="background:#D99B24"></i> FAR — nhận nhầm người khác</span><span><i class="tuneDot" style="background:#006B68"></i> FRR — từ chối chính chủ</span></div>
 <div id="tuneCounts" class="help"></div></section>
 <section class="card"><h3>So sánh kNN và Cosine Similarity</h3>
-<p class="muted">Các biến thể được chấm lại bằng lượt thử <b>mới có lưu đặc trưng</b>. Khi chưa đủ lượt thử của một nhóm, chỉ số FAR/FRR sẽ hiển thị “Chưa có dữ liệu”. Chọn “Dùng thử” chỉ điền cấu hình; chưa lưu.</p>
+<p class="muted">Các biến thể V3 được chấm lại bằng lượt thử <b>có lưu đầy đủ 126 đặc trưng</b>. Khi chưa đủ lượt thử của một nhóm, chỉ số FAR/FRR sẽ hiển thị “Chưa có dữ liệu”. Chọn “Dùng thử” chỉ điền cấu hình; chưa lưu.</p>
 <div class="tuneTableWrap"><table class="tuneTable"><thead><tr><th>Đặc trưng</th><th>k</th><th>Khoảng cách</th><th>Lượt thử</th><th>FAR</th><th>FRR</th><th></th></tr></thead><tbody id="tuneVariants"><tr><td colspan="7">Chọn Phân tích để xem kết quả.</td></tr></tbody></table></div>
 <div class="example" style="margin-top:14px"><b>Gợi ý:</b> Thu 20–30 mẫu ở nhiều buổi; kiểm tra thêm lượt chính chủ và người khác. Chọn phương án có FAR và FRR cùng chấp nhận được, không chỉ FAR thấp.</div>
 </section></div>
@@ -211,12 +208,12 @@ function showView(name){
  if(name==='learn')switchTo('enroll');if(name==='verify'){switchTo('verify');syncPicker()}if(name==='tune')syncTune();window.scrollTo({top:0,behavior:'smooth'});
 }
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>showView(b.dataset.tab));
-function advice(){const n=Number(E('sampleTarget').value);let text=n<=5?'3–5 mẫu: chỉ phù hợp xem ứng dụng hoạt động; mô hình cực thiếu dữ liệu và điểm dễ biến động.':n<=10?'6–10 mẫu: thử chức năng và quan sát khoảng cách, chưa phù hợp kết luận ai là chính chủ.':n<=19?'11–19 mẫu: phù hợp POC demo ban đầu, vẫn cần thử với nhiều người khác nhau.':n<=30?'20–30 mẫu: mức nên chọn để đánh giá thử tốt hơn, nên thu ở nhiều buổi và kiểm định riêng.':'31–40 mẫu: nhiều ví dụ hơn nhưng không tự bảo đảm độ chính xác; cần kiểm định FAR/FRR.';E('sampleAdvice').textContent=text;}
+function advice(){const n=Number(E('sampleTarget').value);let text=n<=5?'5 mẫu: chỉ phù hợp xem ứng dụng hoạt động; mô hình cực thiếu dữ liệu và điểm dễ biến động.':n<=10?'6–10 mẫu: thử chức năng và quan sát khoảng cách, chưa phù hợp kết luận ai là chính chủ.':n<=19?'11–19 mẫu: phù hợp POC demo ban đầu, vẫn cần thử với nhiều người khác nhau.':n<=30?'20–30 mẫu: mức nên chọn để đánh giá thử tốt hơn, nên thu ở nhiều buổi và kiểm định riêng.':'31–40 mẫu: nhiều ví dụ hơn nhưng không tự bảo đảm độ chính xác; cần kiểm định FAR/FRR.';E('sampleAdvice').textContent=text;}
 E('sampleTarget').onchange=async()=>{advice();if(!me){E('progress').textContent='0/'+E('sampleTarget').value;return;}try{await api('set_target',{target_samples:Number(E('sampleTarget').value)});await refresh();say('Đã lưu cấu hình số mẫu của hồ sơ')}catch(e){say('⚠ '+e.message)}};
 function syncPicker(){const picker=E('verifyPicker'),old=picker.value||E('profiles').value;picker.replaceChildren();
- for(const p of profiles){const o=document.createElement('option');o.value=p.id;o.textContent=p.name+' — '+(p.model_kind==='timing_v3'?(p.v3_count??0)+' mẫu V3':p.count+'/'+p.target_samples+' mẫu V1/V2')+(p.ready?'':' (chưa đủ)');picker.append(o)}
+ for(const p of profiles){const o=document.createElement('option');o.value=p.id;o.textContent=p.name+' — '+p.count+'/'+p.required_samples+' mẫu V3'+(p.ready?'':' (chưa đủ)');picker.append(o)}
  if(profiles.some(p=>p.id===old))picker.value=old;E('profiles').value=picker.value;selected();
- const p=profiles.find(x=>x.id===picker.value);E('clearStatsBtn').hidden=!(p&&p.owner);syncTune();E('verifySummary').textContent=p?'Hồ sơ '+p.name+' · '+(p.model_kind==='timing_v3'?(p.v3_count??0)+' mẫu V3':'V1/V2 '+p.count+'/'+p.target_samples+' mẫu')+'. '+(p.ready?'Sẵn sàng thử.':'Chưa đủ mẫu cho mô hình đang chọn.'):'Chưa có hồ sơ nào';
+ const p=profiles.find(x=>x.id===picker.value);E('clearStatsBtn').hidden=!(p&&p.owner);syncTune();E('verifySummary').textContent=p?'Hồ sơ '+p.name+' · '+p.count+'/'+p.required_samples+' mẫu V3. '+(p.ready?'Sẵn sàng thử.':'Cần thu thêm mẫu V3 để nhận diện.'):'Chưa có hồ sơ nào';
 }
 E('verifyPicker').onchange=()=>{E('stats').textContent='';E('verifyOutcome').textContent='';E('verifyMessage').textContent='Hãy gõ câu mẫu để kiểm tra hồ sơ đã chọn.';E('profiles').value=E('verifyPicker').value;syncPicker();manage().catch(e=>say(e.message))};
 E('verifyReset').onclick=()=>{E('verifyTyping').value='';E('verifyOutcome').textContent='';E('verifyMessage').textContent='Hãy gõ lại câu mẫu'};
@@ -320,12 +317,12 @@ E('deleteProfileBtn').onclick=async()=>{
 function syncTune(){
  const picker=E('tuneProfile');if(!picker)return;
  const previous=picker.value;picker.replaceChildren();
- for(const p of profiles.filter(x=>x.owner)){const option=document.createElement('option');option.value=p.id;option.textContent=p.name+' (V1: '+p.count+', V2: '+(p.v2_count??0)+', V3: '+(p.v3_count??0)+')';picker.append(option)}
+ for(const p of profiles.filter(x=>x.owner)){const option=document.createElement('option');option.value=p.id;option.textContent=p.name+' ('+p.count+'/'+p.required_samples+' mẫu V3)';picker.append(option)}
  if([...picker.options].some(o=>o.value===previous))picker.value=previous;
  const p=profiles.find(x=>x.id===picker.value);
  if(!p){E('tuneStatus').textContent='Chưa có hồ sơ thuộc quyền sở hữu. Hãy tạo hồ sơ ở tab Lấy mẫu.';return}
- E('tuneKind').value=p.model_kind||'legacy';E('tuneK').value=String(p.knn_k||3);E('tuneMetric').value=p.distance_metric||'euclidean';E('tuneFactor').value=String(p.threshold_factor??1.25);displayFactor();displayMethod();
- E('tuneStatus').textContent='Đang dùng: '+(p.model_kind==='timing_v3'?'V3':p.model_kind==='improved'?'V2':'V1')+' · V2: '+(p.v2_count??0)+' mẫu; V3: '+(p.v3_count??0)+' mẫu. V3 cần ít nhất '+Math.max(5,p.target_samples)+' mẫu mới; nên thu 20–30 mẫu ở nhiều buổi.';
+ E('tuneKind').value='timing_v3';E('tuneK').value=String(p.knn_k||3);E('tuneMetric').value=p.distance_metric||'euclidean';E('tuneFactor').value=String(p.threshold_factor??1.25);displayFactor();displayMethod();
+ E('tuneStatus').textContent='V3 · '+p.count+'/'+p.required_samples+' mẫu. Đang dùng k='+p.knn_k+', '+p.distance_metric+', hệ số ngưỡng '+p.threshold_factor+'. Nên thu 20–30 mẫu qua nhiều buổi để kiểm định.';
 }
 function displayFactor(){E('tuneFactorText').textContent=Number(E('tuneFactor').value).toLocaleString('vi-VN',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function displayMethod(){
@@ -352,15 +349,15 @@ function tuneDraw(pts){
  ctx.fillStyle='#5b7b72';ctx.textAlign='center';ctx.font='12px system-ui';pts.forEach((p,i)=>ctx.fillText(Math.round(p.factor*100)+'%',px(i),h-15));
 }
 function tuneRender(d){
- E('tuneCounts').textContent='Lượt thử: '+d.counts.historical+' · có V1/V2: '+d.counts.recorded_features+' · mẫu V1: '+d.counts.legacy+' · V2: '+d.counts.improved+' · V3: '+(d.counts.timing_v3??0)+'. Chỉ số trên các lượt thử đã ghi, chưa phải độ chính xác đã kiểm định độc lập.';
+ E('tuneCounts').textContent='Mẫu huấn luyện V3: '+d.counts.timing_v3+'/'+d.counts.required_v3+' · Lượt thử V3 có vector: '+d.counts.recorded_features+' · Tổng lượt V3: '+d.counts.historical+'. Chỉ số vẫn dựa trên nhãn tự khai báo.';
  tuneDraw(d.sweep);const body=E('tuneVariants');body.replaceChildren();
  if(!d.candidates.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=7;td.textContent='Chưa đủ mẫu để so sánh các phương án.';tr.append(td);body.append(tr);return}
  for(const c of d.candidates){
  const tr=document.createElement('tr');
- const arr=[c.kind==='timing_v3'?'V3 — đầy đủ thời gian':c.kind==='improved'?'V2 — toàn câu':'V1 — mẫu cũ',c.metric==='cosine_median'?'—':c.k,({euclidean:'Euclidean',manhattan:'Manhattan',cosine_knn:'Cosine kNN',cosine_median:'Cosine Median'})[c.metric]||c.metric,c.genuine+' chính chủ / '+c.impostor+' người khác',pctText(c.far),pctText(c.frr)];
+ const arr=['V3 · 126 đặc trưng',c.metric==='cosine_median'?'—':c.k,({euclidean:'Euclidean',manhattan:'Manhattan',cosine_knn:'Cosine kNN',cosine_median:'Cosine Median'})[c.metric]||c.metric,c.genuine+' chính chủ / '+c.impostor+' người khác',pctText(c.far),pctText(c.frr)];
  for(const v of arr){const td=document.createElement('td');td.textContent=String(v);tr.append(td)}
  const td=document.createElement('td'),b=document.createElement('button');b.textContent='Dùng thử';b.className='light';
- b.onclick=()=>{E('tuneKind').value=c.kind;E('tuneK').value=String(c.k);E('tuneMetric').value=c.metric;displayMethod();E('tuneMessage').textContent='Đã điền cấu hình '+c.kind+' / k='+c.k+'. Chưa lưu lên hệ thống.';window.scrollTo({top:0,behavior:'smooth'})};
+ b.onclick=()=>{E('tuneKind').value='timing_v3';E('tuneK').value=String(c.k);E('tuneMetric').value=c.metric;displayMethod();E('tuneMessage').textContent='Đã điền cấu hình '+c.kind+' / k='+c.k+'. Chưa lưu lên hệ thống.';window.scrollTo({top:0,behavior:'smooth'})};
  td.append(b);tr.append(td);body.append(tr)
  }
 }
@@ -417,7 +414,7 @@ E('statsBtn').onclick=async()=>{
  ['FAR',pct(far),data.false_accept+' / '+data.impostor+' lượt người khác được nhận nhầm','far'],
  ['FRR',pct(frr),data.false_reject+' / '+data.genuine+' lượt chính chủ bị từ chối nhầm','frr']
  ]){const card=document.createElement('div');card.className='metricCard '+kind;const label=document.createElement('small');label.textContent=title;const figure=document.createElement('strong');figure.textContent=value;const foot=document.createElement('span');foot.textContent=subtitle;card.append(label,figure,foot);summary.append(card)}
- const note=document.createElement('p');note.className='help';note.textContent='Tổng '+data.total+' lượt thử theo cấu hình hiện tại ('+(data.model_kind==='timing_v3'?'V3':data.model_kind==='improved'?'V2':'V1')+', k='+data.knn_k+', '+data.distance_metric+', hệ số '+data.threshold_factor+'); đã lưu '+data.historical_total+' lượt kiểm thử mọi phiên bản (tối đa 500 lượt gần nhất). FAR/FRR chỉ tính đúng phiên bản và tham số đang dùng, dựa vào nhãn tự khai báo, mang tính POC.';
+ const note=document.createElement('p');note.className='help';note.textContent='V3 · '+data.total+' lượt thử theo tham số hiện tại (k='+data.knn_k+', '+data.distance_metric+', hệ số '+data.threshold_factor+'). Tổng lượt V3 đã ghi '+data.historical_total+' (tối đa 500 lượt gần nhất). FAR/FRR dựa vào nhãn tự khai báo, chỉ mang tính thử nghiệm.';
  area.append(summary,note);
  }catch(e){area.textContent='⚠ '+e.message}
 };
