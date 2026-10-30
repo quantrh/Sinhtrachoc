@@ -305,18 +305,55 @@ E('verifyPicker').onchange=()=>{E('stats').textContent='';E('verifyOutcome').tex
 E('verifyReset').onclick=()=>{E('verifyTyping').value='';E('verifyOutcome').textContent='';E('verifyMessage').textContent='Hãy gõ lại câu mẫu'};
 E('verifyTyping').onpaste=e=>{e.preventDefault();E('verifyMessage').textContent='Không dùng copy/paste'};
 E('verifyTyping').ondrop=e=>e.preventDefault();
-let vKeys=[],vActive=new Map(),vInvalid=false;
-E('verifyTyping').onkeydown=e=>{if(e.key==='Tab'||e.key==='Shift'||['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;
+let vKeys=[],vActive=new Map(),vInvalid=false,vTimingOffset=0,vResumeAnchor=null;
+const verifyInput=E('verifyTyping');
+function resetVerifyKeys(){
+ vKeys=[];vActive.clear();vInvalid=false;vTimingOffset=0;vResumeAnchor=null;
+ verifyInput.value='';E('verifyOutcome').textContent='';E('verifyMessage').textContent='Có thể nhập lại';
+}
+verifyInput.onkeydown=e=>{
+ if(isMobileKeyboard)return; // Mobile uses per-character input timestamps, not keyup.
+ if(e.key==='Tab'||e.key==='Shift'||['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;
  if(e.ctrlKey||e.altKey||e.metaKey||e.repeat){if(e.key.length===1)e.preventDefault();return}
  if(e.isComposing||e.key==='Dead'||e.key==='Process'){vInvalid=true;return}
- const input=E('verifyTyping'),p=input.selectionStart??input.value.length,q=input.selectionEnd??p;
- if(e.key==='Backspace'||e.key==='Delete'){const a=p===q?(e.key==='Backspace'?Math.max(0,p-1):p):p,b=p===q?(e.key==='Delete'?Math.min(vKeys.length,p+1):p):q;vKeys.splice(a,b-a);return}
- if(e.key.length!==1)return;if(q>p)vKeys.splice(p,q-p);
- const obj={down:performance.now(),up:null,char:e.key};vKeys.splice(p,0,obj);vActive.set(e.code||e.key,obj);
+ const p=verifyInput.selectionStart??verifyInput.value.length,q=verifyInput.selectionEnd??p;
+ if(e.key==='Backspace'||e.key==='Delete'){
+  const a=p===q?(e.key==='Backspace'?Math.max(0,p-1):p):p;
+  const b=p===q?(e.key==='Delete'?Math.min(vKeys.length,p+1):p):q;
+  vKeys.splice(a,b-a);return;
+ }
+ if(e.key.length!==1)return;
+ if(q>p)vKeys.splice(p,q-p);
+ const obj={down:performance.now(),up:null,char:e.key};
+ vKeys.splice(p,0,obj);vActive.set(e.code||e.key,obj);
 };
-E('verifyTyping').onkeyup=e=>{const a=vActive.get(e.code||e.key);if(a){a.up=performance.now();vActive.delete(e.code||e.key)}};
-E('verifyTyping').oninput=()=>{if(vKeys.map(x=>x.char).join('')!==E('verifyTyping').value)vInvalid=true};
-E('verifyReset').onclick=()=>{vKeys=[];vActive.clear();vInvalid=false;E('verifyTyping').value='';E('verifyOutcome').textContent='';E('verifyMessage').textContent='Có thể nhập lại'};
+verifyInput.onkeyup=e=>{
+ if(isMobileKeyboard)return;
+ const a=vActive.get(e.code||e.key);if(a){a.up=performance.now();vActive.delete(e.code||e.key)}
+};
+verifyInput.oninput=()=>{
+ if(isMobileKeyboard){
+  const prefix=vKeys.map(x=>x.char).join(''),value=verifyInput.value;
+  if(prefix===value)return;
+  if(prefix.length&&value===prefix.slice(0,-1)){
+   const removed=vKeys.pop();vResumeAnchor=removed.down;
+   if(!vKeys.length){vTimingOffset=0;vResumeAnchor=null}
+   verifyInput.setSelectionRange(value.length,value.length);
+   E('verifyMessage').textContent='Đã xóa một ký tự';return;
+  }
+  if(value.length===prefix.length+1&&value.startsWith(prefix)&&P.startsWith(value)){
+   const now=performance.now();if(vResumeAnchor!==null){vTimingOffset=now-vResumeAnchor;vResumeAnchor=null}
+   const down=now-vTimingOffset;
+   vKeys.push({down,up:down+MOBILE_HOLD_ESTIMATE,char:value.slice(-1),estimated:true});
+   return;
+  }
+  if(vResumeAnchor===null)vResumeAnchor=performance.now()-vTimingOffset;
+  verifyInput.value=prefix;verifyInput.setSelectionRange(prefix.length,prefix.length);
+  E('verifyMessage').textContent='⚠ Đã bỏ ký tự sai, giữ lại phần gõ đúng. Hãy tiếp tục.';return;
+ }
+ if(vKeys.map(x=>x.char).join('')!==verifyInput.value)vInvalid=true;
+};
+E('verifyReset').onclick=resetVerifyKeys;
 E('verifySend').onclick=async()=>{const btn=E('verifySend');E('verifyOutcome').textContent='';E('verifyMessage').textContent='Đang kiểm tra nhịp gõ mới...';btn.disabled=true;try{
  const p=profiles.find(x=>x.id===E('verifyPicker').value);if(!p)throw Error('Chưa chọn hồ sơ');if(!p.ready)throw Error('Hồ sơ chưa đủ '+p.target_samples+' mẫu');
  if(vInvalid||E('verifyTyping').value!==P||vKeys.length!==P.length||vKeys.some(x=>x.up===null)||vActive.size)throw Error('Hãy gõ đúng đủ câu, nhả hết phím và không dùng copy/paste');
@@ -324,7 +361,7 @@ E('verifySend').onclick=async()=>{const btn=E('verifySend');E('verifyOutcome').t
  const d=await api('verify',{profile_id:p.id,claimed_owner:E('verifyOwner').checked,features_v3});
  E('verifyOutcome').textContent=(d.uncertain?'⚠ GẦN NGƯỠNG — NÊN GÕ THÊM':d.accepted?'✓ PHÙ HỢP':'✕ KHÔNG PHÙ HỢP')+' · Điểm '+d.score.toFixed(3)+' / ngưỡng '+d.threshold.toFixed(3);
  E('verifyMessage').textContent=d.uncertain?'Điểm nằm trong vùng gần ngưỡng ±10%. Nên gõ thêm một lần; lượt vừa rồi vẫn được tính theo ngưỡng hiện tại.':'Điểm thấp hơn ngưỡng là gần giống mẫu gõ của '+p.name+'. Đây là nhận định ML, không phải xác minh danh tính chắc chắn.';
- vKeys=[];vActive.clear();vInvalid=false;E('verifyTyping').value='';
+ resetVerifyKeys();
  }catch(e){E('verifyMessage').textContent='⚠ '+e.message}finally{btn.disabled=false}};
 function sim(){const x=+E('scoreSim').value,y=+E('cutSim').value;E('scoreSimValue').textContent=x.toFixed(2);E('cutSimValue').textContent=y.toFixed(2);
  E('simResult').textContent=x<=y?'✓ Phù hợp: điểm khác biệt không vượt ngưỡng.':'✕ Không phù hợp: điểm khác biệt lớn hơn ngưỡng.'}
