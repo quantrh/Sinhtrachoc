@@ -99,7 +99,13 @@ textarea.typing-box.alert,textarea.typing-box.alert:focus{background:#ffe9ed;bor
 <div id="featureReasons" class="info">Chưa có dữ liệu.</div>
 <h3>42 đặc trưng đã thu thập</h3>
 <p class="muted">Các đặc trưng mang nhãn “Tham khảo” (digraph/trigraph) vẫn được thu thập cho mục đích nghiên cứu nhưng <b>không tham gia quyết định hiện tại</b>.</p>
+<details open><summary><b>📖 Hướng dẫn đọc các feature</b></summary>
+<p><b>KeyDown</b> là thời điểm nhấn phím, <b>KeyUp</b> là thời điểm nhả. Đơn vị thời gian là <b>ms</b> (1.000 ms = 1 giây). “Mẫu gốc” là trung bình đặc trưng từ các cửa sổ huấn luyện; “Lần gõ” là cửa sổ 30 phím gần nhất.</p>
+<p><b>Giá trị cao hay thấp không tự động đồng nghĩa người lạ.</b> Mô hình so sánh độ lệch với mẫu và độ dao động đã học. Khi gõ chậm/mệt, nhiều đặc trưng có thể tăng cùng lúc.</p>
+<div id="featureGlossary"></div></details>
+<p class="muted">Chọn tên đặc trưng trong bảng để xem giải thích đầy đủ bên dưới.</p>
 <div style="overflow-x:auto"><table><thead><tr><th>Đặc trưng</th><th>Mẫu gốc</th><th>Lần gõ</th><th>Chênh lệch</th><th>Vai trò</th></tr></thead><tbody id="featureTable"></tbody></table></div>
+<div id="featureExplanation" class="info">Chạm vào tên một đặc trưng để xem công thức, đơn vị và cách diễn giải.</div>
 </section>
 <section class="card page" data-page="guide" hidden>
 <h2>Hướng dẫn sử dụng KeyDNA Continuous</h2>
@@ -554,6 +560,41 @@ const featureNames=["Dwell trung bình","Biến thiên Dwell","Press-to-Press tr
  ...Array.from({length:20},(_,i)=>"Digraph bucket "+(i+1)),
  ...Array.from({length:10},(_,i)=>"Trigraph bucket "+(i+1)),
  "Latency P10","Latency P50","Latency P90","Tỷ lệ quãng nghỉ dài","Hệ số biến thiên latency"];
+const featureDescriptions=[
+ ["Dwell trung bình","Trung bình thời gian giữ một phím: KeyUp − KeyDown.","ms","Lớn hơn: giữ phím lâu hơn; nhỏ hơn: nhả phím nhanh hơn."],
+ ["Biến thiên Dwell","Độ lệch chuẩn của thời gian giữ các phím trong cửa sổ.","ms","Lớn hơn: thời gian giữ phím kém đều; nhỏ hơn: đều hơn."],
+ ["Press-to-Press trung bình","Trung bình KeyDown(i+1) − KeyDown(i), được chặn trong 0–1600 ms.","ms","Lớn hơn: khoảng cách nhấn phím dài hơn, thường là gõ chậm hơn."],
+ ["Biến thiên Press-to-Press","Độ lệch chuẩn khoảng thời gian giữa hai lần nhấn liên tiếp.","ms","Lớn hơn: tốc độ giữa các phím biến động nhiều hơn."],
+ ["Release-to-Press trung bình","Trung bình KeyDown(i+1) − KeyUp(i), giới hạn -300 đến 1600 ms.","ms","Âm: thao tác hai phím chồng lấn; dương cao: có khoảng nghỉ sau khi nhả phím."],
+ ["Biến thiên Release-to-Press","Độ lệch chuẩn thời gian chuyển từ nhả phím trước sang nhấn phím sau.","ms","Lớn hơn: khoảng nghỉ/chồng phím ít ổn định hơn."],
+ ["Tốc độ gõ (WPM)","60 × số phím / (5 × tổng thời gian gõ tính bằng giây).","từ/phút (quy ước 5 ký tự/từ)","Cao: gõ nhanh; thấp: gõ chậm. Đây là ước lượng tốc độ, không phân tích từ ngữ."],
+ ...Array.from({length:20},(_,i)=>["Digraph bucket "+(i+1),"Trung bình Press-to-Press của cặp ký tự được ánh xạ vào nhóm băm số "+(i+1)+".","ms","Có thể bằng 0 nếu nhóm không xuất hiện trong cửa sổ; phụ thuộc cặp ký tự nên chỉ tham khảo, không tham gia cảnh báo."]),
+ ...Array.from({length:10},(_,i)=>["Trigraph bucket "+(i+1),"Trung bình thời gian từ KeyDown phím đầu đến KeyDown phím thứ ba của bộ ba ký tự trong nhóm băm số "+(i+1)+".","ms","Có thể bằng 0 nếu nhóm không xuất hiện; phụ thuộc nội dung phím nên chỉ tham khảo."]),
+ ["Latency P10","Phân vị 10% của Press-to-Press: 10% khoảng thời gian nhấn–nhấn có giá trị nhỏ hơn hoặc bằng mức này.","ms","Phản ánh những đoạn gõ nhanh nhất trong cửa sổ."],
+ ["Latency P50","Trung vị Press-to-Press, phản ánh nhịp gõ điển hình.","ms","Tăng khi tốc độ nhịp gõ thông thường chậm hơn."],
+ ["Latency P90","Phân vị 90% Press-to-Press, phản ánh các khoảng gõ chậm hơn.","ms","Tăng khi xuất hiện các đoạn ngập ngừng/ngắt nhịp dài."],
+ ["Tỷ lệ quãng nghỉ dài","Số Press-to-Press lớn hơn 400 ms / tổng số khoảng Press-to-Press.","tỷ lệ 0–1","0,20 nghĩa là 20% khoảng nhấn–nhấn vượt 400 ms; cao hơn thể hiện nhiều quãng ngắt nhịp."],
+ ["Hệ số biến thiên latency","Độ lệch chuẩn Press-to-Press / (trung bình Press-to-Press + 1).","không đơn vị","Cao: nhịp gõ ít ổn định tương đối so với tốc độ trung bình."]
+];
+function showFeatureExplanation(i){
+ const x=featureDescriptions[i];if(!x)return;
+ $("featureExplanation").replaceChildren();
+ const head=document.createElement("b");head.textContent=(i+1)+". "+x[0]+" · "+x[2];
+ const p1=document.createElement("p");p1.textContent="Cách tính: "+x[1];
+ const p2=document.createElement("p");p2.textContent="Diễn giải: "+x[3];
+ const p3=document.createElement("small");p3.textContent=activeDimensions.includes(i)?"Vai trò: đang dùng trong mô hình cảnh báo robust (có thể bị loại nếu nằm trong hai độ lệch lớn nhất).":"Vai trò: chỉ tham khảo; không ảnh hưởng quyết định cảnh báo hiện tại.";
+ $("featureExplanation").append(head,p1,p2,p3);
+}
+function renderFeatureGlossary(){
+ const host=$("featureGlossary");host.replaceChildren();
+ for(const [title,ids] of [["Nhóm 1: Thời gian giữ và chuyển phím",[0,1,2,3,4,5,6]],["Nhóm 2: Digraph và Trigraph (tham khảo)",[7,27]],["Nhóm 3: Phân vị và nhịp gõ",[37,38,39,40,41]]]){
+  const section=document.createElement("details"),summary=document.createElement("summary");summary.textContent=title;
+  section.append(summary);
+  for(const i of ids){const p=document.createElement("p");const x=featureDescriptions[i];p.textContent=x[0]+": "+x[1]+" ("+x[2]+"). "+x[3];section.append(p)}
+  if(ids[0]===7){const p=document.createElement("p");p.textContent="Có 20 nhóm Digraph (feature 8–27) và 10 nhóm Trigraph (feature 28–37). Mỗi nhóm có cùng quy tắc tính, khác mã băm. Không có đặc trưng phân tích ý nghĩa văn bản.";section.append(p)}
+  host.append(section);
+ }
+}
 const featureUnits=i=>i===6?" WPM":i===40||i===41?"":" ms";
 const activeDimensions=[0,1,2,3,4,5,6,37,38,39,40,41];
 let latestInsights=null;
@@ -589,7 +630,7 @@ function refreshInsights(){
  }
  for(let i=0;i<42;i++){
   const tr=document.createElement("tr");const values=[featureNames[i],featureValue(i,profile.m[i]),featureValue(i,data.features[i]),featureValue(i,data.features[i]-profile.m[i]),activeDimensions.includes(i)?"Đang dùng":"Tham khảo"];
-  for(const v of values){const td=document.createElement("td");td.textContent=v;tr.append(td)}
+  for(const [j,v] of values.entries()){const td=document.createElement("td");if(j===0){const btn=document.createElement("button");btn.type="button";btn.className="alt";btn.style.cssText="padding:5px 8px;text-align:left;white-space:normal";btn.textContent=v;btn.onclick=()=>showFeatureExplanation(i);td.append(btn)}else td.textContent=v;tr.append(td)}
   $("featureTable").append(tr);
  }
 }
@@ -601,5 +642,5 @@ $("downloadFeatures").onclick=()=>{
  a.href=url;a.download="keydna-feature-analysis.json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 };
 
-showProfile();updateEnroll();connect();
+renderFeatureGlossary();showProfile();updateEnroll();connect();
 </script></body></html>
