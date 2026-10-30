@@ -27,7 +27,7 @@ footer{text-align:center;padding:30px;color:#66837b}
 <div class="tabs row">
 <button class="active" data-tab="enroll">1. Đăng ký hành vi</button>
 <button class="alt" data-tab="monitor">2. Xác thực liên tục</button>
-<button class="alt" data-tab="lab">3. Model Lab</button>
+<button class="alt" data-tab="academy">3. Giáo trình</button>
 </div>
 <div class="grid">
 <div>
@@ -43,30 +43,25 @@ footer{text-align:center;padding:30px;color:#66837b}
 <div id="trainMsg" class="info">Bộ thu chỉ ghi thời gian phím khi vùng nhập đang được chọn. Hạn chế sửa bằng paste, autofill hoặc dictation.</div>
 </section>
 <section class="card page" data-page="monitor" hidden><div id="dangerBanner" role="alert" hidden style="background:#ffd5da;border:3px solid #bd1837;color:#920b27;padding:20px;border-radius:12px;margin-bottom:16px;font-weight:800;font-size:20px">⚠️ PHÁT HIỆN HÀNH VI GÕ BẤT THƯỜNG<div id="dangerDetail"></div></div>
-<h2>Xác thực liên tục</h2>
-<p>Gõ nội dung tùy ý. Mỗi 15 phím mới sẽ kiểm tra một cửa sổ 30 phím, kết hợp Isolation Forest và Mahalanobis. Cần 3 cửa sổ bất thường liên tiếp để chuyển sang trạng thái cảnh báo.</p>
+<h2>Xác thực liên tục</h2><label for="verifyProfile">Hồ sơ cần xác thực</label><select id="verifyProfile" style="width:100%;padding:12px;margin-bottom:12px"><option>Chưa có hồ sơ</option></select>
+<p>Gõ nội dung tùy ý. Mỗi 15 phím mới sẽ kiểm tra một cửa sổ 30 phím, kết hợp Isolation Forest và Mahalanobis. Báo đỏ từ cửa sổ đầu tiên bất thường, ba cửa sổ liên tiếp tăng mức cảnh báo.</p>
 <textarea id="monitorText" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Gõ ở đây để hệ thống theo dõi nhịp gõ..."></textarea>
 <div class="row"><button class="alt" id="soundEnable">🔊 Bật âm thanh</button><button class="alt" id="monitorReset">Đặt lại phiên</button><span id="liveState" class="pill">Chưa đủ dữ liệu</span></div>
 <div class="stats"><div class="stat"><small>Cửa sổ đã xử lý</small><strong id="nWindows">0</strong></div><div class="stat"><small>Độ tin cậy (POC)</small><strong id="confidence">—</strong></div><div class="stat"><small>Bất thường liên tiếp</small><strong id="streak">0/3</strong></div></div>
 <h3>Nhật ký quyết định</h3><div class="log" id="log"><div>Chưa có dữ liệu phiên.</div></div>
 </section>
-<section class="card page" data-page="lab" hidden>
-<h2>Model Lab</h2>
-<p>Hồ sơ được huấn luyện bằng hai bộ chấm điểm. Đây là phiên bản JavaScript mô phỏng kiến trúc TrueStroke, không phải engine WASM/C++ nguyên bản.</p>
-<table><tr><th>Thông số</th><th>Giá trị</th></tr>
-<tr><td>Đặc trưng</td><td>42 chiều (7 thống kê + 20 digraph + 10 trigraph + 5 nhịp)</td></tr>
-<tr><td>Window / stride</td><td>30 / 15 phím</td></tr>
-<tr><td>Isolation Forest</td><td>100 cây, subsample tối đa 256</td></tr>
-<tr><td>Mahalanobis</td><td>Diagonal covariance có regularization</td></tr>
-<tr><td>Score fusion</td><td>Trung bình 2 percentile score</td></tr>
-<tr><td>Hysteresis</td><td>3 cửa sổ liên tiếp</td></tr></table>
-<h3>Đánh giá</h3>
-<p class="muted">FAR/FRR cần mẫu chính chủ và người lạ được gán nhãn độc lập. Vì vậy không hiển thị độ chính xác tự ước tính từ tập train.</p>
-<button id="export" class="alt">Xuất hồ sơ JSON</button><button id="wipe" class="warn">Xóa hồ sơ cục bộ</button>
-</section>
+<section class="card page" data-page="academy" hidden><h2>Giáo trình Keystroke Dynamics</h2><p>Học từ cơ bản tới nâng cao; mỗi bài có lý thuyết và ứng dụng KeyDNA.</p>
+<details open><summary><b>Bài 1 · Sinh trắc học hành vi</b></summary><p>Keystroke Dynamics nhận dạng người qua nhịp gõ, không phải nội dung. Fixed-text dùng câu cố định, free-text dùng văn bản tự do, continuous authentication kiểm tra nhịp gõ liên tục qua cửa sổ phím.</p></details>
+<details><summary><b>Bài 2 · Thu thập KeyDown và KeyUp</b></summary><p>Dwell = thời điểm nhả − nhấn. Press-to-Press = thời điểm nhấn phím sau − nhấn phím trước. Release-to-Press = nhấn sau − nhả trước. Không sử dụng paste/autofill, xử lý key repeat và sự kiện thiếu. Bàn phím mềm có thể không cung cấp KeyUp chính xác.</p></details>
+<details><summary><b>Bài 3 · 42 đặc trưng và cửa sổ trượt</b></summary><p>KeyDNA dùng cửa sổ 30 phím, stride 15 phím, gồm 7 thống kê, 20 nhóm digraph, 10 nhóm trigraph và 5 thống kê nhịp. Cửa sổ chồng lấn không phải mẫu đánh giá độc lập.</p></details>
+<details><summary><b>Bài 4 · Isolation Forest</b></summary><p>Mô hình gồm 100 cây chia ngẫu nhiên. Điểm dễ cô lập có đường đi ngắn. Công thức s(x,n)=2^(-E[h(x)]/c(n)). Không nên tin cậy kết quả với quá ít mẫu.</p></details>
+<details><summary><b>Bài 5 · Mahalanobis</b></summary><p>D(x)=√((x−μ)ᵀΣ⁻¹(x−μ)). KeyDNA hiện dùng phiên bản đường chéo có regularization, khác ma trận covariance đầy đủ của TrueStroke.</p></details>
+<details><summary><b>Bài 6 · Score Fusion và cảnh báo</b></summary><p>Điểm Isolation Forest và Mahalanobis được đổi thành phân vị trên tập train rồi lấy trung bình. Cửa sổ bất thường đầu tiên kích hoạt báo đỏ và âm thanh nếu đã bật. Ba cửa sổ liên tiếp sẽ tăng mức cảnh báo. Điểm nghi vấn không phải xác suất một người là người lạ.</p></details>
+<details><summary><b>Bài 7 · FAR, FRR, EER</b></summary><p>FAR = số lần người lạ được chấp nhận / tổng lần người lạ thử. FRR = số lần chính chủ bị từ chối / tổng lần chính chủ thử. EER là ngưỡng FAR gần FRR. Chia train/validation/test theo phiên, không chia ngẫu nhiên các cửa sổ chồng lấn.</p></details>
+<details><summary><b>Bài 8 · Thực hành đánh giá</b></summary><ol><li>Tạo hai hồ sơ của hai người khác nhau, mỗi hồ sơ tối thiểu 200 phím.</li><li>Chọn hồ sơ A và cho chính chủ A gõ thử.</li><li>Giữ hồ sơ A, cho người B gõ và quan sát cảnh báo.</li><li>Chọn hồ sơ B và kiểm thử tương tự, lặp lại ở nhiều phiên khác nhau.</li><li>Ghi số lần sai để tính FAR và FRR, không coi điểm nghi vấn là xác suất đã hiệu chuẩn.</li></ol></details></section>
 </div>
 <aside>
-<section class="card"><h2>Trạng thái hồ sơ</h2><div id="profileState" class="pill">Chưa có hồ sơ</div><p id="profileInfo" class="muted"></p><div class="info">Phiên bản mới lưu hồ sơ và cảnh báo trong Supabase theo từng tài khoản ẩn danh. Dữ liệu V3 cũ được giữ nguyên.</div></section>
+<section class="card"><h2>Quản lý hồ sơ</h2><select id="profileList" style="width:100%;padding:12px;margin:8px 0 12px"><option>Đang kết nối...</option></select><div class="row"><button id="refreshProfiles" class="alt">Làm mới</button><button id="exportProfile" class="alt">Xuất JSON</button><button id="removeProfile" class="warn">Xóa hồ sơ</button></div><small id="profileCount">0 hồ sơ</small><h3>Hồ sơ đang chọn</h3><div id="profileState" class="pill">Chưa có hồ sơ</div><p id="profileInfo" class="muted"></p><div class="info">Phiên bản mới lưu hồ sơ và cảnh báo trong Supabase theo từng tài khoản ẩn danh. Dữ liệu V3 cũ được giữ nguyên.</div></section>
 <section class="card"><h2>Giải thích thuật toán</h2><p><b>Isolation Forest:</b> phát hiện cửa sổ có mẫu nhịp gõ dễ bị cô lập.</p><p><b>Mahalanobis:</b> kiểm tra khoảng cách từng đặc trưng đến hành vi đã học; dùng phương sai điều chuẩn để tránh chia cho 0.</p><p><b>Fusion:</b> quy đổi điểm vào phân vị tương ứng của tập huấn luyện, rồi gộp thành điểm bất thường.</p><p><b>Hysteresis:</b> tránh báo động do một lần gõ bất thường đơn lẻ.</p><small>Gõ trên bàn phím mềm iOS có thể thiếu sự kiện KeyUp hoặc timestamp đáng tin cậy. Khi thiếu dữ liệu, ứng dụng từ chối huấn luyện/nhận diện thay vì tạo kết quả giả.</small></section>
 </aside>
 </div></main><footer>KeyDNA Continuous · Research POC · Inspired by TrueStroke (MIT) · Không dùng làm xác thực thực tế</footer>
@@ -77,21 +72,32 @@ const $=id=>document.getElementById(id), K="keydna_continuous_profile_v1", W=30,
 let profile=null, enroll=[], monitor=[], down=new Map(), epoch=0, nDone=0, badStreak=0, alertLogged=false, soundEnabled=false, audioCtx=null;
 
 const sb=window.supabase?.createClient("https://rmbsxccrwrktbjlnezpu.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJtYnN4Y2Nyd3JrdGJqbG5lenB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg2MjczNjQsImV4cCI6MjA2NDIwMzM2NH0.ydCqificftdtn1niRciFCifeuo8aX6SDGti-hCY5Z_Y");
-let currentUser=null;
+let currentUser=null, profiles=[], selectedProfileId=null;
+function renderProfiles(){
+ for(const id of ["profileList","verifyProfile"]){const e=$(id);e.replaceChildren();if(!profiles.length)e.add(new Option("Chưa có hồ sơ",""));for(const p of profiles)e.add(new Option(p.name+" · "+new Date(p.updated_at).toLocaleDateString("vi-VN"),p.id));e.value=selectedProfileId||""}
+ $("profileCount").textContent=profiles.length+" hồ sơ đã lưu";showProfile();
+}
+function selectProfile(id){selectedProfileId=id||null;profile=profiles.find(p=>p.id===id)?.model||null;$("monitorReset").click();renderProfiles()}
+async function loadProfiles(preferred){
+ if(!currentUser)return;
+ const {data,error}=await sb.from("kd_continuous_profiles").select("id,name,model,created_at,updated_at").eq("user_id",currentUser).order("updated_at",{ascending:false});
+ if(error){setInfo("Lỗi tải hồ sơ: "+error.message);return}
+ profiles=data||[];const id=preferred||selectedProfileId;selectedProfileId=profiles.some(p=>p.id===id)?id:profiles[0]?.id||null;
+ profile=profiles.find(p=>p.id===selectedProfileId)?.model||null;renderProfiles();
+}
 async function connect(){
- if(!sb){setInfo("Chưa tải được Supabase SDK");return}
- try{let {data:{session}}=await sb.auth.getSession();if(!session){const r=await sb.auth.signInAnonymously();if(r.error)throw r.error;session=r.data.session}
- currentUser=session?.user?.id;
- if(!currentUser)throw Error("Không có phiên đăng nhập");
- const r=await sb.from("kd_continuous_profiles").select("model").eq("user_id",currentUser).maybeSingle();
- if(r.error)throw r.error;if(r.data?.model){profile=r.data.model;showProfile()}
- setInfo("Supabase đã kết nối. Hồ sơ được lưu theo tài khoản ẩn danh.");
+ if(!sb){setInfo("Không tải được Supabase SDK");return}
+ try{let {data:{session},error}=await sb.auth.getSession();if(error)throw error;
+ if(!session){const r=await sb.auth.signInAnonymously();if(r.error)throw r.error;session=r.data.session}
+ currentUser=session?.user?.id;if(!currentUser)throw Error("Không có phiên đăng nhập");
+ await loadProfiles();setInfo("Supabase đã kết nối, hỗ trợ nhiều hồ sơ.");
  }catch(e){setInfo("Lỗi Supabase: "+e.message)}
 }
-async function persistProfile(){
- if(!currentUser){setInfo("Chưa kết nối Supabase, chưa thể lưu");return}
- const r=await sb.from("kd_continuous_profiles").upsert({user_id:currentUser,name:profile.name,model:profile,updated_at:new Date().toISOString()},{onConflict:"user_id"});
- setInfo(r.error?"Lưu Supabase thất bại: "+r.error.message:"Đã lưu hồ sơ lên Supabase.");
+async function persistProfile(model){
+ if(!currentUser){setInfo("Chưa kết nối Supabase");return}
+ const r=await sb.from("kd_continuous_profiles").insert({user_id:currentUser,name:model.name,model}).select("id").single();
+ if(r.error){setInfo("Lỗi lưu: "+r.error.message);return}
+ await loadProfiles(r.data.id);setInfo("Đã lưu hồ sơ "+model.name+".");
 }
 function soundAlert(){
  if(!soundEnabled)return;
@@ -103,7 +109,7 @@ function alertNow(score,count){
  const pct=Math.round(score*100);
  $("dangerBanner").hidden=false;$("dangerDetail").textContent="Điểm nghi vấn: "+pct+"%";
  if(!alertLogged){alertLogged=true;soundAlert();
- if(currentUser)sb.from("kd_continuous_alerts").insert({user_id:currentUser,suspicion:pct,anomaly_score:score,windows_count:count}).then(({error})=>{if(error)console.warn(error.message)})}
+ if(currentUser)sb.from("kd_continuous_alerts").insert({user_id:currentUser,profile_id:selectedProfileId,suspicion:pct,anomaly_score:score,windows_count:count}).then(({error})=>{if(error)console.warn(error.message)})}
 }
 
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
@@ -208,15 +214,27 @@ keyCollector($("monitorText"),monitor,updateMonitor);
 $("train").onclick=()=>{
  const rows=windows(enroll);if(rows.length<10){setInfo("Chưa đủ cửa sổ để huấn luyện.");return}
  try{profile={name:$("person").value.trim()||"Người dùng",count:enroll.length,rows:rows.length,created:new Date().toISOString(),...trainModel(rows)};
- showProfile();persistProfile();}
+ persistProfile(profile);}
  catch(e){setInfo("Không huấn luyện được: "+e.message)}
 };
 $("enrollReset").onclick=()=>{enroll.length=0;$("enrollText").value="";updateEnroll()};
 $("monitorReset").onclick=()=>{monitor.length=0;$("monitorText").value="";nDone=0;badStreak=0;alertLogged=false;$("dangerBanner").hidden=true;$("nWindows").textContent="0";$("confidence").textContent="—";$("streak").textContent="0/3";$("liveState").textContent="Chưa đủ dữ liệu";$("liveState").className="pill";$("log").innerHTML="<div>Đã đặt lại phiên.</div>"};
 $("soundEnable").onclick=async()=>{try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();await audioCtx.resume();soundEnabled=true;$("soundEnable").textContent="🔊 Đã bật âm thanh"}catch(e){alert("Không bật được âm thanh: "+e.message)}};
+$("profileList").onchange=e=>selectProfile(e.target.value);
+$("verifyProfile").onchange=e=>selectProfile(e.target.value);
+$("refreshProfiles").onclick=()=>loadProfiles();
+$("exportProfile").onclick=()=>$("export").click();
+$("removeProfile").onclick=async()=>{
+ if(!selectedProfileId||!currentUser)return alert("Chưa chọn hồ sơ");
+ const p=profiles.find(x=>x.id===selectedProfileId);
+ if(!confirm('Xóa vĩnh viễn hồ sơ "'+p.name+'" khỏi Supabase?'))return;
+ const {error}=await sb.from("kd_continuous_profiles").delete().eq("id",selectedProfileId).eq("user_id",currentUser);
+ if(error)return alert("Xóa thất bại: "+error.message);
+ selectedProfileId=null;profile=null;await loadProfiles();setInfo("Đã xóa hồ sơ.");
+};
 document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{const tab=b.dataset.tab;document.querySelectorAll("[data-tab]").forEach(x=>{x.className=x===b?"active":"alt"});document.querySelectorAll("[data-page]").forEach(x=>x.hidden=x.dataset.page!==tab)});
 $("export").onclick=()=>{if(!profile){alert("Chưa có hồ sơ");return}const blob=new Blob([JSON.stringify(profile)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="keydna-continuous-profile.json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
 $("wipe").onclick=()=>alert("Để tránh xóa dữ liệu từ xa ngoài ý muốn, xóa hồ sơ đang tạm khóa.");
-try{profile=JSON.parse(localStorage.getItem(K)||"null");if(profile&&!profile.forest)profile=null}catch(e){profile=null}
+
 showProfile();updateEnroll();connect();
 </script></body></html>
