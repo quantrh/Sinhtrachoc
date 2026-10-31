@@ -219,13 +219,6 @@ function setTypingState(state){
  if(state!=="normal")box.classList.add(state);
 }
 function clearAlertUI(){$("dangerBanner").hidden=true;$("dangerBanner").className="danger-inline";$("dangerBanner").querySelector("b").textContent="⚠️ Phát hiện hành vi gõ bất thường";setTypingState("normal");alertLogged=false}
-function alertNow(score,count,locked){
- const pct=Math.round(score*100);
- $("dangerBanner").hidden=false;$("dangerBanner").className="danger-inline"+(locked?" strong":"");$("dangerDetail").textContent="Điểm nghi vấn: "+pct+"%";setTypingState(locked?"alert":"suspect");
- if(!alertLogged){alertLogged=true;soundAlert();
- if(currentUser)sb.from("kd_continuous_alerts").insert({user_id:currentUser,profile_id:selectedProfileId,suspicion:pct,anomaly_score:score,windows_count:count}).then(({error})=>{if(error)console.warn(error.message)})}
-}
-
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const mean=a=>a.reduce((x,y)=>x+y,0)/Math.max(1,a.length);
 const sd=a=>Math.sqrt(mean(a.map(v=>(v-mean(a))**2)));
