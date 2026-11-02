@@ -51,6 +51,12 @@ textarea.typing-box.alert,textarea.typing-box.alert:focus{background:#ffe9ed;bor
 [data-page="academy"] details.lesson .lesson-body{padding:15px 17px 18px;line-height:1.65}
 [data-page="academy"] details.lesson .lesson-body h3{color:#006b68;margin:21px 0 9px;border-bottom:1px solid #d8eae3;padding-bottom:7px;font-size:16px}
 @media(max-width:750px){[data-page="academy"] details.lesson>summary{padding:14px 11px;font-size:14px}[data-page="academy"] details.lesson .lesson-body{padding:12px}}
+
+#scrollUpBtn{position:fixed;right:max(17px,env(safe-area-inset-right));bottom:calc(20px + env(safe-area-inset-bottom));width:52px;height:52px;border-radius:50%;background:#006B68;color:#fff;border:2px solid #FFC62F;box-shadow:0 5px 18px #003d3955;display:flex;align-items:center;justify-content:center;font-size:27px;z-index:1000;cursor:pointer;margin:0;transition:opacity .2s,transform .2s}
+#scrollUpBtn[hidden]{display:none!important}
+#scrollUpBtn:focus-visible{outline:3px solid #FFC62F;outline-offset:3px}
+#scrollUpBtn:hover{transform:translateY(-3px)}
+@media(prefers-reduced-motion:reduce){#scrollUpBtn{transition:none}}
 </style></head>
 <body><header><small>KEYDNA · CONTINUOUS BEHAVIORAL AUTHENTICATION</small><h1>⌨️ KeyDNA Continuous</h1><div>Thiết kế lại theo kiến trúc TrueStroke · Xử lý cục bộ trong trình duyệt · Bản POC</div></header>
 <main>
@@ -651,4 +657,10 @@ function renderRawKeys(){
 $("refreshModelInspector").onclick=renderModelInspector;
 $("refreshRawKeys").onclick=renderRawKeys;
 renderFeatureGlossary();showProfile();updateEnroll();connect();
-</script></body></html>
+
+const scrollUpBtn=document.getElementById("scrollUpBtn");
+function updateScrollUpVisibility(){scrollUpBtn.hidden=window.scrollY<280}
+window.addEventListener("scroll",updateScrollUpVisibility,{passive:true});
+scrollUpBtn.addEventListener("click",()=>window.scrollTo({top:0,behavior:window.matchMedia("(prefers-reduced-motion: reduce)").matches?"instant":"smooth"}));
+updateScrollUpVisibility();
+</script><button id="scrollUpBtn" type="button" aria-label="Lên đầu trang" title="Lên đầu trang" hidden>↑</button></body></html>
