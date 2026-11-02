@@ -67,7 +67,7 @@ textarea.typing-box.alert,textarea.typing-box.alert:focus{background:#ffe9ed;bor
 <h2>Kiểm tra người đang gõ</h2><label for="verifyProfile">Mẫu hành vi tham chiếu</label><select id="verifyProfile" style="width:100%;padding:12px;margin-bottom:12px"><option>Chưa có mẫu hành vi</option></select>
 <div class="info" style="margin:12px 0 14px"><label for="trialIdentity" style="display:block;margin-bottom:8px">👤 Người đang thực hiện lượt thử</label><select id="trialIdentity" style="width:100%;padding:13px;border-radius:10px;font-size:16px"><option value="other" selected>Người khác (thử phát hiện người lạ)</option><option value="owner">Chính chủ mẫu hành vi</option></select><small>Chọn đúng trước khi gõ để ghi kết quả FAR/FRR.</small></div>
 <p>Mỗi 15 phím mới chương trình kiểm tra cửa sổ 30 phím qua 12 đặc trưng thời gian và khoảng cách robust.</p>
-<div class="monitor-wrap"><div id="dangerBanner" role="alert" aria-live="polite" class="danger-inline" hidden><b>⚠️ Phát hiện hành vi gõ bất thường</b><div id="dangerDetail"></div></div><textarea id="monitorText" class="typing-box" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Người cần kiểm tra gõ ở đây..."></textarea></div>
+<div class="monitor-wrap"><div id="dangerBanner" role="alert" aria-live="polite" class="danger-inline" hidden><b>⚠️ Phát hiện hành vi gõ bất thường</b><div id="dangerDetail"></div><div id="violationReasons" style="margin-top:10px;display:grid;gap:8px" aria-live="polite"></div></div><textarea id="monitorText" class="typing-box" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Người cần kiểm tra gõ ở đây..."></textarea></div>
 <div class="row"><button class="alt" id="soundEnable">🔊 Bật âm thanh</button><button class="alt" id="monitorReset">Đặt lại phiên</button><span id="liveState" class="pill">Chưa đủ dữ liệu</span></div>
 <div class="stats"><div class="stat"><small>Cửa sổ đã xử lý</small><strong id="nWindows">0</strong></div><div class="stat"><small>Điểm tương đồng tương đối</small><strong id="confidence">—</strong></div><div class="stat"><small>Cửa sổ nghi vấn liên tiếp</small><strong id="streak">0/3</strong></div></div>
 <details open style="margin-top:14px"><summary><b>⚙️ Tinh chỉnh độ nhạy</b></summary>
@@ -244,7 +244,47 @@ function setTypingState(state){
  box.classList.remove("suspect","alert","risk-1","risk-2","risk-3","risk-4");
  if(state!=="normal")box.classList.add(state);
 }
-function clearAlertUI(){$("dangerBanner").hidden=true;$("dangerBanner").className="danger-inline";$("dangerBanner").querySelector("b").textContent="⚠️ Phát hiện hành vi gõ bất thường";setTypingState("normal");alertLogged=false}
+function explainViolation(f){
+ const corrected=adjustedFeatures(f);
+ const entries=f.map((value,i)=>{
+   const baseline=profile.m[i],scale=Math.max(profile.s[i]||1,Math.abs(baseline)*.15,8);
+   const deviation=Math.min(5,Math.abs(corrected[i]-baseline)/scale);
+   return {i,value,baseline,corrected:corrected[i],deviation};
+ });
+ // Match the decision: two largest deviations are discarded by robust scoring.
+ const ranked=[...entries].sort((a,b)=>a.deviation-b.deviation);
+ const used=ranked.slice(0,10).sort((a,b)=>b.deviation-a.deviation);
+ const labels=[
+   ["Giữ phím quá lâu","Giữ phím ngắn hơn mẫu"],
+   ["Thời gian giữ phím biến động nhiều hơn","Thời gian giữ phím đều hơn mẫu"],
+   ["Khoảng giữa hai lần nhấn dài hơn","Khoảng giữa hai lần nhấn ngắn hơn"],
+   ["Nhịp nhấn phím kém đều hơn","Nhịp nhấn phím đều hơn mẫu"],
+   ["Chuyển sang phím kế tiếp chậm hơn","Chuyển sang phím kế tiếp nhanh hơn"],
+   ["Thời gian chuyển phím kém đều hơn","Thời gian chuyển phím đều hơn mẫu"],
+   ["Gõ nhanh hơn mẫu","Gõ chậm hơn mẫu"],
+   ["Những đoạn nhấn nhanh chậm hơn mẫu","Những đoạn nhấn nhanh nhanh hơn mẫu"],
+   ["Khoảng nhấn điển hình dài hơn","Khoảng nhấn điển hình ngắn hơn"],
+   ["Những khoảng nhấn chậm dài hơn mẫu","Những khoảng nhấn chậm ngắn hơn mẫu"],
+   ["Ngắt quãng dài thường xuyên hơn","Ít ngắt quãng dài hơn mẫu"],
+   ["Nhịp gõ dao động nhiều hơn","Nhịp gõ ít dao động hơn mẫu"]
+ ];
+ const result=used.filter(x=>x.deviation>=.12).slice(0,3);
+ const host=$("violationReasons");host.replaceChildren();
+ const header=document.createElement("div");header.textContent="Các dấu hiệu lệch mẫu nổi bật (đã tính vào điểm cảnh báo):";header.style.fontWeight="700";host.append(header);
+ if(!result.length){const msg=document.createElement("div");msg.textContent="Không có một yếu tố nổi bật riêng lẻ; cảnh báo do nhiều sai lệch nhỏ cộng lại.";host.append(msg);return}
+ for(const x of result){
+   const faster=x.i===6?x.value>x.baseline:x.corrected>x.baseline;
+   const box=document.createElement("div");box.style.cssText="background:#fff9;border:1px solid #d8b8b8;border-radius:10px;padding:10px;color:#472b2b";
+   const title=document.createElement("strong");title.textContent=labels[x.i][faster?0:1];box.append(title);
+   const p=document.createElement("div");p.style.marginTop="4px";
+   const fmt=v=>Number(v).toLocaleString("vi-VN",{maximumFractionDigits:1});
+   const unit=x.i===6?" từ/phút":x.i===10||x.i===11?"":" ms";
+   p.textContent="Mẫu: "+fmt(x.baseline)+unit+" · Lần này: "+fmt(x.value)+unit+(Math.abs(x.value-x.corrected)>.01?" · Sau bù gõ chậm: "+fmt(x.corrected)+unit:"");
+   box.append(p);host.append(box);
+ }
+ const note=document.createElement("small");note.textContent="Đây là lý do kỹ thuật khiến nhịp gõ khác mẫu, không phải kết luận chắc chắn người khác đang gõ. Hai độ lệch lớn nhất được loại khỏi công thức cảnh báo.";host.append(note);
+}
+function clearAlertUI(){$("violationReasons").replaceChildren();$("dangerBanner").hidden=true;$("dangerBanner").className="danger-inline";$("dangerBanner").querySelector("b").textContent="⚠️ Phát hiện hành vi gõ bất thường";setTypingState("normal");alertLogged=false}
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const mean=a=>a.reduce((x,y)=>x+y,0)/Math.max(1,a.length);
 const sd=a=>Math.sqrt(mean(a.map(v=>(v-mean(a))**2)));
@@ -357,6 +397,7 @@ function updateMonitor(){
   $("dangerBanner").className="danger-inline risk-"+level;
   $("dangerBanner").querySelector("b").textContent=names[level];
   $("dangerDetail").textContent="Tương đồng "+Math.round(r.confidence*100)+"% · "+badStreak+" cửa sổ nghi vấn liên tiếp";
+  explainViolation(f);
   setTypingState("risk-"+level);
   if(locked&&!alertLogged){
     alertLogged=true;soundAlert();
