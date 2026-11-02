@@ -4,7 +4,7 @@
 <style>
 :root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#173b3b;background:#f0f6f4;--c:#006B68;--g:#FFC62F}
 *{box-sizing:border-box}body{margin:0}header{padding:27px max(18px,calc((100% - 1080px)/2));background:linear-gradient(120deg,#004d4e,#007c72);color:white;border-bottom:5px solid var(--g)}
-h1{font-size:clamp(24px,4vw,38px);margin:5px 0}h2{font-size:20px;margin-top:0}p{line-height:1.6}small,.muted{color:#627f78}
+.menu-shell{display:flex;align-items:center;gap:12px;margin-bottom:12px}.menu-shell button{margin:0}.menu-panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(205px,1fr));gap:6px;background:#fff;border:1px solid #c7ded7;border-radius:12px;padding:10px;margin-bottom:15px}.menu-panel[hidden]{display:none}.menu-panel button{text-align:left;margin:0}h1{font-size:clamp(24px,4vw,38px);margin:5px 0}h2{font-size:20px;margin-top:0}p{line-height:1.6}small,.muted{color:#627f78}
 header small{color:#d5f0e7}main{max-width:1080px;margin:25px auto;padding:0 15px}
 .grid{display:grid;grid-template-columns:1.4fr 1fr;gap:18px}.card{background:#fff;border:1px solid #d4e7e0;border-radius:18px;padding:22px;margin-bottom:17px;box-shadow:0 7px 22px #04443c0a}
 input,textarea{width:100%;padding:13px;border-radius:12px;border:1px solid #b9d5ce;font:16px system-ui;margin:7px 0 12px}
@@ -41,15 +41,10 @@ textarea.typing-box.alert,textarea.typing-box.alert:focus{background:#ffe9ed;bor
 </style></head>
 <body><header><small>KEYDNA · CONTINUOUS BEHAVIORAL AUTHENTICATION</small><h1>⌨️ KeyDNA Continuous</h1><div>Thiết kế lại theo kiến trúc TrueStroke · Xử lý cục bộ trong trình duyệt · Bản POC</div></header>
 <main>
-<div class="tabs row">
-<button class="active" data-tab="enroll">1. Tạo mẫu gõ</button>
-<button class="alt" data-tab="monitor">2. Kiểm tra người gõ</button>
-<button class="alt" data-tab="guide">3. Hướng dẫn</button>
-<button class="alt" data-tab="academy">4. Giáo trình</button><button class="alt" data-tab="insights">5. Phân tích đặc trưng</button>
-</div>
+<div class="menu-shell"><button id="menuToggle" type="button" aria-expanded="false">☰ Menu</button><b id="currentPageLabel">1. Kiểm tra người gõ</b></div><div id="mobileMenu" class="menu-panel" hidden><button data-tab="monitor">1. Kiểm tra người gõ</button><button data-tab="enroll">2. Tạo mẫu gõ</button><button data-tab="insights">3. Phân tích đặc trưng</button><button data-tab="academy">4. Học Thuật toán Robust Timing Distance</button><button data-tab="guide">5. Hướng dẫn</button></div>
 <div class="grid">
 <div>
-<section class="card page" data-page="enroll">
+<section class="card page" data-page="enroll" hidden>
 <h2>Tạo mẫu hành vi gõ phím</h2>
 <p class="muted">Không cần gõ câu cố định. Gõ tự nhiên ít nhất 200 phím hợp lệ. Hệ thống tạo các cửa sổ 30 phím, bước dịch 15 phím và học đặc trưng của nhịp gõ.</p>
 <div class="info"><b>Huấn luyện đa phiên:</b> mỗi phiên tối thiểu 200 phím. Chọn “Bổ sung phiên” để làm giàu mẫu của chính mình. Không sử dụng dữ liệu từ phần kiểm tra người gõ để học tự động.</div>
@@ -63,8 +58,8 @@ textarea.typing-box.alert,textarea.typing-box.alert:focus{background:#ffe9ed;bor
 <div class="row"><button id="train" disabled>Phân tích và lưu mẫu</button><button id="enrollReset" class="alt">Nhập lại</button></div>
 <div id="trainMsg" class="info">Bộ thu chỉ ghi thời gian phím khi vùng nhập đang được chọn. Hạn chế sửa bằng paste, autofill hoặc dictation.</div>
 </section>
-<section class="card page" data-page="monitor" hidden>
-<h2>Kiểm tra người đang gõ</h2><label for="verifyProfile">Mẫu hành vi tham chiếu</label><select id="verifyProfile" style="width:100%;padding:12px;margin-bottom:12px"><option>Chưa có mẫu hành vi</option></select>
+<section class="card page" data-page="monitor">
+<h2>Kiểm tra người đang gõ</h2><div class="row"><button type="button" class="alt" id="goInsights">Xem phân tích đặc trưng</button><button type="button" class="alt" id="goModel">Xem mô hình tham chiếu</button></div><label for="verifyProfile">Mẫu hành vi tham chiếu</label><select id="verifyProfile" style="width:100%;padding:12px;margin-bottom:12px"><option>Chưa có mẫu hành vi</option></select>
 <div class="info" style="margin:12px 0 14px"><label for="trialIdentity" style="display:block;margin-bottom:8px">👤 Người đang thực hiện lượt thử</label><select id="trialIdentity" style="width:100%;padding:13px;border-radius:10px;font-size:16px"><option value="other" selected>Người khác (thử phát hiện người lạ)</option><option value="owner">Chính chủ mẫu hành vi</option></select><small>Chọn đúng trước khi gõ để ghi kết quả FAR/FRR.</small></div>
 <p>Mỗi 15 phím mới chương trình kiểm tra cửa sổ 30 phím qua 12 đặc trưng thời gian và khoảng cách robust.</p>
 <div class="monitor-wrap"><div id="dangerBanner" role="alert" aria-live="polite" class="danger-inline" hidden><b>⚠️ Phát hiện hành vi gõ bất thường</b><div id="dangerDetail"></div><div id="violationReasons" style="margin-top:10px;display:grid;gap:8px" aria-live="polite"></div></div><textarea id="monitorText" class="typing-box" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Người cần kiểm tra gõ ở đây..."></textarea></div>
@@ -96,7 +91,7 @@ textarea.typing-box.alert,textarea.typing-box.alert:focus{background:#ffe9ed;bor
 <div class="row"><button id="refreshInsights" class="alt">Làm mới phân tích</button><button id="downloadFeatures" class="alt">Xuất số liệu JSON</button></div>
 <p id="insightsNote" class="info">Chọn mẫu hành vi và gõ đủ 30 phím trong phần Kiểm tra người gõ.</p>
 <div class="stats"><div class="stat"><small>Điểm tương đồng tương đối</small><strong id="insSimilarity">—</strong></div><div class="stat"><small>Mức không tương đồng tương đối</small><strong id="insDifference">—</strong></div><div class="stat"><small>Đặc trưng đang dùng để quyết định</small><strong>12 / 12</strong></div></div>
-<h3>Những yếu tố đóng góp vào độ lệch</h3>
+<details id="modelInspector" style="margin-top:14px"><summary><b>🔎 Xem dữ liệu mô hình đã huấn luyện</b></summary><p>Mô hình lưu <b>m</b> (giá trị trung bình của từng yếu tố) và <b>s</b> (thang dao động đã điều chỉnh); hai dãy đều gồm 12 số. Số s cao nghĩa là mức dao động được chấp nhận rộng hơn, không phải xác suất.</p><button id="refreshModelInspector" type="button" class="alt">Làm mới dữ liệu mô hình</button><div id="modelInspectorNote" class="info">Chưa có mẫu.</div><div id="modelInspectorTable" style="overflow-x:auto"></div><details><summary>Giải thích các trường và xem JSON</summary><p><b>name</b>: tên mẫu; <b>count</b>: số phím huấn luyện; <b>rows</b>: số cửa sổ; <b>created</b>: ngày tạo; <b>sessions</b>: các phiên huấn luyện; <b>sessionRows</b>: vector 12 yếu tố từng phiên (nếu có); <b>m</b>: giá trị trung bình; <b>s</b>: thang phân tán đã điều chỉnh. <b>id/user_id</b> (nếu có): định danh bản ghi/quyền sở hữu.</p><pre id="modelInspectorJson" class="info" style="max-height:320px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere"></pre></details></details><details style="margin:14px 0"><summary><b>⌨️ Xem dữ liệu thô thu thập từ bàn phím</b></summary><p>Mỗi dòng là một phím hợp lệ, trước khi gộp thành cửa sổ và tính 12 yếu tố. <b>Nhấn/Nhả</b> là thời điểm theo đồng hồ trình duyệt (ms), <b>Giữ</b> là thời gian nhấn tới nhả, <b>Nhấn–nhấn</b> là khoảng giữa hai lần nhấn, <b>Nhả–nhấn</b> là khoảng chuyển sang phím sau. Chỉ hiện 60 sự kiện gần nhất và không gửi thêm dữ liệu thô lên Supabase.</p><p class="muted">Không gõ mật khẩu hoặc thông tin bí mật vì dữ liệu hiển thị có ký tự phím.</p><button id="refreshRawKeys" type="button" class="alt">Làm mới dữ liệu thô</button><div id="rawKeysSummary" class="info">Chưa có dữ liệu.</div><div id="rawKeysTable" style="overflow-x:auto"></div></details><h3>Những yếu tố đóng góp vào độ lệch</h3>
 <p class="muted">Tỷ trọng dưới đây phản ánh <b>phần đóng góp của từng đặc trưng vào khoảng cách robust</b>, không phải nguyên nhân thực tế được chứng minh hay xác suất danh tính. Hai độ lệch lớn nhất được loại khỏi công thức quyết định để giảm tác động của giá trị ngoại lệ.</p>
 <div id="featureReasons" class="info">Chưa có dữ liệu.</div>
 <h3>12 đặc trưng đã thu thập</h3>
@@ -543,7 +538,12 @@ $("removeProfile").onclick=async()=>{
  if(error)return alert("Xóa thất bại: "+error.message);
  selectedProfileId=null;profile=null;await loadProfiles();setInfo("Đã xóa mẫu hành vi.");
 };
-document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{const tab=b.dataset.tab;document.querySelectorAll("[data-tab]").forEach(x=>{x.className=x===b?"active":"alt"});document.querySelectorAll("[data-page]").forEach(x=>x.hidden=x.dataset.page!==tab);if(tab==="insights")refreshInsights()});
+function navigateTo(tab){const btn=document.querySelector('[data-tab="'+tab+'"]');if(!btn)return;document.querySelectorAll("[data-page]").forEach(x=>x.hidden=x.dataset.page!==tab);document.querySelectorAll("[data-tab]").forEach(x=>x.className=x===btn?"active":"alt");$("currentPageLabel").textContent=btn.textContent;$("mobileMenu").hidden=true;$("menuToggle").setAttribute("aria-expanded","false");if(tab==="insights"){refreshInsights();renderModelInspector();renderRawKeys();}window.scrollTo({top:0,behavior:"smooth"});}
+document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>navigateTo(b.dataset.tab));
+$("menuToggle").onclick=()=>{const menu=$("mobileMenu");menu.hidden=!menu.hidden;$("menuToggle").setAttribute("aria-expanded",String(!menu.hidden))};
+$("goInsights").onclick=()=>navigateTo("insights");
+$("goModel").onclick=()=>{navigateTo("insights");$("modelInspector").open=true;renderModelInspector();$("modelInspector").scrollIntoView({behavior:"smooth",block:"start"})};
+
 $("exportProfile").onclick=()=>{if(!profile){alert("Chưa có mẫu hành vi");return}const blob=new Blob([JSON.stringify(profile)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="keydna-continuous-profile.json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
 
 
@@ -621,5 +621,21 @@ $("downloadFeatures").onclick=()=>{
  a.href=url;a.download="keydna-feature-analysis.json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 };
 
+function renderModelInspector(){
+ const note=$("modelInspectorNote"),host=$("modelInspectorTable"),dump=$("modelInspectorJson");host.replaceChildren();
+ if(!profile){note.textContent="Hãy chọn một mẫu tham chiếu trong màn hình Kiểm tra người gõ.";dump.textContent="Không có mẫu.";return}
+ note.textContent="Mẫu: "+profile.name+" · "+(profile.count||0)+" phím huấn luyện · "+(profile.rows||0)+" cửa sổ · "+(profile.sessions?.length||1)+" phiên.";
+ const table=document.createElement("table");table.style.width="100%";const head=table.insertRow();["Yếu tố","Trung bình (m)","Dao động (s)","Giải thích"].forEach(label=>{const th=document.createElement("th");th.textContent=label;head.append(th)});
+ for(let i=0;i<12;i++){const tr=table.insertRow();[featureNames[i],featureValue(i,profile.m[i]),featureValue(i,profile.s[i]),featureDescriptions[i]?.[1]||""].forEach(value=>{const td=tr.insertCell();td.textContent=value;td.style.padding="8px";td.style.borderBottom="1px solid #dce8e4"})}host.append(table);
+ dump.textContent=JSON.stringify(profile,null,2);
+}
+function renderRawKeys(){
+ const host=$("rawKeysTable");host.replaceChildren();$("rawKeysSummary").textContent="Phiên kiểm tra đang có "+monitor.length+" sự kiện phím hợp lệ; hiển thị tối đa 60 sự kiện mới nhất.";
+ if(!monitor.length)return;
+ const table=document.createElement("table");table.style.width="100%";const th=table.insertRow();["#","Phím","Nhấn (ms)","Nhả (ms)","Giữ (ms)","Nhấn–nhấn (ms)","Nhả–nhấn (ms)"].forEach(x=>{const h=document.createElement("th");h.textContent=x;h.style.padding="7px";th.append(h)});
+ const start=Math.max(0,monitor.length-60);for(let i=start;i<monitor.length;i++){const v=monitor[i],prior=monitor[i-1];const tr=table.insertRow();[i+1,v.key,v.down.toFixed(1),v.up.toFixed(1),v.dwell.toFixed(1),prior?(v.down-prior.down).toFixed(1):"—",prior?(v.down-prior.up).toFixed(1):"—"].forEach(t=>{const c=tr.insertCell();c.textContent=String(t);c.style.padding="7px";c.style.borderBottom="1px solid #e1ede9"})}host.append(table);
+}
+$("refreshModelInspector").onclick=renderModelInspector;
+$("refreshRawKeys").onclick=renderRawKeys;
 renderFeatureGlossary();showProfile();updateEnroll();connect();
 </script></body></html>
